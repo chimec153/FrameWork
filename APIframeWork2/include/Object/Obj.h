@@ -63,13 +63,15 @@ public:
 		m_blsPhysics = bPhysics;
 	}
 protected:
-	POSITION	m_tPos;
-	_SIZE		m_tSize;
-	_SIZE		m_tImageOffset;
-	POSITION	m_tPivot;
+	POSITION			m_tPos;
+	_SIZE				m_tSize;
+	_SIZE				m_tImageOffset;
+	POSITION			m_tPivot;
 	class Texture*		m_pTexture;
 	list<Collider*>		m_ColliderList;
 	class Animation*	m_pAnimation;
+	unsigned char		m_cAlpha;
+	bool				m_bAlphaOn;
 
 public:
 	class Animation* CreateAnimation(const string& strTag);
@@ -85,8 +87,12 @@ public:
 		int iLengthX, int iLengthY, float fOptionLimitTime,
 		const string& strTextKey, const vector<wstring>& vecFileName,
 		const string& strPathKey = TEXTURE_PATH);
+	void SetAnimationCurrentClip(const string& strName);
+	void SetAnimationDefaultClip(const string& strName);
 	void SetAnimationClipColorKey(const string& strClip,
 		unsigned char r, unsigned char g, unsigned char b);
+
+	class Texture* GetTexture()	const;
 
 
 	const list<Collider*>* GetColliderList() const
@@ -100,18 +106,33 @@ public:
 	void AddCollisionFunction(const string& strTag,
 		COLLISION_STATE eState, T* pObj,
 		void(T::*pFunc)(Collider*, Collider*, float))
-	{
+	{/*
 		list<Collider*>::iterator		iter;
 		list<Collider*>::iterator		iterEnd = m_ColliderList.end();
 
 		for (iter = m_ColliderList.begin(); iter != iterEnd; ++iter)
 		{
-			//if ((*iter)->GetTag() == strTag)
-			//{
-			//	(*iter)->AddCollisionFunction(eState, pObj, pFunc);
-			//	break;
-			//}
-		}
+			if ((*iter)->GetTag() == strTag)
+			{
+				(*iter)->AddCollisionFunction(eState, pObj, pFunc);
+				break;
+			}
+		}*/
+	}
+
+	void SetAlpha(unsigned char cAlpha)
+	{
+		m_cAlpha = cAlpha;
+	}
+
+	void EnableAlpha(bool bAlpha)
+	{
+		m_bAlphaOn = bAlpha;
+	}
+
+	unsigned char GetAlpha()	const
+	{
+		return m_cAlpha;
 	}
 
 public:

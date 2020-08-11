@@ -3,11 +3,16 @@
 #include "../Core/Camera.h"
 #include "..//Resources/Texture.h"
 #include "../Resources/ResourcesManager.h"
+#include "../Object/UIPanel.h"
+#include "..//Scene/Scene.h"
 
 UIInventory::UIInventory()	:
 	m_iCount(0),
 	m_iCursor(0),
-	m_pCursorTex(nullptr)
+	m_pCursorTex(nullptr),
+	m_pBackPanel(nullptr),
+	m_iCountX(0),
+	m_iCountY(0)
 {
 	m_vecItem.resize(36);
 
@@ -18,6 +23,8 @@ UIInventory::~UIInventory()
 {
 	Safe_Release_VecList(m_vecItem);
 	SAFE_RELEASE(m_pCursorTex);
+	Safe_Release_VecList(m_vecPanel);
+	SAFE_RELEASE(m_pBackPanel);
 }
 
 bool UIInventory::Init()
@@ -70,7 +77,7 @@ void UIInventory::Render(HDC hDC, float fDeltaTime)
 
 			tPos += m_vecItem[i]->GetPivot() * tSize;
 
-			tPos.x += tSize.x * i;
+			tPos.x += (tSize.x + 2) * i;
 
 			m_vecItem[i]->SetPos(tPos);
 			m_vecItem[i]->Render(hDC, fDeltaTime);
@@ -88,11 +95,94 @@ UIInventory* UIInventory::Clone()
 	return new UIInventory(*this);
 }
 
+void UIInventory::CreateInfoPanel(int iCountX, int iCountY)
+{
+	Layer* pLayer = m_pScene->FindLayer("UI");
+
+	m_pBackPanel = CreateObj<UIPanel>("BackPanel", pLayer);
+
+	m_pBackPanel->SetTexture("backPanel", TEXT("UI\\FarmLeft.bmp"));
+
+	m_pBackPanel->SetSize(32.f * 3.f, 32.f * 3.f);
+
+	m_pBackPanel->SetEnable(false);
+
+	m_iCountX = iCountX;
+	m_iCountY = iCountY;
+
+	m_vecPanel.resize(m_iCountX * m_iCountY);
+
+	for (int i = 0; i < m_iCountY; ++i)
+	{
+		for (int j = 0; j < m_iCountX; ++j)
+		{
+			UIPanel* pPanel = CreateObj<UIPanel>("Panel", pLayer);
+
+			if (i != 2 || j == 0 || j == m_iCountY - 1)
+			{
+				pPanel->SetTexture("menuTile", TEXT("Maps\\MenuTiles.bmp"));
+				pPanel->SetColorKey(255, 255, 255);
+			}
+
+			pPanel->SetSize(32.f, 32.f);
+
+			if(i !=2 && j> 0 && j< m_iCountX-1)
+				pPanel->SetImageOffset(32.f * (m_iCountX - 2), 32.f * i);
+
+			else
+				pPanel->SetImageOffset(32.f * j, 32.f * i);
+
+			pPanel->SetEnable(false);
+
+			m_vecPanel[i * m_iCountX + j] = pPanel;
+
+			SAFE_RELEASE(pPanel);
+		}
+	}
+}
+
+void UIInventory::InfoPanelOn(POSITION tPos)
+{
+	for (int i = 0; i < m_iCountX; ++i)
+	{
+		for (int j = 0; j < m_iCountY; ++j)
+		{
+			m_vecPanel[i * m_iCountX + j]->SetEnable(true);
+			m_vecPanel[i * m_iCountX + j]->SetPos(tPos);
+		}
+	}
+
+	m_pBackPanel->SetEnable(true);
+	m_pBackPanel->SetPos(tPos + POSITION(16.f, 16.f));
+}
+
+void UIInventory::InfoPanelUpdate(POSITION tPos)
+{
+	for (int i = 0; i < m_iCountX; ++i)
+	{
+		for (int j = 0; j < m_iCountY; ++j)
+			m_vecPanel[i * m_iCountX + j]->SetPos(tPos.x + 32.f * j, tPos.y + 32.f * i);
+	}
+
+	m_pBackPanel->SetPos(tPos + POSITION(16.f, 16.f));
+}
+
+void UIInventory::InfoPanelOff()
+{
+	for (int i = 0; i < m_iCountX; ++i)
+	{
+		for (int j = 0; j < m_iCountY; ++j)
+			m_vecPanel[i * m_iCountX + j]->SetEnable(false);
+	}
+
+	m_pBackPanel->SetEnable(false);
+}
+
 void UIInventory::AddItem(Item* pItem)
 {
 	if (pItem)
 	{
-		pItem->AddRef();
+		pItem->SetInventory(this);
 
 		for (int i = 0; i < 36; ++i)
 		{

@@ -21,20 +21,20 @@ Slime::~Slime()
 
 bool Slime::Init()
 {
-	SetSize(32.f, 64.f);
+	SetSize(32.f, 48.f);
 	SetPivot(0.5f, 0.5f);
 	m_iHP = 20;
 
 	Animation* pAni = CreateAnimation("slimeAni");
 	pAni->AddClip("slimeIdle", AT_ATLAS, AO_LOOP,
-		1.f, 4, 8, 0, 0, 4, 1, 1.f, "slime", TEXT("Characters\\Monsters\\Green Slime.bmp"));
+		1.f, 4, 11, 0, 4, 4, 1, 1.f, "slime", TEXT("Characters\\Monsters\\Green Slime.bmp"));
 	pAni->SetClipColorKey("slimeIdle", 255, 255, 255);
 
 	SAFE_RELEASE(pAni);
 
 	ColliderRect* pRC = AddCollider<ColliderRect>("SlimeBody");
 
-	pRC->SetRect(-16.f, -32.f, 16.f, 32.f);
+	pRC->SetRect(-16.f, -24.f, 16.f, 24.f);
 
 	SAFE_RELEASE(pRC);
 
@@ -58,7 +58,7 @@ int Slime::Update(float fDeltaTime)
 				POSITION tDir(i - 0.5f, j - 0.5f);
 				pEffect->SetAngle(tDir);
 				pEffect->SetPos(m_tPos);
-				pEffect->SetImageOffset(i * 16.f, 16.f * j + 236.f);
+				pEffect->SetImageOffset(i * 16.f, 16.f * j + 240.f);
 
 				SAFE_RELEASE(pEffect);
 			}

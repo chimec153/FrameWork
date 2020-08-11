@@ -1,10 +1,13 @@
 #include "AniEditDlg.h"
 #include "Core.h"
+#include "Core/PathManager.h"
+#include "Scene/AnimationEditScene.h"
 
 CAniEditDlg* g_pDlg = nullptr;
 
 CAniEditDlg::CAniEditDlg()	:
-	m_hWnd(0)
+	m_hWnd(0),
+	m_pAnimation(nullptr)
 {
 	g_pDlg = this;
 }
@@ -30,6 +33,19 @@ void CAniEditDlg::Clear()
 	ShowCursor(false);
 }
 
+void CAniEditDlg::Save()
+{
+}
+
+void CAniEditDlg::Load()
+{
+}
+
+void CAniEditDlg::Save(TCHAR* pFileName)
+{
+}
+
+
 INT_PTR __stdcall CAniEditDlg::DlgProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 {
 	switch (iMessage)
@@ -38,13 +54,16 @@ INT_PTR __stdcall CAniEditDlg::DlgProc(HWND hWnd, UINT iMessage, WPARAM wParam, 
 		g_pDlg->m_hWnd = hWnd;
 		break;
 	case WM_COMMAND:
-		switch (LOWORD(lParam))
+		switch (LOWORD(wParam))
 		{
 		case IDOK:
 
 			break;
 		case IDCANCEL:
 			DestroyWindow(hWnd);
+			break;
+		case IDC_BUTTON_ANI_SAVE:
+			g_pDlg->Save();
 			break;
 		}
 		break;

@@ -13,17 +13,20 @@ private:
 	~UIClockHand();
 
 private:
-	float m_fTime;
+	float			m_fTime;
 	POSITION		m_tOriginPos;
+	class Obj*		m_pNightPanel;
 
 public:
 	void AddTime(float fTime)
 	{
-		m_fTime += fTime * 120.f;	//	24 * 60 = 1440
+		m_fTime += fTime;	//	24 * 60 = 1440
 
 		if (m_fTime >= 1440.f)
 			m_fTime = 0.f;
 	}
+
+	void SetNightPanel(class Obj* pObj);
 
 public:
 	virtual bool Init();

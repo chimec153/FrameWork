@@ -22,5 +22,8 @@ public:
 
 public:
 	virtual bool Init();
+
+public:
+	void OutPortalCol(class Collider* pSrc, class Collider* pDest, float fTime);
 };
 

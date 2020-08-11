@@ -12,6 +12,7 @@
 #include "..//Collider/ColliderRect.h"
 #include "..//Object/Slime.h"
 #include "../Animation/Animation.h"
+#include "InGameScene.h"
 
 SceneCave::SceneCave()	:
 	m_pStage(nullptr)
@@ -25,8 +26,6 @@ SceneCave::~SceneCave()
 
 bool SceneCave::Init()
 {
-	GET_SINGLE(Camera)->SetWorldResolution(3200, 3200);
-
 	Layer* pStageLayer = FindLayer("Stage");
 
 	m_pStage = Obj::CreateObj<Stage>("Stage", pStageLayer);
@@ -59,9 +58,8 @@ bool SceneCave::Init()
 		fclose(pLoadFile);
 	}
 
-	Player* pPlayer = (Player*)CreatePlayer();
-
-	CreateProtoNumberSmall();
+	if (!Scene::Init(POSITION(32.f * 8.5f, 32.f * 7.f)))	//	8,5 out
+		return false;
 
 	CreateBatProto();
 
@@ -71,9 +69,17 @@ bool SceneCave::Init()
 
 	CreateSlimeClone();
 
-	CreateUI(pPlayer);
+	ColliderRect* pPortal = m_pStage->AddCollider<ColliderRect>("OutPortal");
 
-	SAFE_RELEASE(pPlayer);
+	pPortal->SetRect(32.f * 8.f, 32.f * 2.f, 32.f * 9.f, 32.f * 3.f);
+	pPortal->AddCollisionFunction(CS_ENTER, this, &SceneCave::OutPortalCol);
+
+	SAFE_RELEASE(pPortal);
 
 	return true;
+}
+
+void SceneCave::OutPortalCol(Collider* pSrc, Collider* pDest, float fTime)
+{
+	GET_SINGLE(SceneManager)->CreateScene<InGameScene>(SC_NEXT);
 }

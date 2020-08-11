@@ -60,10 +60,17 @@ void Stage::CreateTile(int iNumX, int iNumY,
 			pTile->SetPos((float)j*iSizeX, (float)i*iSizeY);
 
 			pTile->SetTexture(strKey, pFileName, strPathKey);
+			pTile->SetStage(this);
+			pTile->m_pScene = m_pScene;
+			pTile->m_pLayer = m_pLayer;
+			pTile->SetAlpha(255);
+			pTile->EnableAlpha(true);
 
 			m_vecTile.push_back(pTile);
 		}
 	}
+
+	GET_SINGLE(Camera)->SetWorldResolution(m_iTileNumX* m_iTileSizeX, m_iTileNumY* m_iTileSizeY);
 }
 
 bool Stage::Init()
@@ -116,6 +123,130 @@ int Stage::Update(float fDeltaTime)
 			m_pSelectTile = pTile;
 
 			pTile->SelectTile();
+		}
+	}
+
+	for (int i = 0; i < m_iTileNumY; ++i)
+	{
+		for (int j = 0; j < m_iTileNumX; ++j)
+		{
+			TILE_OPTION eOption = m_vecTile[i * m_iTileNumX + j]->GetTileOption();
+			POSITION tOffset = m_vecTile[i * m_iTileNumX + j]->GetUpperImageOffset();
+
+			if (eOption != TO_WATERDIRT &&
+				eOption != TO_HOEDIRT)
+				continue;
+
+			Tile* pLeftTile = nullptr;
+
+			if (j > 0)
+				pLeftTile = m_vecTile[i * m_iTileNumX + j - 1];
+
+			Tile* pRightTile = nullptr;
+
+			if (j < m_iTileNumX - 1)
+				pRightTile = m_vecTile[i * m_iTileNumX + j + 1];
+
+			TILE_OPTION eLeftOption = TO_NONE;
+			POSITION tLeftOffset(0.f, 0.f);
+
+			if (pLeftTile)
+			{
+				eLeftOption = pLeftTile->GetTileOption();
+				tLeftOffset = pLeftTile->GetUpperImageOffset();
+			}				
+
+			TILE_OPTION eRightOption = TO_NONE;
+			POSITION tRightOffset(0.f, 0.f);
+
+			if (pRightTile)
+			{
+				eRightOption = pRightTile->GetTileOption();
+				tRightOffset = pRightTile->GetUpperImageOffset();
+			}				
+
+			if ((eLeftOption == TO_HOEDIRT || eLeftOption == TO_WATERDIRT) &&
+				(eRightOption == TO_HOEDIRT || eRightOption == TO_WATERDIRT) &&
+				tLeftOffset.x != 0.f && tRightOffset.x !=0.f &&
+				((tOffset.x ==0.f && tOffset.y == 0.f) ||
+				(tOffset.x !=0.f)))
+			{
+				m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset(m_iTileSizeX * 2.f, m_iTileSizeY * 3.f);
+				continue;
+			}
+
+			else if ((eLeftOption == TO_HOEDIRT || eLeftOption == TO_WATERDIRT) &&
+				(tLeftOffset.x != 0.f || tLeftOffset.y == 0.f) &&
+				((tOffset.x == 0.f && tOffset.y == 0.f) ||
+				(tOffset.x != 0.f)))
+			{
+				m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset(m_iTileSizeX * 3.f, m_iTileSizeY * 3.f);
+				continue;
+			}
+
+			else if ((eRightOption == TO_HOEDIRT || eRightOption == TO_WATERDIRT) &&
+				(tRightOffset.x != 0.f || tRightOffset.y == 0.f) &&
+				((tOffset.x == 0.f && tOffset.y == 0.f) ||
+				(tOffset.x != 0.f)))
+			{
+				m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset((float)m_iTileSizeX , m_iTileSizeY * 3.f);
+				continue;
+			}
+
+			Tile* pUpTile = nullptr;
+
+			if (i > 0)
+				pUpTile = m_vecTile[(i-1) * m_iTileNumX + j];
+
+			Tile* pDownTile = nullptr;
+
+			if (i < m_iTileNumY - 1)
+				pDownTile = m_vecTile[(i+1) * m_iTileNumX + j];
+
+			TILE_OPTION eUpOption = TO_NONE;
+			POSITION	tUpOffset(0.f, 0.f);
+
+			if (pUpTile)
+			{
+				eUpOption = pUpTile->GetTileOption();
+				tUpOffset = pUpTile->GetUpperImageOffset();
+			}
+
+			TILE_OPTION eDownOption = TO_NONE;
+			POSITION	tDownOffset(0.f, 0.f);
+
+			if (pDownTile)
+			{
+				eDownOption = pDownTile->GetTileOption();
+				tDownOffset = pDownTile->GetUpperImageOffset();
+			}
+
+			if ((eUpOption == TO_HOEDIRT || eUpOption == TO_WATERDIRT) &&
+				(eDownOption == TO_HOEDIRT || eDownOption == TO_WATERDIRT) &&
+				tUpOffset.x == 0.f && tDownOffset.x ==0.f)
+			{
+				m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset(0, m_iTileSizeY * 2.f);
+				continue;
+			}
+
+			else if ((eUpOption == TO_HOEDIRT || eUpOption == TO_WATERDIRT) &&
+				tUpOffset.x == 0.f &&
+				tOffset.x == 0.f)
+			{
+				m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset(0, m_iTileSizeY * 3.f);
+				continue;
+			}
+
+			else if ((eDownOption == TO_HOEDIRT || eDownOption == TO_WATERDIRT) &&
+				tDownOffset.x  == 0.f &&
+				tOffset.x == 0.f)
+			{
+				m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset(0, (float)m_iTileSizeY);
+				continue;
+			}
+
+			else
+				m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset(0.f, 0.f);
 		}
 	}
 
@@ -206,6 +337,10 @@ void Stage::Load(FILE * pFile)
 		Tile* pTile = Obj::CreateObj<Tile>("Tile");
 
 		pTile->Load(pFile);
+		pTile->m_pScene = m_pScene;
+		pTile->m_pLayer = m_pLayer;
+		pTile->SetAlpha(255);
+		pTile->EnableAlpha(true);
 
 		m_vecTile.push_back(pTile);
 	}

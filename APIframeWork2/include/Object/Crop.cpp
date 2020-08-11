@@ -1,7 +1,8 @@
 #include "Crop.h"
 
 Crop::Crop()	:
-	m_eType(CROP_APRICOT)
+	m_eType(CROP_APRICOT),
+	m_iLevel(1)
 {
 }
 
@@ -9,6 +10,7 @@ Crop::Crop(const Crop& crop)	:
 	MoveObj(crop)
 {
 	m_eType = crop.m_eType;
+	m_iLevel = crop.m_iLevel;
 }
 
 Crop::~Crop()

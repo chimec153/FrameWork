@@ -38,7 +38,7 @@ POSITION Input::GetMouseMove() const
 
 bool Input::Init(HWND hWnd)
 {
-	m_hWnd=hWnd;
+	m_hWnd = hWnd;
 
 	AddKey('W', "MoveFront");
 	AddKey('S', "MoveBack");
@@ -59,8 +59,8 @@ bool Input::Init(HWND hWnd)
 	AddKey("8", '8');
 	AddKey("9", '9');
 	AddKey("10", '0');
-	AddKey("11", '-');
-	AddKey("12", '=');
+	AddKey("11", VK_OEM_MINUS);
+	AddKey("12", VK_OEM_PLUS);
 	AddKey("Debug", VK_TAB);
 	AddKey("PrevScene", VK_ESCAPE);
 
@@ -71,13 +71,16 @@ bool Input::Init(HWND hWnd)
 
 	AddKey("Save", 'S', VK_CONTROL);
 	AddKey("Load", 'O', VK_CONTROL);
-	//AddKey("UpperLayer", VK_SPACE);
 	AddKey("MapEditDlg", 'E', VK_CONTROL);
 
 	AddKey("PixelUp", 'T');
 	AddKey("PixelDown", 'G');
 	AddKey("PixelLeft", 'F');
 	AddKey("PixelRight", 'H');
+
+	AddKey("TimeFaster", VK_F4);
+	AddKey("TimeSlower", VK_F5);
+	AddKey("TimeOrigin", VK_F6);
 
 	GetCursorPos(&m_tMousePos);
 

@@ -110,7 +110,7 @@ HouseGlass,Buildings\houses.bmp
 255, 0, 255
 224, 320
 0.5, 0.5
-308, 0		offset1
+310, 0		offset1
 0, 0		size2
 0.0, 0.0		pivot2
 0, 0		offset2
@@ -122,7 +122,7 @@ HouseGlass2,Buildings\houses.bmp
 255, 0, 255
 224, 320
 0.5, 0.5
-308, 320		offset1
+310, 320		offset1
 0, 0		size2
 0.0, 0.0		pivot2
 0, 0		offset2

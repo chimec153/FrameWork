@@ -40,8 +40,8 @@ typedef struct _tagAnimationInfo
 class CAnimationEditScene :
 	public Scene
 {
-private:
 	friend class SceneManager;
+	friend class CAniEditDlg;
 
 private:
 	class Stage*						m_pStage;
@@ -70,6 +70,7 @@ private:
 	static int							m_iShirtPos;
 	static int							m_iArmPos;
 	class CAniEditDlg*					m_pAniEditDlg;
+	HWND								m_hWnd;
 
 private:
 	CAnimationEditScene();
@@ -80,6 +81,10 @@ public:
 	virtual void Input(float fDeltaTime);
 	virtual int Update(float fDeltaTime);
 	virtual void Render(HDC hDC, float fDeltaTime);
+	void Save();
+
+public:
+	void Save(TCHAR* pFileName);
 
 public:
 	static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);

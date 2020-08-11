@@ -98,6 +98,7 @@ public:
 	bool LoadTextureFromFullPath(HINSTANCE hInst, HDC hDC,
 		const string& strKey, const wchar_t* pFileName);
 	void Render(HDC hDC, POSITION tPos, POSITION tImagePos, POSITION tSize, int iIndex = 0);
+	void RenderByAlpha(unsigned char cAlpha, HDC hDC, POSITION tPos, POSITION tImagePos, POSITION tSize, int iIndex = 0);
 
 	void SaveFromPath(const char* pFileName, const string& strPathKey = DATA_PATH);
 	void Save(FILE* pFile);

@@ -232,8 +232,22 @@ void CMapEditDlg::Render(HDC hDC, float fTime)
 					(int)m_tImageOffSet.x, (int)m_tImageOffSet.y, (int)(fRenderWidth), (int)(fRenderHeight), m_pTexture->GetColorKey());
 			}
 			else
+			{
+				BLENDFUNCTION	tBF = {};
+
+				tBF.BlendOp = 0;
+				tBF.BlendFlags = 0;
+				tBF.SourceConstantAlpha = 255;
+
+				tBF.AlphaFormat = AC_SRC_ALPHA;
+
+				GdiAlphaBlend(hDC, (int)(tRC.left + pt.x), (int)(tRC.top + pt.y), (int)tRC.right - tRC.left, (int)tRC.bottom - tRC.top,
+					m_pTexture->GetDC(), (int)m_tImageOffSet.x, (int)m_tImageOffSet.y, (int)tRC.right - tRC.left, (int)tRC.bottom - tRC.top, tBF);
+
+/*
 				BitBlt(hDC, (int)(tRC.left + pt.x), (int)(tRC.top + pt.y), (int)tRC.right - tRC.left, (int)tRC.bottom - tRC.top, m_pTexture->GetDC(),
-					(int)m_tImageOffSet.x, (int)m_tImageOffSet.y, SRCCOPY);
+					(int)m_tImageOffSet.x, (int)m_tImageOffSet.y, SRCCOPY);*/
+			}
 		}
 
 		RECT tSel = { (LONG)(tRC.left + pt.x + m_tPictureOffset.x - m_tImageOffSet.x), (LONG)(tRC.top + pt.y +m_tPictureOffset.y - m_tImageOffSet.y),
@@ -353,9 +367,15 @@ void CMapEditDlg::SetTileEnd()
 
 	ScreenToClient(m_hPicture, &pt);
 
+	RECT tRC = {};
+	GetWindowRect(m_hPicture, &tRC);
+
 	POSITION tPos = pt;
 
 	if (pt.x < 0.f || pt.y < 0.f)
+		return;
+
+	if (pt.x > tRC.right - tRC.left || pt.y > tRC.bottom - tRC.top)
 		return;
 
 	POSITION tTotal = m_tImageOffSet + tPos;

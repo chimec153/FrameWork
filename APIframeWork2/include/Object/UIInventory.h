@@ -16,6 +16,10 @@ private:
 	int							m_iCount;
 	int							m_iCursor;
 	class Texture*				m_pCursorTex;
+	vector<class UIPanel*>		m_vecPanel;
+	class UIPanel*				m_pBackPanel;
+	int							m_iCountX;
+	int							m_iCountY;
 
 public:
 	class Item* GetItem(int iIndex)	const
@@ -46,5 +50,11 @@ public:
 	virtual void Collision(float fDeltaTime);
 	virtual void Render(HDC hDC, float fDeltaTime);
 	virtual UIInventory* Clone();
+
+public:
+	void CreateInfoPanel(int iCountX, int iCountY);
+	void InfoPanelOn(POSITION tPos);
+	void InfoPanelUpdate(POSITION tPos);
+	void InfoPanelOff();
 };
 

@@ -13,6 +13,8 @@
 #include "..//Resources/Texture.h"
 #include "../AniEditDlg.h"
 
+CAnimationEditScene* g_pDlg = nullptr;
+
 TCHAR CAnimationEditScene::m_strText[MAX_PATH] = {};
 UIPanel* CAnimationEditScene::m_pBody = nullptr;
 PAniInfo	CAnimationEditScene::m_pAniInfo = nullptr;
@@ -48,6 +50,7 @@ CAnimationEditScene::CAnimationEditScene()	:
 	memset(&m_vecHair[0], 0, sizeof(PIXEL) * 32 * 64 * 6);
 	memset(&m_vecShirt[0], 0, sizeof(PIXEL) * 32 * 64 * 6);
 	m_pAniInfo = new AniInfo;
+	g_pDlg = this;
 }
 
 CAnimationEditScene::~CAnimationEditScene()
@@ -57,6 +60,7 @@ CAnimationEditScene::~CAnimationEditScene()
 	SAFE_RELEASE(m_pBody);
 	SAFE_RELEASE(m_pShirt);
 	SAFE_DELETE(m_pAniInfo);
+	SAFE_DELETE(m_pAniEditDlg);
 }
 
 bool CAnimationEditScene::Init()
@@ -80,7 +84,7 @@ bool CAnimationEditScene::Init()
 	Stage* pStage = Obj::CreateObj<Stage>("ShirtPanel",
 		pDafaultLayer);
 
-	pStage->SetPos(512.f, 0.f);
+	pStage->SetPos(1024.f, 0.f);
 
 	pStage->SetSize(128.f, 224.f);
 	pStage->SetTexture("AniShirtPanel", L"Characters\\Farmer\\shirts.bmp");
@@ -90,7 +94,7 @@ bool CAnimationEditScene::Init()
 	pStage = Obj::CreateObj<Stage>("HairPanel",
 		pDafaultLayer);
 
-	pStage->SetPos(384.f, 0.f);
+	pStage->SetPos(768.f, 0.f);
 
 	pStage->SetSize(128.f, 512.f);
 	pStage->SetTexture("AniHairPanel", L"Characters\\Farmer\\hairstyles.bmp");
@@ -114,7 +118,7 @@ bool CAnimationEditScene::Init()
 
 	m_pBody = Obj::CreateObj<UIPanel>("Body",
 		pLayer);
-	m_pBody->SetPos(GETRESOLUTION.iW * 0.9f - 8.f, GETRESOLUTION.iH * 0.25f - 16.f);
+	m_pBody->SetPos(GETRESOLUTION.iW * 0.9f - 16.f, GETRESOLUTION.iH * 0.25f - 32.f);
 
 	m_pBody->SetSize(32.f, 64.f);
 	m_pBody->SetTexture("Body", L"Characters\\Farmer\\farmer_girl_base.bmp");
@@ -125,7 +129,7 @@ bool CAnimationEditScene::Init()
 		pLayer);
 	m_pShirt->SetPos(GETRESOLUTION.iW * 0.9f - 16.f, GETRESOLUTION.iH * 0.25f - 32.f);
 	
-	m_pShirt->SetSize(8.f, 8.f);
+	m_pShirt->SetSize(16.f, 16.f);
 	m_pShirt->SetTexture("Shirt", L"Characters\\Farmer\\shirts.bmp");
 	m_pShirt->SetColorKey(255, 255, 255);
 
@@ -665,31 +669,31 @@ void CAnimationEditScene::Render(HDC hDC, float fDeltaTime)
 	//Rectangle(hDC, m_tPos.x - 8.f, m_tPos.y - 16.f, m_tPos.x + 8.f, m_tPos.y + 16.f);
 	for (int k = 0; k < 3; ++k)
 	{
-		MoveToEx(hDC, (int)(m_tPos.x - 9.f - tCamPos.x + k * 96.f), (int)(m_tPos.y - 17.f - tCamPos.y), NULL);	//	선택 영역을 그린다.
-		LineTo(hDC, (int)(m_tPos.x + 9.f - tCamPos.x + k*96.f), (int)(m_tPos.y - 17.f - tCamPos.y));
-		LineTo(hDC, (int)(m_tPos.x + 9.f - tCamPos.x + k*96.f), (int)(m_tPos.y + 17.f - tCamPos.y));
-		LineTo(hDC, (int)(m_tPos.x - 9.f - tCamPos.x + k*96.f), (int)(m_tPos.y + 17.f - tCamPos.y));
-		LineTo(hDC, (int)(m_tPos.x - 9.f - tCamPos.x + k*96.f), (int)(m_tPos.y - 17.f - tCamPos.y));
+		MoveToEx(hDC, (int)(m_tPos.x - 17.f - tCamPos.x + k * 192.f), (int)(m_tPos.y - 33.f - tCamPos.y), NULL);	//	선택 영역을 그린다.
+		LineTo(hDC, (int)(m_tPos.x + 17.f - tCamPos.x + k*192.f), (int)(m_tPos.y - 33.f - tCamPos.y));
+		LineTo(hDC, (int)(m_tPos.x + 17.f - tCamPos.x + k*192.f), (int)(m_tPos.y + 33.f - tCamPos.y));
+		LineTo(hDC, (int)(m_tPos.x - 17.f - tCamPos.x + k*192.f), (int)(m_tPos.y + 33.f - tCamPos.y));
+		LineTo(hDC, (int)(m_tPos.x - 17.f - tCamPos.x + k*192.f), (int)(m_tPos.y - 33.f - tCamPos.y));
 	}
 
 	POSITION tPos = m_pHair->GetPos();
-	tPos.y -= GETRESOLUTION.iH*0.25f - 16.f;
+	tPos.y -= GETRESOLUTION.iH*0.25f - 32.f;
 	tPos.y += m_pHair->GetImageOffset().y;
 
-	MoveToEx(hDC, (int)(392.f - 9.f - tCamPos.x), (int)(-1.f - tCamPos.y+ tPos.y), NULL);	//	선택 영역을 그린다.
-	LineTo(hDC, (int)(392.f + 9.f - tCamPos.x), (int)(-1.f - tCamPos.y+ tPos.y));
-	LineTo(hDC, (int)(392.f + 9.f - tCamPos.x), (int)(33.f - tCamPos.y+tPos.y));
-	LineTo(hDC, (int)(392.f - 9.f - tCamPos.x), (int)(33.f - tCamPos.y+tPos.y));
-	LineTo(hDC, (int)(392.f - 9.f - tCamPos.x), (int)(-1.f - tCamPos.y+tPos.y));
+	MoveToEx(hDC, (int)(784.f - 17.f - tCamPos.x), (int)(-1.f - tCamPos.y+ tPos.y), NULL);	//	선택 영역을 그린다.
+	LineTo(hDC, (int)(784.f + 17.f - tCamPos.x), (int)(-1.f - tCamPos.y+ tPos.y));
+	LineTo(hDC, (int)(784.f + 17.f - tCamPos.x), (int)(65.f - tCamPos.y+tPos.y));
+	LineTo(hDC, (int)(784.f - 17.f - tCamPos.x), (int)(65.f - tCamPos.y+tPos.y));
+	LineTo(hDC, (int)(784.f - 17.f - tCamPos.x), (int)(-1.f - tCamPos.y+tPos.y));
 
 	tPos = m_pShirt->GetPos();
-	tPos.y -= GETRESOLUTION.iH * 0.25f - 16.f;
+	tPos.y -= GETRESOLUTION.iH * 0.25f - 32.f;
 	tPos.y += m_pShirt->GetImageOffset().y;
-	MoveToEx(hDC, (int)(516.f - 5.f - tCamPos.x), (int)(- 1.f - tCamPos.y + tPos.y), NULL);	//	선택 영역을 그린다.
-	LineTo(hDC, (int)(516.f + 5.f - tCamPos.x), (int)(4.f - 5.f - tCamPos.y +tPos.y));
-	LineTo(hDC, (int)(516.f + 5.f - tCamPos.x), (int)(4.f + 5.f - tCamPos.y +tPos.y));
-	LineTo(hDC, (int)(516.f - 5.f - tCamPos.x), (int)(4.f + 5.f - tCamPos.y +tPos.y));
-	LineTo(hDC, (int)(516.f - 5.f - tCamPos.x), (int)(4.f - 5.f - tCamPos.y +tPos.y));
+	MoveToEx(hDC, (int)(1032.f - 9.f - tCamPos.x), (int)(- 1.f - tCamPos.y + tPos.y), NULL);	//	선택 영역을 그린다.
+	LineTo(hDC, (int)(1032.f + 9.f - tCamPos.x), (int)(8.f - 9.f - tCamPos.y +tPos.y));
+	LineTo(hDC, (int)(1032.f + 9.f - tCamPos.x), (int)(8.f + 9.f - tCamPos.y +tPos.y));
+	LineTo(hDC, (int)(1032.f - 9.f - tCamPos.x), (int)(8.f + 9.f - tCamPos.y +tPos.y));
+	LineTo(hDC, (int)(1032.f - 9.f - tCamPos.x), (int)(8.f - 9.f - tCamPos.y +tPos.y));
 
 	MoveToEx(hDC, (int)(GETRESOLUTION.iW * 0.8), (int)(GETRESOLUTION.iH / 2.f), NULL);	//	틀을 그린다.
 	LineTo(hDC, (int)(GETRESOLUTION.iW * 0.8), 0);
@@ -747,11 +751,11 @@ INT_PTR CAnimationEditScene::DlgProc(HWND hWnd, UINT message, WPARAM wParam, LPA
 
 INT_PTR CAnimationEditScene::DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	vector<COLORREF> vecPixel = {};
 	HDC hDC = nullptr;
 	Texture* pTex = nullptr;
 	RECT tRC = { 0, 0, 80, 90 };
 	TCHAR strPos[32] = {};
-	vector<COLORREF> vecPixel = {};
 	HWND hSlider = nullptr;
 	TCHAR str[128] = {};
 	HDC hMemDC = nullptr;
@@ -886,7 +890,9 @@ INT_PTR CAnimationEditScene::DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LP
 			break;
 		}
 		break;
-	case WM_INITDIALOG:	//	창을 띄을때 초기화하는 부분이다.
+	case WM_INITDIALOG:	//	창을 띄을때 초기화하는 부분이다.		
+		g_pDlg->m_hWnd = hWnd;
+
 			if (!m_vecvecPixel[AP_BASE].empty())
 			{
 				size_t iSize = m_vecvecPixel[AP_BASE].size();
@@ -1122,53 +1128,7 @@ INT_PTR CAnimationEditScene::DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LP
 			SendMessage(hSlider, CB_ADDSTRING, 0, (LPARAM)str);
 			break;
 		case IDC_BUTTON_ANI_SAVE:	//	저장 버튼이 눌렸을 때이다.
-			vecPixel.resize(192 * 64);
-			memset(&vecPixel[0], 0, sizeof(COLORREF) * 192 * 64);
-
-			for (int i = 0; i < 64; ++i)
-			{
-				for (int j = 0; j < 192; ++j)
-				{
-					if (!m_vecvecPixel[AP_BASE].empty())
-					{
-						if (m_vecvecPixel[AP_BASE][m_iBasePos][i * 384 + j] != 0)
-						vecPixel[i * 384 + j] =
-							m_vecvecPixel[AP_BASE][m_iBasePos][i * 384 + j];
-					}
-
-					if (!m_vecvecPixel[AP_UNDERWEAR].empty())
-					{
-						if (m_vecvecPixel[AP_UNDERWEAR][m_iUnderwearPos][i * 384 + j] != 0)
-						vecPixel[i * 384 + j] =
-							m_vecvecPixel[AP_UNDERWEAR][m_iUnderwearPos][i * 384 + j];
-					}
-
-					if (!m_vecvecPixel[AP_SHIRT].empty())
-					{
-						if (m_vecvecPixel[AP_SHIRT][m_iShirtPos][i * 384 + j] != 0)
-						vecPixel[i * 384 + j] =
-							m_vecvecPixel[AP_SHIRT][m_iShirtPos][i * 384 + j];
-					}
-
-					if (!m_vecvecPixel[AP_ARM].empty())
-					{
-						if (m_vecvecPixel[AP_ARM][m_iArmPos][i * 384 + j] != 0)
-						vecPixel[i * 384 + j] =
-							m_vecvecPixel[AP_ARM][m_iArmPos][i * 384 + j];
-					}
-
-					if (!m_vecvecPixel[AP_HAIR].empty())
-					{
-						if (m_vecvecPixel[AP_HAIR][m_iHairPos][i * 384 + j] != 0)
-							vecPixel[i * 384 + j] =
-							m_vecvecPixel[AP_HAIR][m_iHairPos][i * 384 + j];
-					}
-				}
-			}
-			GetDlgItemText(hWnd, IDC_EDIT1, strFileName, MAX_PATH);	//	IDC_EDIT1의 텍스트를 strFileName로 받는다.
-
-			AnimationSave(strFileName,vecPixel);
-
+			g_pDlg->Save();
 			break;			
 		case IDC_COMBO1:
 			switch (HIWORD(wParam))
@@ -1285,21 +1245,13 @@ INT_PTR CAnimationEditScene::DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LP
 void CAnimationEditScene::AnimationSave(const TCHAR* pFilePath, const vector<COLORREF>& vecCOLOR)
 {
 	char	strFileName[MAX_PATH] = {};
+
 	WideCharToMultiByte(CP_ACP, 0, pFilePath, -1, strFileName,
 		lstrlen(pFilePath), 0, 0);
+
 	FILE* pFile = nullptr;
-	wchar_t pPath[MAX_PATH] = {};
-	const wchar_t* pTexturePath = GET_SINGLE(PathManager)->FindPath(TEXTURE_PATH);
-	wcscat_s((wchar_t*)pPath, MAX_PATH, pTexturePath);	//	pPath에 텍스쳐 경로를 붙인다.
-	wcscat_s((wchar_t*)pPath, MAX_PATH, pFilePath);	//	pPath에 파일 이름을 붙힌다.
 
-	char strName[MAX_PATH] = {};
-	WideCharToMultiByte(CP_ACP, 0, pFilePath, -1, strName, MAX_PATH, nullptr, nullptr);
-
-	_bstr_t b(pPath);
-	const char* multibytePath = b;
-
-	fopen_s(&pFile, multibytePath, "wb");
+	fopen_s(&pFile, strFileName, "wb");
 
 	if (pFile)
 	{
@@ -1327,7 +1279,7 @@ void CAnimationEditScene::AnimationSave(const TCHAR* pFilePath, const vector<COL
 
 		for (int i = 0; i < 64; ++i)
 		{
-			for (int j = 0; j < 16 * 6; ++j)
+			for (int j = 0; j < 32 * 6; ++j)
 			{
 				tPixel[(63 - i) * 32 * 6 + j].r =
 					(unsigned int)vecCOLOR[i * 32 * 6 + j] & 0x000000ff;
@@ -1338,9 +1290,9 @@ void CAnimationEditScene::AnimationSave(const TCHAR* pFilePath, const vector<COL
 			}
 		}
 
-		if (16 * 6 % 4 == 0)
+		if ((32 * 6) % 4 == 0)
 		{
-			for (int i = 0; i < 32; ++i)
+			for (int i = 0; i < 64; ++i)
 			{
 				fwrite(&tPixel[i * 32 * 6], sizeof(PIXEL), 32 * 6, pFile);
 			}
@@ -1370,3 +1322,71 @@ void CAnimationEditScene::OnEditDlg()
 	m_pAniEditDlg->OnEditDlg(IDD_DIALOG2);
 }
 
+
+void CAnimationEditScene::Save()
+{
+	TCHAR strFileName[MAX_PATH] = {};
+
+	OPENFILENAME tOFN = {};
+
+	tOFN.lStructSize = sizeof(OPENFILENAME);
+	tOFN.hwndOwner = m_hWnd;
+	tOFN.lpstrFile = strFileName;
+	tOFN.lpstrFilter = TEXT("모든파일\0*.*\0비트맵파일\0*.bmp");
+	tOFN.lpstrInitialDir = GET_SINGLE(PathManager)->FindPath(TEXTURE_PATH);
+	tOFN.nMaxFile = 256;
+
+	if (GetSaveFileName(&tOFN))
+		Save(strFileName);
+}
+
+void CAnimationEditScene::Save(TCHAR* pFileName)
+{
+	vector<COLORREF> vecPixel = {};
+
+	vecPixel.resize(192 * 64);
+	memset(&vecPixel[0], 0, sizeof(COLORREF) * 192 * 64);
+
+	for (int i = 0; i < 64; ++i)
+	{
+		for (int j = 0; j < 192; ++j)
+		{
+			if (!m_vecvecPixel[AP_BASE].empty())
+			{
+				if (m_vecvecPixel[AP_BASE][m_iBasePos][i * 192 + j] != 0)
+					vecPixel[i * 192 + j] =
+					m_vecvecPixel[AP_BASE][m_iBasePos][i * 192 + j];
+			}
+
+			if (!m_vecvecPixel[AP_UNDERWEAR].empty())
+			{
+				if (m_vecvecPixel[AP_UNDERWEAR][m_iUnderwearPos][i * 192 + j] != 0)
+					vecPixel[i * 192 + j] =
+					m_vecvecPixel[AP_UNDERWEAR][m_iUnderwearPos][i * 192 + j];
+			}
+
+			if (!m_vecvecPixel[AP_SHIRT].empty())
+			{
+				if (m_vecvecPixel[AP_SHIRT][m_iShirtPos][i * 192 + j] != 0)
+					vecPixel[i * 192 + j] =
+					m_vecvecPixel[AP_SHIRT][m_iShirtPos][i * 192 + j];
+			}
+
+			if (!m_vecvecPixel[AP_ARM].empty())
+			{
+				if (m_vecvecPixel[AP_ARM][m_iArmPos][i * 192 + j] != 0)
+					vecPixel[i * 192 + j] =
+					m_vecvecPixel[AP_ARM][m_iArmPos][i * 192 + j];
+			}
+
+			if (!m_vecvecPixel[AP_HAIR].empty())
+			{
+				if (m_vecvecPixel[AP_HAIR][m_iHairPos][i * 192 + j] != 0)
+					vecPixel[i * 192 + j] =
+					m_vecvecPixel[AP_HAIR][m_iHairPos][i * 192 + j];
+			}
+		}
+	}
+
+	AnimationSave(pFileName, vecPixel);
+}

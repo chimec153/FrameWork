@@ -60,18 +60,35 @@ void UI::Render(HDC hDC, float fDeltaTime)
 		}
 
 		tImagePos += m_tImageOffset;
-
-		if (m_pTexture->GetColorKeyEnable())
+		if (!m_bAlphaOn)
 		{
-			TransparentBlt(hDC, (int)m_tPos.x, (int)m_tPos.y, (int)m_tSize.x,
-				(int)m_tSize.y, m_pTexture->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
-				(int)m_tSize.x, (int)m_tSize.y, m_pTexture->GetColorKey());
+			if (m_pTexture->GetColorKeyEnable())
+			{
+				TransparentBlt(hDC, (int)m_tPos.x, (int)m_tPos.y, (int)m_tSize.x,
+					(int)m_tSize.y, m_pTexture->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
+					(int)m_tSize.x, (int)m_tSize.y, m_pTexture->GetColorKey());
+			}
+			else
+			{
+				BitBlt(hDC, (int)m_tPos.x, (int)m_tPos.y, (int)m_tSize.x,
+					(int)m_tSize.y, m_pTexture->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
+					SRCCOPY);
+			}
 		}
+
 		else
 		{
-			BitBlt(hDC, (int)m_tPos.x, (int)m_tPos.y, (int)m_tSize.x,
-				(int)m_tSize.y, m_pTexture->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
-				SRCCOPY);
+			BLENDFUNCTION tBF = {};
+
+			tBF.AlphaFormat = AC_SRC_ALPHA;
+			tBF.SourceConstantAlpha = m_cAlpha;
+			tBF.BlendFlags = 0;
+			tBF.BlendOp = 0;
+
+			GdiAlphaBlend(hDC, (int)m_tPos.x, (int)m_tPos.y, 
+				(int)m_tSize.x, (int)m_tSize.y, m_pTexture->GetDC(), 
+				(int)tImagePos.x, (int)tImagePos.y,
+				(int)m_tSize.x, (int)m_tSize.y, tBF);
 		}
 	}
 	list<Collider*>::iterator	iter;

@@ -13,13 +13,18 @@ protected:
 	virtual ~Item() = 0;
 
 protected:
-	ITEM_TYPE		m_eType;
-	bool			m_bInventory;
+	ITEM_TYPE					m_eType;
+	bool						m_bInventory;
+	bool						m_bMouseOn;
+	class UIInventory*			m_pInventory;
 
 public:
-	void SetInventory(bool bInventory)
+	void SetInventory(class UIInventory* pInven)
 	{
-		m_bInventory = bInventory;
+		m_pInventory = pInven;
+
+		if(m_pInventory)
+			m_bInventory = true;
 	}
 
 	ITEM_TYPE GetType()	const
@@ -37,5 +42,7 @@ public:
 
 public:
 	void CollEnter(class Collider* pSrc, class Collider* pDest, float fTime);
+	void ColStay(class Collider* pSrc, class Collider* pDest, float fTime);
+	void ColEnd(class Collider* pSrc, class Collider* pDest, float fTime);
 };
 

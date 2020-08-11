@@ -16,12 +16,17 @@
 #include "../Object/UIClockHand.h"
 #include "../Core/Timer.h"
 #include "../Object/UIInventory.h"
+#include "../Object/FarmEffect.h"
+#include "../Object/Tool.h"
+#include "../Object/PadeEffect.h"
+#include "../Core.h"
 
 unordered_map<string, Obj*> Scene::m_mapPrototype[SC_END];
 
 Scene::Scene()	:
 	m_bEditMode(false),
-	m_pPlayer(nullptr)
+	m_pPlayer(nullptr),
+	m_pPadeEffect(nullptr)
 {
 	Layer* pLayer = CreateLayer("UI", INT_MAX);
 	pLayer = CreateLayer("HUD", INT_MAX - 1);
@@ -36,6 +41,7 @@ Scene::~Scene()
 	ErasePrototype(m_eSceneType);
 	Safe_Delete_VecList(m_LayerList);
 	SAFE_RELEASE(m_pPlayer);
+	SAFE_RELEASE(m_pPadeEffect);
 }
 
 void Scene::ErasePrototype(const string & strTag,
@@ -99,8 +105,95 @@ Layer * Scene::FindLayer(const string & strTag)
 	return NULL;
 }
 
-bool Scene::Init()
+bool Scene::Init(POSITION tPos)
 {
+	Player* pPlayer = (Player*)CreatePlayer();
+
+	CreateProtoNumberSmall();
+
+	CreateUI(pPlayer);
+
+	Layer* pUILayer = FindLayer("UI");
+
+	m_pPadeEffect = Obj::CreateObj<PadeEffect>("Pade", pUILayer);
+
+	pPlayer->SetPos(tPos);
+
+	Layer* pLayer = FindLayer("Default");
+
+	Item* pSword = Obj::CreateObj<Tool>("sword", pLayer);
+
+	pSword->SetTexture("weapon", TEXT("Item\\weapons.bmp"));
+	pSword->SetColorKey(255, 255, 255);
+	((Tool*)pSword)->SetToolType(TOOL_SWORD);
+
+	Collider* pSwordCol = pSword->GetCollider("ItemBody");
+
+	pSwordCol->AddCollisionFunction(CS_ENTER, pSword, &Item::CollEnter);
+	pSwordCol->AddCollisionFunction(CS_STAY, pSword, &Item::ColStay);
+	pSwordCol->AddCollisionFunction(CS_LEAVE, pSword, &Item::ColEnd);
+
+	SAFE_RELEASE(pSwordCol);
+
+	pPlayer->GetInven()->AddItem(pSword);
+
+	Item* pHoe = Obj::CreateObj<Tool>("hoe", pLayer);
+
+	pHoe->SetTexture("tool", TEXT("Item\\tools.bmp"));
+	pHoe->SetColorKey(255, 255, 255);
+	pHoe->SetImageOffset(160.f, 64.f);
+	((Tool*)pHoe)->SetToolType(TOOL_HOE);
+
+	Collider* pHoeCol = pHoe->GetCollider("ItemBody");
+
+	pHoeCol->AddCollisionFunction(CS_ENTER, pHoe, &Item::CollEnter);
+	pHoeCol->AddCollisionFunction(CS_STAY, pHoe, &Item::ColStay);
+	pHoeCol->AddCollisionFunction(CS_LEAVE, pHoe, &Item::ColEnd);
+
+	SAFE_RELEASE(pHoeCol);
+
+	pPlayer->GetInven()->AddItem(pHoe);
+
+	Item* pPikEx = Obj::CreateObj<Tool>("pikex", pLayer);
+
+	pPikEx->SetTexture("tool", TEXT("Item\\tools.bmp"));
+	pPikEx->SetColorKey(255, 255, 255);
+	pPikEx->SetImageOffset(160.f, 192.f);
+	((Tool*)pPikEx)->SetToolType(TOOL_PIKEX);
+
+	Collider* pPikExCol = pPikEx->GetCollider("ItemBody");
+
+	pPikExCol->AddCollisionFunction(CS_ENTER, pPikEx, &Item::CollEnter);
+	pPikExCol->AddCollisionFunction(CS_STAY, pPikEx, &Item::ColStay);
+	pPikExCol->AddCollisionFunction(CS_LEAVE, pPikEx, &Item::ColEnd);
+
+	SAFE_RELEASE(pPikExCol);
+
+	pPlayer->GetInven()->AddItem(pPikEx);
+
+	Item* pEx = Obj::CreateObj<Tool>("ex", pLayer);
+
+	pEx->SetTexture("tool", TEXT("Item\\tools.bmp"));
+	pEx->SetColorKey(255, 255, 255);
+	pEx->SetImageOffset(160.f, 320.f);
+	((Tool*)pEx)->SetToolType(TOOL_EX);
+
+	Collider* pExCol = pEx->GetCollider("ItemBody");
+
+	pExCol->AddCollisionFunction(CS_ENTER, pEx, &Item::CollEnter);
+	pExCol->AddCollisionFunction(CS_STAY, pEx, &Item::ColStay);
+	pExCol->AddCollisionFunction(CS_LEAVE, pEx, &Item::ColEnd);
+
+	SAFE_RELEASE(pExCol);
+
+	pPlayer->GetInven()->AddItem(pEx);
+
+	SAFE_RELEASE(pSword);
+	SAFE_RELEASE(pHoe);
+	SAFE_RELEASE(pPikEx);
+	SAFE_RELEASE(pEx);
+	SAFE_RELEASE(pPlayer);
+
 	return true;
 }
 
@@ -255,6 +348,8 @@ void Scene::CreateUI(class Obj* pObj)
 	pClockPanel->SetColorKey(255, 255, 255);
 	pClockPanel->SetPos(1000, 40);
 	pClockPanel->SetSize(144.f, 114.f);
+	pClockPanel->EnableAlpha(true);
+	pClockPanel->SetAlpha(255);
 
 	SAFE_RELEASE(pClockPanel);
 
@@ -298,6 +393,8 @@ void Scene::CreateUI(class Obj* pObj)
 
 	((Player*)pObj)->SetInven(pInven);
 
+	pInven->CreateInfoPanel(4, 4);
+
 	SAFE_RELEASE(pInven);
 
 	CreateClockHand();
@@ -309,7 +406,7 @@ void Scene::CreateSlimeClone()
 
 	Slime* pSlime = (Slime*)Obj::CreateCloneObj("Slime","slime", SC_NEXT, pLayer);
 
-	pSlime->SetPos(200.f, 100.f);
+	pSlime->SetPos(500.f, 600.f);
 
 	Collider* pCol = pSlime->GetCollider("SlimeBody");
 
@@ -343,7 +440,7 @@ void Scene::CreateBatClone()
 
 	Obj* pMinion = Obj::CreateCloneObj("Minion", "Minion", SC_NEXT, pLayer);
 
-	pMinion->SetPos(300.f, 300.f);
+	pMinion->SetPos(532.f, 500.f);
 
 	Collider* pCol = pMinion->GetCollider("MinionBody");
 
@@ -388,13 +485,49 @@ void Scene::CreateProtoNumberSmall()
 
 void Scene::CreateClockHand()
 {
+	RESOLUTION tRS = GET_SINGLE(Core)->GetResolution();
+
 	Layer* pLayer = FindLayer("UI");
 
 	UIClockHand* pClockHand = Obj::CreateObj<UIClockHand>("ClockHand", pLayer, POSITION(995.f, 30.f));
 
 	GET_SINGLE(Timer)->SetClockHand(pClockHand);
 
+	UIPanel* pNightPanel = Obj::CreateObj<UIPanel>("Night", pLayer,
+		POSITION::Zero, POSITION((float)tRS.iW, (float)tRS.iH));
+
+	pNightPanel->SetTexture("Night", TEXT("UI\\night.bmp"));
+	pNightPanel->SetAlpha(120);
+	pNightPanel->EnableAlpha(true);
+
+	pClockHand->SetNightPanel(pNightPanel);
+
+	SAFE_RELEASE(pNightPanel);
+
 	SAFE_RELEASE(pClockHand);
+}
+
+void Scene::CreateFarmEffect()
+{
+	Layer* pLayer = FindLayer("Default");
+
+	FarmEffect* pEffect = CreateProtoType<FarmEffect>("HoeEffect", SC_NEXT);
+
+	pEffect->SetSize(32.f, 32.f);
+
+	Animation* pAni = pEffect->CreateAnimation("HoeAni");
+
+	pEffect->AddAnimationClip("HoeDirt", AT_ATLAS, AO_ONCE_DESTROY, 0.6f, 10, 52, 0, 12, 8, 1, 1.f,
+		"FarmAni", TEXT("TileSheets\\animations.bmp"));
+	pEffect->SetAnimationClipColorKey("HoeDirt", 255, 255, 255);
+
+	pEffect->AddAnimationClip("WaterSplashing", AT_ATLAS, AO_ONCE_DESTROY, 0.6f, 10, 52, 0, 13, 10, 1, 1.f,
+		"FarmAni", TEXT("TileSheets\\animations.bmp"));
+	pEffect->SetAnimationClipColorKey("WaterSplashing", 255, 255, 255);
+
+	SAFE_RELEASE(pAni);
+
+	SAFE_RELEASE(pEffect);
 }
 
 Obj* Scene::CreatePlayer()

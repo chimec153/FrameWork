@@ -18,6 +18,8 @@
 #include "..//Collider/ColliderSphere.h"
 #include "Item.h"
 #include "../Object/UIInventory.h"
+#include "Tool.h"
+#include "../Core/Timer.h"
 
 Player::Player()	:
 	m_bAttack(false),
@@ -26,7 +28,8 @@ Player::Player()	:
 	m_pEnergyBar(nullptr),
 	m_pHPBar(nullptr),
 	m_pWeapon(nullptr),
-	m_pInventory(nullptr)
+	m_pInventory(nullptr),
+	m_bWalk(false)
 {
 	m_bTileEffect = true;
 }
@@ -148,6 +151,38 @@ bool Player::Init()
 		0, 0, 6, 1, 0.f, "PlayerFarmDown", L"farmDown.bmp");
 	SetAnimationClipColorKey("FarmDown", 0, 0, 0);
 
+	AddAnimationClip("LiftIdleRight", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
+		0, 0, 1, 1, 0.f, "PlayerLiftIdleRight", L"LiftRight.bmp");
+	SetAnimationClipColorKey("LiftIdleRight", 0, 0, 0);
+
+	AddAnimationClip("LiftIdleLeft", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
+		0, 0, 1, 1, 0.f, "PlayerLiftIdleLeft", L"LiftLeft.bmp");
+	SetAnimationClipColorKey("LiftIdleLeft", 0, 0, 0);
+
+	AddAnimationClip("LiftIdleUp", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
+		0, 0, 1, 1, 0.f, "PlayerLiftIdleUp", L"LiftUp.bmp");
+	SetAnimationClipColorKey("LiftIdleUp", 0, 0, 0);
+
+	AddAnimationClip("LiftIdleDown", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
+		0, 0, 1, 1, 0.f, "PlayerLiftIdleDown", L"LiftDown.bmp");
+	SetAnimationClipColorKey("LiftIdleDown", 0, 0, 0);
+
+	AddAnimationClip("LiftRight", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		1, 0, 2, 1, 0.f, "PlayerLiftRight", L"LiftRight.bmp");
+	SetAnimationClipColorKey("LiftRight", 0, 0, 0);
+
+	AddAnimationClip("LiftLeft", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		1, 0, 2, 1, 0.f, "PlayerLiftLeft", L"LiftLeft.bmp");
+	SetAnimationClipColorKey("LiftLeft", 0, 0, 0);
+
+	AddAnimationClip("LiftUp", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		1, 0, 2, 1, 0.f, "PlayerLiftUp", L"LiftUp.bmp");
+	SetAnimationClipColorKey("LiftUp", 0, 0, 0);
+
+	AddAnimationClip("LiftDown", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		1, 0, 2, 1, 0.f, "PlayerLiftDown", L"LiftDown.bmp");
+	SetAnimationClipColorKey("LiftDown", 0, 0, 0);
+
 	SAFE_RELEASE(pAni);	
 
 	return true;
@@ -159,91 +194,171 @@ void Player::Input(float fDeltaTime)
 
 	bool bPress = false;
 
+	Item* pItem = m_pInventory->GetItem();
+
+	ITEM_TYPE eType = IT_NONE;
+
+	if(pItem)
+		eType = pItem->GetType();
+
 	if (KEYPRESS("MoveLeft"))
 	{
 		bPress = true;
-		m_pAnimation->ChangeClip("RunLeft");
-		m_pAnimation->SetDefaultClip("IdleLeft");
+
+		if (eType == IT_SEED)
+		{
+			m_pAnimation->ChangeClip("LiftLeft");
+			m_pAnimation->SetDefaultClip("LiftIdleLeft");
+		}
+
+		else
+		{
+			m_pAnimation->ChangeClip("RunLeft");
+			m_pAnimation->SetDefaultClip("IdleLeft");
+		}
+
 		m_tMoveDir = POSITION(-1.f, 0.f);
 		MoveAngle(fDeltaTime);
+
+		m_bWalk = true;
 	}
 
 	else if (KEYPRESS("MoveRight"))
 	{
 		bPress = true;
-		m_pAnimation->ChangeClip("RunRight");
-		m_pAnimation->SetDefaultClip("IdleRight");
+
+		if (eType == IT_SEED)
+		{
+			m_pAnimation->ChangeClip("LiftRight");
+			m_pAnimation->SetDefaultClip("LiftIdleRight");
+		}
+
+		else
+		{
+			m_pAnimation->ChangeClip("RunRight");
+			m_pAnimation->SetDefaultClip("IdleRight");
+		}
+
 		m_tMoveDir = POSITION(1.f, 0.f);
 		MoveAngle(fDeltaTime);
+
+		m_bWalk = true;
 	}
 
 	else if (KEYPRESS("MoveFront"))
 	{
 		bPress = true;
-		m_pAnimation->ChangeClip("RunUp");
-		m_pAnimation->SetDefaultClip("IdleUp");
+
+		if (eType == IT_SEED)
+		{
+			m_pAnimation->ChangeClip("LiftUp");
+			m_pAnimation->SetDefaultClip("LiftIdleUp");
+		}
+
+		else
+		{
+			m_pAnimation->ChangeClip("RunUp");
+			m_pAnimation->SetDefaultClip("IdleUp");
+		}
+
 		m_tMoveDir = POSITION(0.f, -1.f);
 		MoveAngle(fDeltaTime);
+
+		m_bWalk = true;
 	}
 
 	else if (KEYPRESS("MoveBack"))
 	{
 		bPress = true;
-		m_pAnimation->ChangeClip("RunDown");
-		m_pAnimation->SetDefaultClip("IdleDown");
+
+		if (eType == IT_SEED)
+		{
+			m_pAnimation->ChangeClip("LiftDown");
+			m_pAnimation->SetDefaultClip("LiftIdleDown");
+		}
+
+		else
+		{
+			m_pAnimation->ChangeClip("RunDown");
+			m_pAnimation->SetDefaultClip("IdleDown");
+		}
+
 		m_tMoveDir = POSITION(0.f, 1.f);
 		MoveAngle(fDeltaTime);
+
+		m_bWalk = true;
 	}
 
 	if (KEYDOWN("Fire"))
 	{
-		Fire();
-
-		if (m_pWeapon)
-			((CWeapon*)m_pWeapon)->Attack();
-
-		Collider* pCol = GetCollider("attack");
-		pCol->SetEnable(true);
-		if (m_tMoveDir.x == -1.f)
+		if (eType == IT_TOOL && m_iEnergy >= 5.f)
 		{
-			((ColliderRect*)pCol)->SetRect(-96.f, -32.f, -32.f, 32.f);
-			m_pAnimation->ChangeClip("AttackLeft");
-		}
+			TOOL_TYPE eToolType = ((Tool*)pItem)->GetToolType();
 
-		if (m_tMoveDir.y == -1.f)
-		{
-			((ColliderRect*)pCol)->SetRect(-48.f, -64.f, 48.f, -16.f);
-			m_pAnimation->ChangeClip("AttackUp");
-		}
-
-		if (m_tMoveDir.x == 1.f)
-		{
-			((ColliderRect*)pCol)->SetRect(32.f, -32.f, 96.f, 32.f);
-			m_pAnimation->ChangeClip("AttackRight");
-		}
-
-		if (m_tMoveDir.y == 1.f)
-		{
-			((ColliderRect*)pCol)->SetRect(-48.f, 16.f, 48.f, 64.f);
-			m_pAnimation->ChangeClip("AttackDown");
-		}
-		SAFE_RELEASE(pCol);
-
-		Tile* pTile = ((InGameScene*)m_pScene)->GetStage()->GetSelectedTile();
-
-		if (pTile)
-		{
-			TILE_OPTION eOption = pTile->GetTileOption();
-
-			if (eOption == TO_DIRT)
+			if (eToolType == TOOL_SWORD)
 			{
-				pTile->SetTileOption(TO_HOEDIRT);
+				if (m_pWeapon)
+					((CWeapon*)m_pWeapon)->Attack();
+
+				Collider* pCol = GetCollider("attack");
+				pCol->SetEnable(true);
+				if (m_tMoveDir.x == -1.f)
+				{
+					((ColliderRect*)pCol)->SetRect(-96.f, -32.f, -32.f, 32.f);
+					m_pAnimation->ChangeClip("AttackLeft");
+				}
+
+				if (m_tMoveDir.y == -1.f)
+				{
+					((ColliderRect*)pCol)->SetRect(-48.f, -64.f, 48.f, -16.f);
+					m_pAnimation->ChangeClip("AttackUp");
+				}
+
+				if (m_tMoveDir.x == 1.f)
+				{
+					((ColliderRect*)pCol)->SetRect(32.f, -32.f, 96.f, 32.f);
+					m_pAnimation->ChangeClip("AttackRight");
+				}
+
+				if (m_tMoveDir.y == 1.f)
+				{
+					((ColliderRect*)pCol)->SetRect(-48.f, 16.f, 48.f, 64.f);
+					m_pAnimation->ChangeClip("AttackDown");
+				}
+				SAFE_RELEASE(pCol);
 			}
 
-			else if (eOption == TO_HOEDIRT)
+			else if (eToolType == TOOL_HOE)
 			{
-				pTile->SetTileOption(TO_WATERDIRT);
+				Tile* pTile = ((InGameScene*)m_pScene)->GetStage()->GetSelectedTile();
+
+				if (pTile)
+				{
+					TILE_OPTION eOption = pTile->GetTileOption();
+
+					if (eOption == TO_DIRT)
+					{
+						pTile->SetTileOption(TO_HOEDIRT);
+					}
+				}
 			}
+
+			else if (eToolType == TOOL_WATER)
+			{
+				Tile* pTile = ((InGameScene*)m_pScene)->GetStage()->GetSelectedTile();
+
+				if (pTile)
+				{
+					TILE_OPTION eOption = pTile->GetTileOption();
+
+					if (eOption == TO_HOEDIRT)
+					{
+						pTile->SetTileOption(TO_WATERDIRT);
+					}
+				}
+			}
+
+			m_iEnergy -= 5;
 		}
 	}
 
@@ -283,7 +398,25 @@ void Player::Input(float fDeltaTime)
 	if (KEYDOWN("12"))
 		m_pInventory->SetCursor(11);
 
-	
+	if (KEYPRESS("TimeFaster"))
+	{
+		float fScale = GET_SINGLE(Timer)->GetTimeScale();
+
+		GET_SINGLE(Timer)->SetTimeScale(fScale + 0.1f);
+	}
+
+	else if (KEYPRESS("TimeSlower"))
+	{
+		float fScale = GET_SINGLE(Timer)->GetTimeScale();
+
+		if (fScale > 0.1f)
+			GET_SINGLE(Timer)->SetTimeScale(fScale - 0.1f);
+	}
+
+	else if (KEYPRESS("TimeOrigin"))
+	{
+		GET_SINGLE(Timer)->SetTimeScale(1.f);
+	}
 }
 
 int Player::Update(float fDeltaTime)
@@ -314,9 +447,48 @@ int Player::Update(float fDeltaTime)
 
 	Item* pItem = m_pInventory->GetItem();
 
+	ITEM_TYPE eType = IT_NONE;
+
 	if (pItem)
+		eType = pItem->GetType();
+
+	if (!m_bWalk)
 	{
-		pItem->GetType();
+		if (m_tMoveDir.x > 0.f)
+		{
+			if (eType == IT_SEED)
+				m_pAnimation->SetCurrentClip("LiftIdleRight");
+
+			else
+				m_pAnimation->SetCurrentClip("IdleRight");
+		}
+
+		else if (m_tMoveDir.x < 0.f)
+		{
+			if (eType == IT_SEED)
+				m_pAnimation->SetCurrentClip("LiftIdleLeft");
+
+			else
+				m_pAnimation->SetCurrentClip("IdleLeft");
+		}
+
+		else if (m_tMoveDir.y > 0.f)
+		{
+			if (eType == IT_SEED)
+				m_pAnimation->SetCurrentClip("LiftIdleDown");
+
+			else
+				m_pAnimation->SetCurrentClip("IdleDown");
+		}
+
+		else if (m_tMoveDir.y < 0.f)
+		{
+			if (eType == IT_SEED)
+				m_pAnimation->SetCurrentClip("LiftIdleUp");
+
+			else
+				m_pAnimation->SetCurrentClip("IdleUp");
+		}
 	}
 
 	return 0;
@@ -325,7 +497,7 @@ int Player::Update(float fDeltaTime)
 int Player::LateUpdate(float fDeltaTime)
 {
 	FightObj::LateUpdate(fDeltaTime);
-
+	m_bWalk = false;
 	return 0;
 }
 
@@ -338,6 +510,35 @@ void Player::Render(HDC hDC, float fDeltaTime)
 {
 	FightObj::Render(hDC,fDeltaTime);
 
+	POSITION	tCamPos = GET_SINGLE(Camera)->GetPos();
+
+	Item* pItem = m_pInventory->GetItem();
+
+	if (pItem)
+	{
+		ITEM_TYPE eType = pItem->GetType();
+
+		if (eType == IT_SEED)
+		{
+			Texture* pTexture = pItem->GetTexture();
+
+			if (pTexture)
+			{
+				POSITION tSize = pItem->GetSize();
+				POSITION tOffSet = pItem->GetImageOffset();
+				POSITION tPos = m_tPos - m_tSize * m_tPivot - tCamPos;
+
+				tPos.y -= tSize.y *0.5f;
+
+				TransparentBlt(hDC, (int)tPos.x, (int)tPos.y, (int)tSize.x, (int)tSize.y, pTexture->GetDC(),
+					(int)tOffSet.x, (int)tOffSet.y, (int)tSize.x, (int)tSize.y, pTexture->GetColorKey());
+
+				SAFE_RELEASE(pTexture);
+			}
+				
+		}
+	}
+
 	Stage* pStage = ((InGameScene*)GET_SINGLE(SceneManager)->GetScene())->GetStage();
 	int iIndex = pStage->GetTileIndex(m_tPos);
 
@@ -347,7 +548,6 @@ void Player::Render(HDC hDC, float fDeltaTime)
 	TILE_OPTION eOption = pStage->GetTile(iIndex)->GetTileOption();
 
 	POSITION	tPos = m_tPos - m_tSize * m_tPivot;
-	POSITION	tCamPos = GET_SINGLE(Camera)->GetPos();
 	tPos -= tCamPos;
 #ifdef _DEBUG
 	if (KEYPRESS("Debug"))

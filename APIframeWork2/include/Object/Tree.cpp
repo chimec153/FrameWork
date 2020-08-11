@@ -16,6 +16,8 @@ CTree::CTree() :
 	m_bMouseOn(false),
 	m_bLeavesRender(true)
 {
+	m_bAlphaOn = true;
+	m_cAlpha = 255;
 }
 
 CTree::CTree(const CTree& tree)	:
@@ -58,6 +60,7 @@ int CTree::LateUpdate(float fDeltaTime)
 	StaticObj::LateUpdate(fDeltaTime);
 	m_bMouseOn = false;
 	m_bLeavesRender = true;
+	m_cAlpha = 255;
 	return 0;
 }
 
@@ -69,8 +72,6 @@ void CTree::Collision(float fDeltaTime)
 void CTree::Render(HDC hDC, float fDeltaTime)
 {
 	StaticObj::Render(hDC, fDeltaTime);
-	if (m_bLeavesRender)
-	{
 		POSITION	tPos = m_tPos - m_tTreeSize * m_tTreePivot;
 		tPos -= GET_SINGLE(Camera)->GetPos();
 
@@ -93,20 +94,36 @@ void CTree::Render(HDC hDC, float fDeltaTime)
 
 			tImagePos += m_tTreeOffset;
 
-			if (m_pTreeSprite->GetColorKeyEnable())
+			/*if (m_bLeavesRender)
 			{
-				TransparentBlt(hDC, (int)tPos.x, (int)tPos.y, (int)m_tTreeSize.x,
-					(int)m_tTreeSize.y, m_pTexture->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
-					(int)m_tTreeSize.x, (int)m_tTreeSize.y, m_pTreeSprite->GetColorKey());
-			}
-			else
+				if (m_pTreeSprite->GetColorKeyEnable())
+				{
+					TransparentBlt(hDC, (int)tPos.x, (int)tPos.y, (int)m_tTreeSize.x,
+						(int)m_tTreeSize.y, m_pTexture->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
+						(int)m_tTreeSize.x, (int)m_tTreeSize.y, m_pTreeSprite->GetColorKey());
+				}
+				else
+				{
+					BitBlt(hDC, (int)tPos.x, (int)tPos.y, (int)m_tTreeSize.x,
+						(int)m_tTreeSize.y, m_pTreeSprite->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
+						SRCCOPY);
+				}
+			}*/
+
+			
 			{
-				BitBlt(hDC, (int)tPos.x, (int)tPos.y, (int)m_tTreeSize.x,
-					(int)m_tTreeSize.y, m_pTreeSprite->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
-					SRCCOPY);
+				BLENDFUNCTION	tBF = {};
+
+				tBF.BlendOp = 0;
+				tBF.BlendFlags = 0;
+				tBF.SourceConstantAlpha = m_cAlpha;
+
+				tBF.AlphaFormat = AC_SRC_ALPHA;
+
+				GdiAlphaBlend(hDC, (int)tPos.x, (int)tPos.y, (int)m_tTreeSize.x, (int)m_tTreeSize.y,
+					m_pTreeSprite->GetDC(), (int)tImagePos.x, (int)tImagePos.y, (int)m_tTreeSize.x, (int)m_tTreeSize.y, tBF);
 			}
 		}
-	}
 	if (KEYPRESS("Debug"))
 	{
 		Rectangle(hDC, (int)m_tPos.x - 2, (int)m_tPos.y - 2, (int)m_tPos.x + 2, (int)m_tPos.y + 2);
@@ -233,6 +250,7 @@ void CTree::Hit(Collider* pSrc, Collider* pDest, float fDeltaTime)
 	else if (pDest->GetTag() == "PlayerBody" && pSrc->GetTag() == "TreeLeavesBody")
 	{
 		m_bLeavesRender = false;
+		m_cAlpha = 125;
 	}
 }
 
@@ -252,5 +270,6 @@ void CTree::HitStay(Collider* pSrc, Collider* pDest, float fDeltaTime)
 	else if (pDest->GetTag() == "PlayerBody" && pSrc->GetTag() == "TreeLeavesBody")
 	{
 		m_bLeavesRender = false;
+		m_cAlpha = 125;
 	}
 }

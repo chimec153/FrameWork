@@ -24,9 +24,6 @@ bool StartScene::Init()
 	GET_SINGLE(SoundManager)->LoadSound("BGM", false, "RoadBgm.mp3");
 	GET_SINGLE(SoundManager)->Play("BGM");
 
-	if (!Scene::Init())
-		return false;
-
 	Layer* pLayer = FindLayer("UI");
 
 	UIPanel* pBackPanel = Obj::CreateObj<UIPanel>("BackPanel",

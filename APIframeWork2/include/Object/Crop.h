@@ -15,6 +15,7 @@ protected:
 protected:
 	CROP_TYPE		m_eType;
 	int				m_iDay;
+	int				m_iLevel;
 
 public:
 	void SetType(CROP_TYPE eType)

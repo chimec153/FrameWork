@@ -23,6 +23,7 @@ protected:
 	SCENE_CREATE		m_eSceneType;
 	bool				m_bEditMode;
 	class Obj*			m_pPlayer;
+	class Obj*			m_pPadeEffect;
 
 public:
 	void SetSceneType(SCENE_CREATE eType)
@@ -53,7 +54,7 @@ public:
 	class Layer* FindLayer(const string& strTag);
 
 public:
-	virtual bool Init();
+	virtual bool Init(POSITION tPos = POSITION::Zero);
 	virtual void Input(float fDeltaTime);
 	virtual int Update(float fDeltaTime);
 	virtual int LateUpdate(float fDeltaTime);
@@ -91,5 +92,6 @@ public:
 	void CreateBatProto();
 	void CreateProtoNumberSmall();
 	void CreateClockHand();
+	void CreateFarmEffect();
 	class Obj* CreatePlayer();
 };

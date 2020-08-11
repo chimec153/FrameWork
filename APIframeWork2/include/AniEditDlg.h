@@ -12,10 +12,16 @@ private:
 private:
 	HWND					m_hWnd;
 	class Animation*		m_pAnimation;
+	vector<COLORREF>		m_vecPixel;
 
 public:
 	void OnEditDlg(int iID);
 	void Clear();
+	void Save();
+	void Load();
+
+public:
+	void Save(TCHAR* pFileName);
 
 private:
 	static INT_PTR WINAPI DlgProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);

@@ -14,10 +14,10 @@ protected:
 
 private:
 	vector<class Tile*>		m_vecTile;
-	int		m_iTileNumX;
-	int		m_iTileNumY;
-	int		m_iTileSizeX;
-	int		m_iTileSizeY;
+	int						m_iTileNumX;
+	int						m_iTileNumY;
+	int						m_iTileSizeX;
+	int						m_iTileSizeY;
 	char** m_ppBlock;
 	class Tile*				m_pSelectTile;
 
@@ -72,6 +72,12 @@ public:
 	}
 
 	class Tile* GetTile(const POSITION& tPos)	const;
+	class Tile* GetTile(float x, float y)
+	{
+		int iIndex = GetTileIndex(x, y);
+
+		return GetTile(iIndex);
+	}
 	
 public:
 	void SetBlock(int iTileIndex, OBJ_BLOCK eBlock, class Obj* obj);

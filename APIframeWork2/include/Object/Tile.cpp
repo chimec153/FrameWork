@@ -8,6 +8,8 @@
 #include "..//Scene/Scene.h"
 #include "..//Collider/ColliderRect.h"
 #include "..//Core.h"
+#include "../Object/Stage.h"
+#include "FarmEffect.h"
 
 Tile::Tile()	:
 	m_eOption(TO_NONE),
@@ -16,7 +18,8 @@ Tile::Tile()	:
 	m_pUpperTex(nullptr),
 	m_tUpperImageOffset(),
 	m_pSelectTex(nullptr),
-	m_bSelect(false)
+	m_bSelect(false),
+	m_pStage(nullptr)
 {
 	//m_pOptionTex = GET_SINGLE(ResourcesManager)->FindTexture("TileNone");
 }
@@ -31,6 +34,7 @@ Tile::Tile(const Tile & tile)	:
 	if(m_pOptionTex)
 		m_pOptionTex->AddRef();
 
+	m_pStage = tile.m_pStage;
 }
 
 Tile::~Tile()
@@ -64,18 +68,40 @@ void Tile::SetUpperColorKey(unsigned char r, unsigned char g, unsigned char b)
 void Tile::SetTileOption(TILE_OPTION eOption)
 {
 	m_eOption = eOption;
-	SAFE_RELEASE(m_pOptionTex);
+	Obj* pEffect = nullptr;
+	Layer* pLayer = nullptr;
+
 	switch (eOption)
 	{
 	case TO_HOEDIRT:
 		SAFE_RELEASE(m_pUpperTex);
 		m_pUpperTex = GET_SINGLE(ResourcesManager)->FindTexture("TileHoeDirt");
 		SetUpperColorKey(255, 255, 255);
+
+		pLayer = m_pScene->FindLayer("Default");
+
+		pEffect = CreateCloneObj("HoeEffect", "HoeEffect", SC_CURRENT, pLayer);
+
+		pEffect->SetPos(m_tPos);
+
+		SAFE_RELEASE(pEffect);
+
 		break;
 	case TO_WATERDIRT:
 		SAFE_RELEASE(m_pUpperTex);
 		m_pUpperTex = GET_SINGLE(ResourcesManager)->FindTexture("TileHoeDirtDark");
 		SetUpperColorKey(255, 255, 255);
+
+		pLayer = m_pScene->FindLayer("Default");
+
+		pEffect = CreateCloneObj("HoeEffect", "WaterEffect", SC_CURRENT, pLayer);
+
+		pEffect->SetAnimationCurrentClip("WaterSplashing");
+
+		pEffect->SetPos(m_tPos);
+
+		SAFE_RELEASE(pEffect);
+
 		break;
 	case TO_NONE:
 		SAFE_RELEASE(m_pOptionTex);
@@ -159,23 +185,40 @@ void Tile::Render(HDC hDC, float fDeltaTime)
 
 	if(m_pUpperTex)
 	{
+		POSITION	tImagePos;
+
+		tImagePos += m_tUpperImageOffset;
+
 		if (m_pUpperTex && bInClient)
 		{
-			POSITION	tImagePos;
-
-			tImagePos += m_tUpperImageOffset;
-
-			if (m_pUpperTex->GetColorKeyEnable())
+			if (!m_bAlphaOn)
 			{
-				TransparentBlt(hDC, (int)tPos.x, (int)tPos.y, (int)m_tSize.x,
-					(int)m_tSize.y, m_pUpperTex->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
-					(int)m_tSize.x, (int)m_tSize.y, m_pUpperTex->GetColorKey());
+				if (m_pUpperTex->GetColorKeyEnable())
+				{
+					TransparentBlt(hDC, (int)tPos.x, (int)tPos.y, (int)m_tSize.x,
+						(int)m_tSize.y, m_pUpperTex->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
+						(int)m_tSize.x, (int)m_tSize.y, m_pUpperTex->GetColorKey());
+				}
+				else
+				{
+					BitBlt(hDC, (int)tPos.x, (int)tPos.y, (int)m_tSize.x,
+						(int)m_tSize.y, m_pUpperTex->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
+						SRCCOPY);
+				}
 			}
+
 			else
 			{
-				BitBlt(hDC, (int)tPos.x, (int)tPos.y, (int)m_tSize.x,
-					(int)m_tSize.y, m_pUpperTex->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
-					SRCCOPY);
+				BLENDFUNCTION	tBF = {};
+
+				tBF.BlendOp = 0;
+				tBF.BlendFlags = 0;
+				tBF.SourceConstantAlpha = m_cAlpha;
+
+				tBF.AlphaFormat = AC_SRC_ALPHA;
+
+				GdiAlphaBlend(hDC, (int)tPos.x, (int)tPos.y, (int)m_tSize.x, (int)m_tSize.y,
+					m_pUpperTex->GetDC(), (float)tImagePos.x, (float)tImagePos.y, (int)m_tSize.x, (int)m_tSize.y, tBF);
 			}
 		}
 	}

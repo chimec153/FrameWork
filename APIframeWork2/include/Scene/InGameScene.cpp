@@ -17,6 +17,8 @@
 #include "SceneManager.h"
 #include "SceneCave.h"
 #include "../Object/Seed.h"
+#include "SceneHome.h"
+#include "../Object/PadeEffect.h"
 
 InGameScene::InGameScene()	:
 	m_pStage(nullptr)
@@ -31,12 +33,9 @@ InGameScene::~InGameScene()
 bool InGameScene::Init()
 {
 	GET_SINGLE(SoundManager)->LoadSound("RoadBGM", true, "RoadBgm.wav");
-	//GET_SINGLE(SoundManager)->Play("RoadBGM");
+	GET_SINGLE(SoundManager)->Play("RoadBGM");
 
 	SetEditMode(false);
-
-	if (!Scene::Init())
-		return false;
 
 	Texture* pTexture = GET_SINGLE(ResourcesManager)->LoadTexture("Tile2", TEXT("Maps\\walls_and_floors.bmp"));
 	SAFE_RELEASE(pTexture);
@@ -72,7 +71,7 @@ bool InGameScene::Init()
 	if (strRootPath)
 		strcat_s(strFileName, strRootPath);
 
-	strcat_s(strFileName, "200808.tmp");
+	strcat_s(strFileName, "200808.tmp");	//	29, 34 cave
 
 	FILE* pLoadFile = nullptr;
 
@@ -91,28 +90,24 @@ bool InGameScene::Init()
 		fclose(pLoadFile);
 	}
 
-	Player* pPlayer = (Player*)CreatePlayer();
+	if (!Scene::Init(POSITION(32.f * 8.f, 32.f * 14.f)))
+		return false;
 
-	CreateProtoNumberSmall();
-
-	//CreateBatProto();
-
-	//CreateBatClone();
-
-	//CreateSlimeProto();
-
-	//CreateSlimeClone();
-
-	CreateUI(pPlayer);
-
-	SAFE_RELEASE(pPlayer);
+	CreateFarmEffect();
 
 	ColliderRect* pPortal = m_pStage->AddCollider<ColliderRect>("CavePortal");
 
-	pPortal->SetRect(32.f * 10.f, 32.f * 10.f, 32.f * 11.f, 32.f * 11.f);
+	pPortal->SetRect(32.f * 29.f, 32.f * 32.f, 32.f * 30.f, 32.f * 33.f);
 	pPortal->AddCollisionFunction(CS_ENTER, this, &InGameScene::Cave);
 
 	SAFE_RELEASE(pPortal);
+
+	ColliderRect* pHomePortal = m_pStage->AddCollider<ColliderRect>("HomePortal");
+
+	pHomePortal->SetRect(32.f * 8.f, 32.f * 9.f, 32.f * 9.f, 32.f * 10.f);
+	pHomePortal->AddCollisionFunction(CS_ENTER, this, &InGameScene::HomePortalCol);
+
+	SAFE_RELEASE(pHomePortal);
 
 	Layer* pLayer = FindLayer("Default");
 
@@ -124,6 +119,8 @@ bool InGameScene::Init()
 	Collider* pCol = pSeed->GetCollider("ItemBody");
 
 	pCol->AddCollisionFunction(CS_ENTER, pSeed, &Item::CollEnter);
+	pCol->AddCollisionFunction(CS_STAY, pSeed, &Item::ColStay);
+	pCol->AddCollisionFunction(CS_LEAVE, pSeed, &Item::ColEnd);
 
 	SAFE_RELEASE(pCol);
 	
@@ -134,8 +131,21 @@ bool InGameScene::Init()
 
 void InGameScene::Cave(Collider* pSrc, Collider* pDest, float fTime)
 {
-	GET_SINGLE(SoundManager)->Stop(ST_BGM);
-
 	if (pDest->GetTag() == "PlayerBody")
+	{
+		GET_SINGLE(SoundManager)->Stop(ST_BGM);
+
 		GET_SINGLE(SceneManager)->CreateScene<SceneCave>(SC_NEXT);
+	}
+
+}
+
+void InGameScene::HomePortalCol(Collider* pSrc, Collider* pDest, float fTime)
+{
+	if (pDest->GetTag() == "PlayerBody")
+	{
+		GET_SINGLE(SoundManager)->Stop(ST_BGM);
+
+		GET_SINGLE(SceneManager)->CreateScene<SceneHome>(SC_NEXT);
+	}
 }

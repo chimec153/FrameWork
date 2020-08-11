@@ -2,6 +2,7 @@
 #include "InGameScene.h"
 #include "StartScene.h"
 #include "../Collider/CollisionManager.h"
+#include "..//Object/UIPanel.h"
 
 DEFINITION_SINGLE(SceneManager)
 
@@ -19,7 +20,6 @@ SceneManager::~SceneManager()
 bool SceneManager::Init()
 {
 	m_pScene = CreateScene<StartScene>(SC_CURRENT);
-
 
 	return true;
 }
@@ -67,5 +67,6 @@ SCENE_CHANGE SceneManager::ChangeScene()
 
 		return SC_CHANGE;
 	}
+
 	return SC_NONE;
 }

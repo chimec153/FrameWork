@@ -17,6 +17,9 @@ Seed::~Seed()
 
 bool Seed::Init()
 {
+	SetTexture("items", TEXT("Item\\springobjects.bmp"));
+	SetColorKey(255, 255, 255);
+
 	if (!Item::Init())
 		return false;
 

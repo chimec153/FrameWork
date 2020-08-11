@@ -76,10 +76,12 @@ void ColliderSphere::Render(HDC hDC, float fDeltaTime)
 		{
 			HBRUSH hBrush = (HBRUSH)CreateSolidBrush(RGB(255, 0, 0));
 			HBRUSH hPrevBrush = (HBRUSH)SelectObject(hDC, hBrush);
+
 			Ellipse(hDC, (int)(m_tWorldInfo.tCenter.x - m_tWorldInfo.fRadius - tCamPos.x),
 				(int)(m_tWorldInfo.tCenter.y - m_tWorldInfo.fRadius - tCamPos.y),
 				(int)(m_tWorldInfo.tCenter.x + m_tWorldInfo.fRadius - tCamPos.x),
 				(int)(m_tWorldInfo.tCenter.y + m_tWorldInfo.fRadius - tCamPos.y));
+
 			SelectObject(hDC, hPrevBrush);
 			DeleteObject(hBrush);
 		}
@@ -87,10 +89,12 @@ void ColliderSphere::Render(HDC hDC, float fDeltaTime)
 		{
 			HBRUSH hBrush = (HBRUSH)GetStockObject(NULL_BRUSH);
 			HBRUSH hPrevBrush = (HBRUSH)SelectObject(hDC, hBrush);
+
 			Ellipse(hDC, (int)(m_tWorldInfo.tCenter.x - m_tWorldInfo.fRadius - tCamPos.x),
 				(int)(m_tWorldInfo.tCenter.y - m_tWorldInfo.fRadius - tCamPos.y),
 				(int)(m_tWorldInfo.tCenter.x + m_tWorldInfo.fRadius - tCamPos.x),
 				(int)(m_tWorldInfo.tCenter.y + m_tWorldInfo.fRadius - tCamPos.y));
+
 			SelectObject(hDC, hPrevBrush);
 			DeleteObject(hBrush);
 		}

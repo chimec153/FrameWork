@@ -25,4 +25,5 @@ public:
 	
 public:
 	void Cave(class Collider* pSrc, class Collider* pDest, float fTime);
+	void HomePortalCol(class Collider* pSrc, class Collider* pDest, float fTime);
 };

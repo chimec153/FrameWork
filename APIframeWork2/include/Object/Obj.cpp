@@ -26,7 +26,9 @@ Obj::Obj()	:
 	m_tPivot(),
 	m_pTexture(NULL),
 	m_pAnimation(NULL),
-	m_bEnableCollide(true)	
+	m_cAlpha(255),
+	m_bEnableCollide(true),
+	m_bAlphaOn(false)
 {
 }
 
@@ -169,13 +171,34 @@ bool Obj::AddAnimationClip(const string & strName, ANIMATION_TYPE eType,
 	m_pAnimation->AddClip(strName, eType, eOption, fAnimationLimitTime,
 		iFrameMaxX, iFrameMaxY, iStartX, iStartY, iLengthX, iLengthY,
 		fOptionLimitTime, strTextKey, vecFileName, strPathKey);
+
 	return true;
+}
+
+void Obj::SetAnimationCurrentClip(const string& strName)
+{
+	if (m_pAnimation)
+		m_pAnimation->SetCurrentClip(strName);
+}
+
+void Obj::SetAnimationDefaultClip(const string& strName)
+{
+	if (m_pAnimation)
+		m_pAnimation->SetDefaultClip(strName);
 }
 
 void Obj::SetAnimationClipColorKey(const string & strClip, unsigned char r, unsigned char g, unsigned char b)
 {
 	if (m_pAnimation)
 		m_pAnimation->SetClipColorKey(strClip, r, g, b);
+}
+
+Texture* Obj::GetTexture() const
+{
+	if (m_pTexture)
+		m_pTexture->AddRef();
+
+	return m_pTexture;
 }
 
 Collider * Obj::GetCollider(const string & strTag)
@@ -329,17 +352,34 @@ void Obj::Render(HDC hDC, float fDeltaTime)
 
 		tImagePos += m_tImageOffset;
 
-		if (m_pTexture->GetColorKeyEnable())
+		if (!m_bAlphaOn)
 		{
-			TransparentBlt(hDC, (int)tPos.x, (int)tPos.y, (int)m_tSize.x,
-				(int)m_tSize.y, m_pTexture->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
-				(int)m_tSize.x, (int)m_tSize.y, m_pTexture->GetColorKey());
+			if (m_pTexture->GetColorKeyEnable())
+			{
+				TransparentBlt(hDC, (int)tPos.x, (int)tPos.y, (int)m_tSize.x,
+					(int)m_tSize.y, m_pTexture->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
+					(int)m_tSize.x, (int)m_tSize.y, m_pTexture->GetColorKey());
+			}
+			else
+			{
+				BitBlt(hDC, (int)tPos.x, (int)tPos.y, (int)m_tSize.x,
+					(int)m_tSize.y, m_pTexture->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
+					SRCCOPY);
+			}
 		}
+
 		else
 		{
-			BitBlt(hDC, (int)tPos.x, (int)tPos.y, (int)m_tSize.x,
-				(int)m_tSize.y, m_pTexture->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
-				SRCCOPY);
+			BLENDFUNCTION	tBF = {};
+
+			tBF.BlendOp = 0;
+			tBF.BlendFlags = 0;
+			tBF.SourceConstantAlpha = m_cAlpha;
+
+			tBF.AlphaFormat = AC_SRC_ALPHA;
+
+			GdiAlphaBlend(hDC, (int)tPos.x, (int)tPos.y, (int)m_tSize.x, (int)m_tSize.y,
+				m_pTexture->GetDC(), (int)tImagePos.x, (int)tImagePos.y, (int)m_tSize.x, (int)m_tSize.y, tBF);
 		}
 	}
 

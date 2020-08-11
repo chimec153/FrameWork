@@ -22,6 +22,7 @@ void Timer::SetClockHand(Obj* pObj)
 	if (m_pClockHand)
 		m_pClockHand->AddRef();
 }
+
 bool Timer::Init(HWND hWnd)
 {
 	m_hWnd = hWnd;
@@ -64,5 +65,5 @@ void Timer::Update()
 	}
 
 	if (m_pClockHand)
-		((UIClockHand*)m_pClockHand)->AddTime(m_fDeltaTime);
+		((UIClockHand*)m_pClockHand)->AddTime(m_fDeltaTime * m_fTimeScale);
 }

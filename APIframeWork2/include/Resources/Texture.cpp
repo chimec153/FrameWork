@@ -186,6 +186,19 @@ void Texture::Render(HDC hDC, POSITION tPos, POSITION tImagePos, POSITION tSize,
 			(int)tImagePos.x, (int)tImagePos.y, SRCCOPY);
 }
 
+void Texture::RenderByAlpha(unsigned char cAlpha, HDC hDC, POSITION tPos, POSITION tImagePos, POSITION tSize, int iIndex)
+{
+	BLENDFUNCTION tBF = {};
+
+	tBF.BlendOp = 0;
+	tBF.BlendFlags = 0;
+	tBF.AlphaFormat = AC_SRC_ALPHA;
+	tBF.SourceConstantAlpha = cAlpha;
+
+	GdiAlphaBlend(hDC, (int)tPos.x, (int)tPos.y, (int)tSize.x, (int)tSize.y, m_vecTexture[iIndex]->hDC,
+		(int)tImagePos.x, tImagePos.y, (int)tSize.x, (int)tSize.y, tBF);
+}
+
 void Texture::SaveFromPath(const char * pFileName, const string & strPathKey)
 {
 }

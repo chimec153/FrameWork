@@ -13,13 +13,14 @@ private:
 	~Tile();
 
 private:
-	TILE_OPTION		m_eOption;
-	class Texture*	m_pOptionTex;
-	class Texture*	m_pUpperTex;
-	class Obj*		m_pObj;
-	POSITION		m_tUpperImageOffset;
-	class Texture*	m_pSelectTex;
-	bool			m_bSelect;
+	TILE_OPTION			m_eOption;
+	class Texture*		m_pOptionTex;
+	class Texture*		m_pUpperTex;
+	class Obj*			m_pObj;
+	POSITION			m_tUpperImageOffset;
+	class Texture*		m_pSelectTex;
+	bool				m_bSelect;
+	class Stage*		m_pStage;
 
 public:
 	void SetUpperTexture(class Texture* pTexture);
@@ -67,7 +68,17 @@ public:
 		m_tUpperImageOffset.y = y;
 	}
 
+	POSITION GetUpperImageOffset()	const
+	{
+		return m_tUpperImageOffset;
+	}
+
 	void SelectTile();
+
+	void SetStage(class Stage* pStage)
+	{
+		m_pStage = pStage;
+	}
 
 public:
 	virtual bool Init();

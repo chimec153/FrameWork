@@ -88,9 +88,6 @@
     <Filter Include="03. Object\01. MoveObj\01. FightObj\02. Monster">
       <UniqueIdentifier>{3e2a7ee7-c94c-4cb2-8c99-4fa75b2e6424}</UniqueIdentifier>
     </Filter>
-    <Filter Include="03. Object\01. MoveObj\02. Tool">
-      <UniqueIdentifier>{ec3c57c7-6fce-48ab-9678-acf473e2311c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="02. Scene\04. AnimationEditScene">
       <UniqueIdentifier>{6439fa03-49c4-4f5a-909f-06bc59f24c41}</UniqueIdentifier>
     </Filter>
@@ -114,6 +111,9 @@
     </Filter>
     <Filter Include="03. Object\01. MoveObj\07. Crop">
       <UniqueIdentifier>{34c1f546-4831-4fd8-abd2-3ef0e221ed57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Object\01. MoveObj\06. Item\02. Tool">
+      <UniqueIdentifier>{3da4456d-2816-4576-a137-65df27b6226a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -252,9 +252,6 @@
     <ClCompile Include="Object\FightObj.cpp">
       <Filter>03. Object\01. MoveObj\01. FightObj</Filter>
     </ClCompile>
-    <ClCompile Include="Object\Weapon.cpp">
-      <Filter>03. Object\01. MoveObj\02. Tool</Filter>
-    </ClCompile>
     <ClCompile Include="Scene\MapEditScene.cpp">
       <Filter>02. Scene\02. MapEditScene</Filter>
     </ClCompile>
@@ -281,6 +278,24 @@
     </ClCompile>
     <ClCompile Include="Object\Crop.cpp">
       <Filter>03. Object\01. MoveObj\07. Crop</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\FarmEffect.cpp">
+      <Filter>03. Object\01. MoveObj\05. Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene\SceneHome.cpp">
+      <Filter>02. Scene\03. InGameScene</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Weapon.cpp">
+      <Filter>03. Object\01. MoveObj\05. Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Tool.cpp">
+      <Filter>03. Object\01. MoveObj\06. Item\02. Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Text.cpp">
+      <Filter>03. Object\01. MoveObj\04. UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\PadeEffect.cpp">
+      <Filter>03. Object\01. MoveObj\05. Effect</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -428,9 +443,6 @@
     <ClInclude Include="Object\FightObj.h">
       <Filter>03. Object\01. MoveObj\01. FightObj</Filter>
     </ClInclude>
-    <ClInclude Include="Object\Weapon.h">
-      <Filter>03. Object\01. MoveObj\02. Tool</Filter>
-    </ClInclude>
     <ClInclude Include="Scene\MapEditScene.h">
       <Filter>02. Scene\02. MapEditScene</Filter>
     </ClInclude>
@@ -457,6 +469,24 @@
     </ClInclude>
     <ClInclude Include="Object\Crop.h">
       <Filter>03. Object\01. MoveObj\07. Crop</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\FarmEffect.h">
+      <Filter>03. Object\01. MoveObj\05. Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\SceneHome.h">
+      <Filter>02. Scene\03. InGameScene</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Weapon.h">
+      <Filter>03. Object\01. MoveObj\05. Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Text.h">
+      <Filter>03. Object\01. MoveObj\04. UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Tool.h">
+      <Filter>03. Object\01. MoveObj\06. Item\02. Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\PadeEffect.h">
+      <Filter>03. Object\01. MoveObj\05. Effect</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

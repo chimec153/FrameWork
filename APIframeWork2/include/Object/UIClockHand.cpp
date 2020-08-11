@@ -4,17 +4,32 @@
 #include "../Resources/Texture.h"
 
 UIClockHand::UIClockHand()	:
-	m_fTime(0.f)
+	m_fTime(720.f),
+	m_pNightPanel(nullptr)
 {
+	m_bAlphaOn = true;
+	m_cAlpha = 255;
 }
 
 UIClockHand::UIClockHand(const UIClockHand& clockhand)	:
 	UI(clockhand)
 {
+	m_fTime = clockhand.m_fTime;
 }
 
 UIClockHand::~UIClockHand()
 {
+	SAFE_RELEASE(m_pNightPanel);
+}
+
+void UIClockHand::SetNightPanel(Obj* pObj)
+{
+	SAFE_RELEASE(m_pNightPanel);
+
+	m_pNightPanel = pObj;
+
+	if (m_pNightPanel)
+		m_pNightPanel->AddRef();
 }
 
 bool UIClockHand::Init()
@@ -47,6 +62,21 @@ int UIClockHand::Update(float fDeltaTime)
 	tPos.Normalize();
 
 	m_tPos = m_tOriginPos + tPos * 20.f;
+
+	float fHour = m_fTime / 60.f;
+	int iAlpha = 0;
+
+	if (fHour <= 4.5f || fHour >= 19.5f)
+		iAlpha = 120;
+
+	else if (fHour < 7.5f && fHour > 4.5f)
+		iAlpha = (int)(-40.f * fHour + 300.f);
+
+	else if (fHour > 16.5f && fHour < 19.5f)
+		iAlpha = (int)(-660.f + 40.f * fHour);
+
+	m_pNightPanel->SetAlpha(iAlpha);
+
 	return 0;
 }
 
@@ -64,7 +94,7 @@ void UIClockHand::Collision(float fDeltaTime)
 void UIClockHand::Render(HDC hDC, float fDeltaTime)
 {
 	if (m_pTexture)
-		m_pTexture->Render(hDC, m_tPos, POSITION::Zero, m_tSize, 12 - (int)(m_fTime/120.f));
+		m_pTexture->RenderByAlpha(m_cAlpha, hDC, m_tPos, POSITION::Zero, m_tSize, 12 - (int)(m_fTime/120.f));
 }
 
 UIClockHand* UIClockHand::Clone()

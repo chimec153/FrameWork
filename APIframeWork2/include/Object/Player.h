@@ -21,7 +21,7 @@ private:
 	class UIBar*				m_pHPBar;
 	class Obj*					m_pWeapon;
 	class UIInventory*			m_pInventory;
-	int							m_iInvenCursor;
+	bool						m_bWalk;
 
 public:
 	void SetType(PLAYER_ANIMATION_TYPE eType)
