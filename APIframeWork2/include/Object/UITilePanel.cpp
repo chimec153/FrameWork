@@ -33,7 +33,9 @@ bool UITilePanel::Init()
 	pColl->AddCollisionFunction(CS_LEAVE, this,
 		&UITilePanel::MouseOut);
 
-	pColl->SetRect(0.f, 0.f, 400.f, 400.f);
+	POSITION tSize = GetSize();
+
+	pColl->SetRect(0.f, 0.f, tSize.x, tSize.y);
 	pColl->SetUI(true);
 
 	SAFE_RELEASE(pColl);
@@ -59,6 +61,9 @@ void UITilePanel::Input(float fDeltaTime)
 		{
 			m_tPos = GET_SINGLE(Input)->GetMouseWorldPos() - m_tMousePos;
 		}
+
+		else if (KEYUP("MouseLButton"))
+			m_bMousePress = false;
 	}
 	else
 	{
@@ -102,5 +107,4 @@ void UITilePanel::MouseOn(Collider* pSrc, Collider* pDest, float fTime)
 
 void UITilePanel::MouseOut(Collider* pSrc, Collider* pDest, float fTime)
 {
-	m_bMousePress = false;
 }

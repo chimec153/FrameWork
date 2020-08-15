@@ -1,0 +1,160 @@
+#include "Item.h"
+#include "../Collider/ColliderRect.h"
+#include "Player.h"
+#include "UIInventory.h"
+#include "UIPanel.h"
+#include "../Scene/Scene.h"
+#include "UINum.h"
+
+Item::Item()	:
+	m_eType(IT_NONE),
+	m_bInventory(false),
+	m_bMouseOn(false),
+	m_pInventory(nullptr),
+	m_iCount(0),
+	m_pNumber(nullptr)
+{
+}
+
+Item::Item(const Item& item)	:
+	MoveObj(item)
+{
+	m_eType = item.m_eType;
+	m_bInventory = item.m_bInventory;
+	m_pInventory = item.m_pInventory;
+	m_bMouseOn = false;
+	m_iCount = item.m_iCount;
+
+	if (item.m_pNumber)
+		m_pNumber = item.m_pNumber->Clone();
+
+	else
+		m_pNumber = nullptr;		
+}
+
+Item::~Item()
+{
+	SAFE_RELEASE(m_pNumber);
+}
+
+void Item::AddItemCount(int iCount)
+{
+	m_iCount += iCount;
+
+	if (m_pNumber)
+	{
+		m_pNumber->DeleteNum();
+
+		m_pNumber->CreateNum(m_iCount);
+	}
+}
+
+bool Item::Init()
+{
+	SetSize(32.f, 32.f);
+	SetPivot(0.5f, 0.5f);
+
+	ColliderRect* pRC = AddCollider<ColliderRect>("ItemBody");
+
+	pRC->SetRect(-16.f, -16.f, 16.f, 16.f);
+
+	SAFE_RELEASE(pRC);
+
+	return true;
+}
+
+int Item::Update(float fDeltaTime)
+{
+	MoveObj::Update(fDeltaTime);
+
+	if (m_bInventory)
+	{
+		POSITION tPos = m_tPos + m_tSize * m_tPivot;
+
+		m_pNumber->SetPosAll(tPos);
+	}
+
+	return 0;
+}
+
+int Item::LateUpdate(float fDeltaTime)
+{
+	MoveObj::LateUpdate(fDeltaTime);
+	return 0;
+}
+
+void Item::Collision(float fDeltaTime)
+{
+	MoveObj::Collision(fDeltaTime);
+}
+
+void Item::Render(HDC hDC, float fDeltaTime)
+{
+	MoveObj::Render(hDC, fDeltaTime);
+}
+
+Item* Item::Clone()
+{
+	return nullptr;
+}
+
+void Item::CollEnter(Collider* pSrc, Collider* pDest, float fTime)
+{
+	if (!m_bInventory)
+	{
+		if (pDest->GetTag() == "PlayerBody")
+			((Player*)pDest->GetObj())->GetInven()->AddItem(this);
+	}
+
+	else
+	{
+		if (pDest->GetTag() == "Mouse")
+		{
+			m_bMouseOn = true;
+
+			m_pInventory->InfoPanelOn(pDest->GetObj()->GetPos());
+		}
+	}
+}
+
+void Item::ColStay(Collider* pSrc, Collider* pDest, float fTime)
+{
+	if (m_bInventory)
+	{
+		if (pDest->GetTag() == "Mouse")
+		{
+			if (m_bMouseOn)
+				m_pInventory->InfoPanelUpdate(pDest->GetObj()->GetPos());
+		}
+	}
+}
+
+void Item::ColEnd(Collider* pSrc, Collider* pDest, float fTime)
+{
+	if (m_bInventory)
+	{
+		if (m_bMouseOn)
+		{
+			m_bMouseOn = false;
+
+			m_pInventory->InfoPanelOff();
+		}
+	}
+		
+}
+
+void Item::CreateItemNumber()
+{
+	Layer* pLayer = m_pScene->FindLayer("UI");
+
+	m_pNumber = (UINum*)CreateCloneObj("NumSm", "ItemNumber", m_pScene->GetSceneType(), pLayer);
+
+	m_pNumber->CreateNum(m_iCount);
+
+	m_pNumber->SetSpeed(0.f);
+}
+
+void Item::DeleteItemNumber()
+{
+	SAFE_RELEASE(m_pNumber);
+}

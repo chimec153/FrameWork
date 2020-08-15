@@ -2,10 +2,21 @@
 #include "../Animation/Animation.h"
 #include "../Resources/ResourcesManager.h"
 #include "../Resources/Texture.h"
+#include "Crop.h"
+#include "../Object/FarmEffect.h"
+#include "../Scene/Scene.h"
+#include "Stage.h"
+#include "Text.h"
 
 UIClockHand::UIClockHand()	:
 	m_fTime(720.f),
-	m_pNightPanel(nullptr)
+	m_pNightPanel(nullptr),
+	m_bRain(false),
+	m_iDay(1),
+	m_iWeek(0),
+	m_fRainTime(0.f),
+	m_fRainTimeMax(0.5f),
+	m_pWeekText(nullptr)
 {
 	m_bAlphaOn = true;
 	m_cAlpha = 255;
@@ -15,13 +26,73 @@ UIClockHand::UIClockHand(const UIClockHand& clockhand)	:
 	UI(clockhand)
 {
 	m_fTime = clockhand.m_fTime;
+	m_pNightPanel = clockhand.m_pNightPanel;
+	m_bRain = clockhand.m_bRain;
+	m_iDay = clockhand.m_iDay;
+	m_iWeek = clockhand.m_iWeek;
+	m_fRainTimeMax = clockhand.m_fRainTimeMax;
+	m_fRainTime = 0.f;
+
+	if(clockhand.m_pWeekText)
+		m_pWeekText = clockhand.m_pWeekText->Clone();
 }
 
 UIClockHand::~UIClockHand()
 {
 	SAFE_RELEASE(m_pNightPanel);
+	Safe_Release_VecList(m_CropList);
+	SAFE_RELEASE(m_pWeekText);
+	Safe_Delete_VecList(m_vecWeekText);
 }
 
+void UIClockHand::AddTime(float fTime)
+{
+	m_fTime += fTime * 120.f;
+
+	if (m_fTime >= 1440.f)	//	하루가 지남
+	{
+		m_bRain = false;
+
+		++m_iDay;
+
+		m_iWeek = ++m_iWeek % 7;
+
+		TCHAR strNum[32] = {};
+
+		swprintf_s(strNum, TEXT("%d"), m_iDay);
+
+		TCHAR strText[MAX_PATH] = {};
+
+		lstrcat(strText, m_vecWeekText[m_iWeek]);
+
+		lstrcat(strText, strNum);
+
+		m_pWeekText->SetText(strText);
+
+		m_fTime = 0.f;
+
+		auto iter = m_CropList.begin();
+		auto iterEnd = m_CropList.end();
+
+		for (; iter != iterEnd; ++iter)
+		{
+			if (!((Crop*)(*iter))->IsStart())
+				((Crop*)(*iter))->TimeStart();
+
+			else
+				((Crop*)(*iter))->AddDay(1);
+		}
+
+		float fRain = rand() % 10001 / 100.f;
+
+		if (fRain < 30.f)
+		{
+			m_bRain = true;
+
+			m_fRainTimeMax = 0.02f;
+		}
+	}
+}
 void UIClockHand::SetNightPanel(Obj* pObj)
 {
 	SAFE_RELEASE(m_pNightPanel);
@@ -30,6 +101,30 @@ void UIClockHand::SetNightPanel(Obj* pObj)
 
 	if (m_pNightPanel)
 		m_pNightPanel->AddRef();
+}
+
+void UIClockHand::SetWeekText(Text* pText)
+{
+	SAFE_RELEASE(m_pWeekText);
+
+	m_pWeekText = pText;
+
+	if (m_pWeekText)
+	{
+		m_pWeekText->AddRef();
+
+		TCHAR strNum[32] = {};
+
+		swprintf_s(strNum, TEXT("%d"), m_iDay);
+
+		TCHAR strText[MAX_PATH] = {};
+
+		lstrcat(strText, m_vecWeekText[m_iWeek]);
+
+		lstrcat(strText, strNum);
+
+		m_pWeekText->SetText(strText);
+	}
 }
 
 bool UIClockHand::Init()
@@ -41,6 +136,48 @@ bool UIClockHand::Init()
 
 	if(m_pTexture)
 		m_pTexture->SetColorKeyAll(RGB(255, 255, 255));
+
+	TCHAR* pWeek = new TCHAR[MAX_PATH];
+
+	lstrcpy(pWeek, TEXT("Sunday, "));
+
+	m_vecWeekText.push_back(pWeek);
+
+	pWeek = new TCHAR[MAX_PATH];
+
+	lstrcpy(pWeek, TEXT("Monday, "));
+
+	m_vecWeekText.push_back(pWeek);
+
+	pWeek = new TCHAR[MAX_PATH];
+
+	lstrcpy(pWeek, TEXT("Tuesday, "));
+
+	m_vecWeekText.push_back(pWeek);
+
+	pWeek = new TCHAR[MAX_PATH];
+
+	lstrcpy(pWeek, TEXT("Wednesday, "));
+
+	m_vecWeekText.push_back(pWeek);
+
+	pWeek = new TCHAR[MAX_PATH];
+
+	lstrcpy(pWeek, TEXT("Thursday, "));
+
+	m_vecWeekText.push_back(pWeek);
+
+	pWeek = new TCHAR[MAX_PATH];
+
+	lstrcpy(pWeek, TEXT("Friday, "));
+
+	m_vecWeekText.push_back(pWeek);
+
+	pWeek = new TCHAR[MAX_PATH];
+
+	lstrcpy(pWeek, TEXT("Saturday, "));
+
+	m_vecWeekText.push_back(pWeek);
 
 	return true;
 }
@@ -64,18 +201,56 @@ int UIClockHand::Update(float fDeltaTime)
 	m_tPos = m_tOriginPos + tPos * 20.f;
 
 	float fHour = m_fTime / 60.f;
+
 	int iAlpha = 0;
 
-	if (fHour <= 4.5f || fHour >= 19.5f)
+	if (!m_bRain)
+	{
+		if (fHour <= 4.5f || fHour >= 19.5f)
+			iAlpha = 120;
+
+		else if (fHour < 7.5f && fHour > 4.5f)
+			iAlpha = (int)(-40.f * fHour + 300.f);
+
+		else if (fHour > 16.5f && fHour < 19.5f)
+			iAlpha = (int)(-660.f + 40.f * fHour);
+	}
+
+	else
 		iAlpha = 120;
 
-	else if (fHour < 7.5f && fHour > 4.5f)
-		iAlpha = (int)(-40.f * fHour + 300.f);
-
-	else if (fHour > 16.5f && fHour < 19.5f)
-		iAlpha = (int)(-660.f + 40.f * fHour);
-
 	m_pNightPanel->SetAlpha(iAlpha);
+
+	if (m_bRain)
+	{
+		m_fRainTime += fDeltaTime;
+
+		while (m_fRainTime >= m_fRainTimeMax)		
+		{
+			m_fRainTime -= m_fRainTimeMax;
+
+			int iTileNumX = m_pScene->GetStage()->GetTileNumX();
+			int iTileNumY = m_pScene->GetStage()->GetTileNumY();
+
+			int iIndexX = rand() % (iTileNumX-1);
+			int iIndexY = rand() % (iTileNumY-1);
+
+			Layer* pLayer = m_pScene->FindLayer("Default");
+
+			FarmEffect* pEffect = (FarmEffect*)CreateCloneObj("HoeEffect", "RainEffect", m_pScene->GetSceneType(), pLayer);
+
+			if (pEffect) 
+			{
+				POSITION tPos = POSITION(32.f, 32.f);
+
+				pEffect->SetPos(iIndexX * tPos.x, iIndexY * tPos.y);
+
+				pEffect->SetAnimationCurrentClip("Rain");
+
+				SAFE_RELEASE(pEffect);
+			}
+		}
+	}
 
 	return 0;
 }

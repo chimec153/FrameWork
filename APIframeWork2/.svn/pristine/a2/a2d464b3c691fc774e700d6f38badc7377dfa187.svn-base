@@ -1,0 +1,50 @@
+#pragma once
+#include "UI.h"
+class UINum :
+	public UI
+{
+	friend class Scene;
+
+protected:
+	UINum();
+	UINum(const UINum& num);
+	virtual ~UINum();
+
+private:
+	int							m_iNum;		//	UINum은 숫자를 가진다. 0부터 9까지.
+	vector<class UINum*>		m_vecNum;
+	float						m_fDist;
+	float						m_fLimitDist;
+	float						m_fSpeed;
+	bool						m_bOneLine;
+
+public:
+	void SetSpeed(float fSpeed)
+	{
+		m_fSpeed = fSpeed;
+	}
+
+	void SetPosAll(const POSITION& tPos);
+
+	void SetOneLine(bool bOne)
+	{
+		m_bOneLine = bOne;
+	}
+
+public:
+	void CreateNum(int iNum);
+	void DeleteNum();
+
+public:
+	virtual bool Init();
+	virtual void Input(float fDeltaTime);
+	virtual int Update(float fDeltaTime);
+	virtual int LateUpdate(float fDeltaTime);
+	virtual void Collision(float fDeltaTime);
+	virtual void Render(HDC hDC, float fDeltaTime);
+	virtual UINum* Clone();
+
+private:
+	void SetNum(int iNum);
+};
+

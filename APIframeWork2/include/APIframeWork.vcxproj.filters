@@ -109,11 +109,41 @@
     <Filter Include="03. Object\01. MoveObj\06. Item\01. Seeds">
       <UniqueIdentifier>{ec50803f-cbc7-4841-8142-50a2e3229c68}</UniqueIdentifier>
     </Filter>
-    <Filter Include="03. Object\01. MoveObj\07. Crop">
-      <UniqueIdentifier>{34c1f546-4831-4fd8-abd2-3ef0e221ed57}</UniqueIdentifier>
-    </Filter>
     <Filter Include="03. Object\01. MoveObj\06. Item\02. Tool">
       <UniqueIdentifier>{3da4456d-2816-4576-a137-65df27b6226a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Object\01. MoveObj\06. Item\03. Crop">
+      <UniqueIdentifier>{34c1f546-4831-4fd8-abd2-3ef0e221ed57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Object\01. MoveObj\06. Item\04. Etc">
+      <UniqueIdentifier>{fbbeea52-c3dc-4fbb-b90e-8803845a5782}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Object\02. StaticObj\04. Rock">
+      <UniqueIdentifier>{28f49267-8064-41ee-95b6-97d1f6a432d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Object\02. StaticObj\05. Portal">
+      <UniqueIdentifier>{4a95ede5-9e43-484c-898c-aef2cdf134ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Core\06. Font">
+      <UniqueIdentifier>{ca1801ba-61ae-4379-b745-9f72385ca16d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Object\01. MoveObj\01. FightObj\02. Monster\03. Bug">
+      <UniqueIdentifier>{540f0a2c-c7cb-434d-9fc5-cc3b3fa718f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Object\01. MoveObj\01. FightObj\02. Monster\02. Slime">
+      <UniqueIdentifier>{8f29045b-786a-43e8-8af2-3c6662dd7b53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Object\01. MoveObj\01. FightObj\02. Monster\01. Bat">
+      <UniqueIdentifier>{46ad6ed8-cfac-4c13-a26b-5ff01c19c628}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Object\01. MoveObj\01. FightObj\02. Monster\04. Fly">
+      <UniqueIdentifier>{b6ab908f-1af6-4bd6-8869-3cc1d37a0aad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Object\01. MoveObj\01. FightObj\02. Monster\05. RockCrab">
+      <UniqueIdentifier>{ed3fe30c-5d6f-4371-aa0c-76c9902f9181}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Object\01. MoveObj\01. FightObj\03. NPC">
+      <UniqueIdentifier>{7df948c6-02e5-42ff-bd85-81c9b99bf9ad}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -149,9 +179,6 @@
     </ClCompile>
     <ClCompile Include="Object\StaticObj.cpp">
       <Filter>03. Object\02. StaticObj</Filter>
-    </ClCompile>
-    <ClCompile Include="Object\Minion.cpp">
-      <Filter>03. Object\01. MoveObj\01. FightObj\02. Monster</Filter>
     </ClCompile>
     <ClCompile Include="Object\Bullet.cpp">
       <Filter>03. Object\01. MoveObj\03. Bullet</Filter>
@@ -240,9 +267,6 @@
     <ClCompile Include="Scene\AnimationEditScene.cpp">
       <Filter>02. Scene\04. AnimationEditScene</Filter>
     </ClCompile>
-    <ClCompile Include="Object\Slime.cpp">
-      <Filter>03. Object\01. MoveObj\01. FightObj\02. Monster</Filter>
-    </ClCompile>
     <ClCompile Include="Object\Effect.cpp">
       <Filter>03. Object\01. MoveObj\05. Effect</Filter>
     </ClCompile>
@@ -277,7 +301,7 @@
       <Filter>03. Object\01. MoveObj\06. Item\01. Seeds</Filter>
     </ClCompile>
     <ClCompile Include="Object\Crop.cpp">
-      <Filter>03. Object\01. MoveObj\07. Crop</Filter>
+      <Filter>03. Object\01. MoveObj\06. Item\03. Crop</Filter>
     </ClCompile>
     <ClCompile Include="Object\FarmEffect.cpp">
       <Filter>03. Object\01. MoveObj\05. Effect</Filter>
@@ -296,6 +320,48 @@
     </ClCompile>
     <ClCompile Include="Object\PadeEffect.cpp">
       <Filter>03. Object\01. MoveObj\05. Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Etc.cpp">
+      <Filter>03. Object\01. MoveObj\06. Item\04. Etc</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Rock.cpp">
+      <Filter>03. Object\02. StaticObj\04. Rock</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Portal.cpp">
+      <Filter>03. Object\02. StaticObj\05. Portal</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Slime.cpp">
+      <Filter>03. Object\01. MoveObj\01. FightObj\02. Monster\02. Slime</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\SlimeHead.cpp">
+      <Filter>03. Object\01. MoveObj\01. FightObj\02. Monster\02. Slime</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Bug.cpp">
+      <Filter>03. Object\01. MoveObj\01. FightObj\02. Monster\03. Bug</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Fly.cpp">
+      <Filter>03. Object\01. MoveObj\01. FightObj\02. Monster\04. Fly</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\RockCrab.cpp">
+      <Filter>03. Object\01. MoveObj\01. FightObj\02. Monster\05. RockCrab</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\FontManager.cpp">
+      <Filter>01. Core\06. Font</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene\SceneRoad.cpp">
+      <Filter>02. Scene\03. InGameScene</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene\SceneTown.cpp">
+      <Filter>02. Scene\03. InGameScene</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\NPC.cpp">
+      <Filter>03. Object\01. MoveObj\01. FightObj\03. NPC</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene\SceneShop.cpp">
+      <Filter>02. Scene\03. InGameScene</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Minion.cpp">
+      <Filter>03. Object\01. MoveObj\01. FightObj\02. Monster\01. Bat</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -343,9 +409,6 @@
     </ClInclude>
     <ClInclude Include="Object\StaticObj.h">
       <Filter>03. Object\02. StaticObj</Filter>
-    </ClInclude>
-    <ClInclude Include="Object\Minion.h">
-      <Filter>03. Object\01. MoveObj\01. FightObj\02. Monster</Filter>
     </ClInclude>
     <ClInclude Include="Object\Bullet.h">
       <Filter>03. Object\01. MoveObj\03. Bullet</Filter>
@@ -434,9 +497,6 @@
     <ClInclude Include="Scene\AnimationEditScene.h">
       <Filter>02. Scene\04. AnimationEditScene</Filter>
     </ClInclude>
-    <ClInclude Include="Object\Slime.h">
-      <Filter>03. Object\01. MoveObj\01. FightObj\02. Monster</Filter>
-    </ClInclude>
     <ClInclude Include="Object\Effect.h">
       <Filter>03. Object\01. MoveObj\05. Effect</Filter>
     </ClInclude>
@@ -468,7 +528,7 @@
       <Filter>03. Object\01. MoveObj\06. Item\01. Seeds</Filter>
     </ClInclude>
     <ClInclude Include="Object\Crop.h">
-      <Filter>03. Object\01. MoveObj\07. Crop</Filter>
+      <Filter>03. Object\01. MoveObj\06. Item\03. Crop</Filter>
     </ClInclude>
     <ClInclude Include="Object\FarmEffect.h">
       <Filter>03. Object\01. MoveObj\05. Effect</Filter>
@@ -488,6 +548,48 @@
     <ClInclude Include="Object\PadeEffect.h">
       <Filter>03. Object\01. MoveObj\05. Effect</Filter>
     </ClInclude>
+    <ClInclude Include="Object\Etc.h">
+      <Filter>03. Object\01. MoveObj\06. Item\04. Etc</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Rock.h">
+      <Filter>03. Object\02. StaticObj\04. Rock</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Portal.h">
+      <Filter>03. Object\02. StaticObj\05. Portal</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Slime.h">
+      <Filter>03. Object\01. MoveObj\01. FightObj\02. Monster\02. Slime</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\SlimeHead.h">
+      <Filter>03. Object\01. MoveObj\01. FightObj\02. Monster\02. Slime</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Bug.h">
+      <Filter>03. Object\01. MoveObj\01. FightObj\02. Monster\03. Bug</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Fly.h">
+      <Filter>03. Object\01. MoveObj\01. FightObj\02. Monster\04. Fly</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\RockCrab.h">
+      <Filter>03. Object\01. MoveObj\01. FightObj\02. Monster\05. RockCrab</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\FontManager.h">
+      <Filter>01. Core\06. Font</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\SceneRoad.h">
+      <Filter>02. Scene\03. InGameScene</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\SceneTown.h">
+      <Filter>02. Scene\03. InGameScene</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\NPC.h">
+      <Filter>03. Object\01. MoveObj\01. FightObj\03. NPC</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\SceneShop.h">
+      <Filter>02. Scene\03. InGameScene</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Minion.h">
+      <Filter>03. Object\01. MoveObj\01. FightObj\02. Monster\01. Bat</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="APIframeWork.rc">
@@ -496,6 +598,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon1.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="bitmap1.bmp">
       <Filter>리소스 파일</Filter>
     </Image>
   </ItemGroup>

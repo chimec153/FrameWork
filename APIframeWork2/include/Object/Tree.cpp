@@ -6,6 +6,11 @@
 #include "..//Core/Input.h"
 #include "..//Scene/SceneManager.h"
 #include "..//Scene/Scene.h"
+#include "Etc.h"
+#include "../Sound/SoundManager.h"
+#include "../Scene/InGameScene.h"
+#include "Stage.h"
+#include "Tile.h"
 
 CTree::CTree() :
 	m_pTreeSprite(nullptr),
@@ -14,10 +19,13 @@ CTree::CTree() :
 	m_tTreeSize(),
 	m_tTreeOffset(),
 	m_bMouseOn(false),
-	m_bLeavesRender(true)
+	m_bLeavesRender(true),
+	m_iCutted(3),
+	m_cLeavesAlpha(255)
 {
 	m_bAlphaOn = true;
 	m_cAlpha = 255;
+	m_eBlock = OB_TREE;
 }
 
 CTree::CTree(const CTree& tree)	:
@@ -40,6 +48,57 @@ CTree::~CTree()
 	SAFE_RELEASE(m_pTreeSprite)
 }
 
+void CTree::ExTree()
+{
+	GET_SINGLE(SoundManager)->Play("wood");
+
+	m_iCutted -= 1;
+
+	if (m_iCutted == 2)
+	{
+		m_bCutted = true;
+
+		Etc* pWood = (Etc*)CreateCloneObj("Wood", "Wood", m_pScene->GetSceneType(), m_pLayer);
+
+		pWood->SetPos(m_tPos);
+
+		Collider* pCol = pWood->GetCollider("ItemBody");
+
+		pCol->AddCollisionFunction(CS_ENTER, (Item*)pWood, &Item::CollEnter);
+		pCol->AddCollisionFunction(CS_STAY, (Item*)pWood, &Item::ColStay);
+		pCol->AddCollisionFunction(CS_LEAVE, (Item*)pWood, &Item::ColEnd);
+
+		SAFE_RELEASE(pCol);
+
+		SAFE_RELEASE(pWood);
+	}
+
+	else if (m_iCutted <= 0)
+		CutTree();
+}
+
+void CTree::CutTree()
+{
+	Etc* pWood = (Etc*)CreateCloneObj("Wood", "Wood", m_pScene->GetSceneType(), m_pLayer);
+
+	pWood->SetPos(m_tPos);
+
+	Collider* pCol = pWood->GetCollider("ItemBody");
+
+	pCol->AddCollisionFunction(CS_ENTER, (Item*)pWood, &Item::CollEnter);
+	pCol->AddCollisionFunction(CS_STAY, (Item*)pWood, &Item::ColStay);
+	pCol->AddCollisionFunction(CS_LEAVE, (Item*)pWood, &Item::ColEnd);
+
+	SAFE_RELEASE(pCol);
+
+	SAFE_RELEASE(pWood);
+
+	Tile* pTile = m_pScene->GetStage()->GetTile(m_tPos);
+
+	pTile->SetTileOption(TO_NONE);
+	pTile->DeleteObj();
+}
+
 bool CTree::Init()
 {
 	return true;
@@ -58,9 +117,11 @@ int CTree::Update(float fDeltaTime)
 int CTree::LateUpdate(float fDeltaTime)
 {
 	StaticObj::LateUpdate(fDeltaTime);
+
 	m_bMouseOn = false;
 	m_bLeavesRender = true;
-	m_cAlpha = 255;
+	m_cLeavesAlpha = 255;
+
 	return 0;
 }
 
@@ -88,7 +149,7 @@ void CTree::Render(HDC hDC, float fDeltaTime)
 		else if (tPos.y > tClientRS.iH)
 			bInClient = false;
 
-		if (m_pTreeSprite && bInClient)
+		if (m_pTreeSprite && bInClient && !m_bCutted)
 		{
 			POSITION	tImagePos = {};
 
@@ -109,14 +170,12 @@ void CTree::Render(HDC hDC, float fDeltaTime)
 						SRCCOPY);
 				}
 			}*/
-
-			
 			{
 				BLENDFUNCTION	tBF = {};
 
 				tBF.BlendOp = 0;
 				tBF.BlendFlags = 0;
-				tBF.SourceConstantAlpha = m_cAlpha;
+				tBF.SourceConstantAlpha = m_cLeavesAlpha;
 
 				tBF.AlphaFormat = AC_SRC_ALPHA;
 
@@ -124,13 +183,23 @@ void CTree::Render(HDC hDC, float fDeltaTime)
 					m_pTreeSprite->GetDC(), (int)tImagePos.x, (int)tImagePos.y, (int)m_tTreeSize.x, (int)m_tTreeSize.y, tBF);
 			}
 		}
+
+#ifdef _DEBUG
 	if (KEYPRESS("Debug"))
 	{
 		Rectangle(hDC, (int)m_tPos.x - 2, (int)m_tPos.y - 2, (int)m_tPos.x + 2, (int)m_tPos.y + 2);
+
+		if (m_bMouseOn)
+			Rectangle(hDC, (int)m_tPos.x - 4, (int)m_tPos.y - 4, (int)m_tPos.x + 4, (int)m_tPos.y + 4);
+
+		TCHAR strRef[32] = { };
+
+		swprintf_s(strRef, TEXT("Ref: %d"), m_iRef);
+
+		TextOut(hDC, (int)tPos.x, (int)tPos.y + 80, strRef, lstrlen(strRef));
 	}
 
-	if(m_bMouseOn)
-		Rectangle(hDC, (int)m_tPos.x - 4, (int)m_tPos.y - 4, (int)m_tPos.x + 4, (int)m_tPos.y + 4);
+#endif
 }
 
 CTree* CTree::Clone()
@@ -159,6 +228,8 @@ void CTree::Save(FILE* pFile)
 	fwrite(&m_tTreePivot, sizeof(POSITION), 1, pFile);
 	fwrite(&m_tTreeSize, sizeof(POSITION), 1, pFile);
 	fwrite(&m_tTreeOffset, sizeof(POSITION), 1, pFile);
+
+	AddCollisionFunc();
 }
 
 void CTree::Load(FILE* pFile)
@@ -185,43 +256,7 @@ void CTree::Load(FILE* pFile)
 
 void CTree::AddCollisionFunc()	//	충돌 콜백함수를 등록하는 함수이다.
 {
-	ColliderRect* pRC = (ColliderRect*)GetCollider("TreeBody");
-
-	if (pRC)
-	{
-		pRC->AddCollisionFunction(CS_ENTER, this,
-			&CTree::Hit);
-		pRC->AddCollisionFunction(CS_STAY, this,
-			&CTree::HitStay);
-
-		SAFE_RELEASE(pRC);
-	}
-
-	pRC = (ColliderRect*)GetCollider("TreeLeavesBody");
-
-	if (pRC)
-	{
-		pRC->AddCollisionFunction(CS_ENTER, this,
-			&CTree::Hit);
-		pRC->AddCollisionFunction(CS_STAY, this,
-			&CTree::HitStay);
-
-		SAFE_RELEASE(pRC);
-	}
-
-	pRC = (ColliderRect*)GetCollider("BuildingBody");
-
-	if (pRC)
-	{
-		pRC->AddCollisionFunction(CS_ENTER, this,
-			&CTree::Hit);
-		pRC->AddCollisionFunction(CS_STAY, this,
-			&CTree::HitStay);
-
-		SAFE_RELEASE(pRC);
-	}
-
-	pRC = (ColliderRect*)GetCollider("BuildingDoorBody");
+	Collider* pRC = (ColliderRect*)GetCollider("TreeLeavesBody");
 
 	if (pRC)
 	{
@@ -238,38 +273,54 @@ void CTree::Hit(Collider* pSrc, Collider* pDest, float fDeltaTime)
 {
 	if (pDest->GetTag() == "Mouse")
 	{
-		m_bMouseOn = true;
-		if (KEYPRESS("MouseRButton"))
-		{
-			bool bEdit = GET_SINGLE(SceneManager)->GetScene()->IsEditMode();
-
-			if(bEdit)
-				Die();
-		}
-	}
-	else if (pDest->GetTag() == "PlayerBody" && pSrc->GetTag() == "TreeLeavesBody")
-	{
-		m_bLeavesRender = false;
-		m_cAlpha = 125;
-	}
-}
-
-void CTree::HitStay(Collider* pSrc, Collider* pDest, float fDeltaTime)
-{
-	if (pDest->GetTag() == "Mouse")
-	{
-		m_bMouseOn = true;
 		if (KEYPRESS("MouseRButton"))
 		{
 			bool bEdit = GET_SINGLE(SceneManager)->GetScene()->IsEditMode();
 
 			if (bEdit)
+			{
+				Tile* pTile = m_pScene->GetStage()->GetTile(m_tPos);
+
+				pTile->SetTileOption(TO_NONE);
+				pTile->DeleteObj();
+
 				Die();
+			}
 		}
 	}
+
 	else if (pDest->GetTag() == "PlayerBody" && pSrc->GetTag() == "TreeLeavesBody")
 	{
 		m_bLeavesRender = false;
-		m_cAlpha = 125;
+		m_cLeavesAlpha = 125;
+	}
+}
+
+void CTree::HitStay(Collider* pSrc, Collider* pDest, float fDeltaTime)
+{
+	string strDest = pDest->GetTag();
+
+	if (strDest == "Mouse")
+	{
+		if (KEYPRESS("MouseRButton"))
+		{
+			bool bEdit = GET_SINGLE(SceneManager)->GetScene()->IsEditMode();
+
+			if (bEdit)
+			{
+				Tile* pTile = m_pScene->GetStage()->GetTile(m_tPos);
+
+				pTile->SetTileOption(TO_NONE);
+				pTile->DeleteObj();
+
+				Die();
+			}
+		}
+	}
+
+	else if (strDest == "PlayerBody" && pSrc->GetTag() == "TreeLeavesBody")
+	{
+		m_bLeavesRender = false;
+		m_cLeavesAlpha = 125;
 	}
 }

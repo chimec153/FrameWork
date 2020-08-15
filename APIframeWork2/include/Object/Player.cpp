@@ -20,16 +20,24 @@
 #include "../Object/UIInventory.h"
 #include "Tool.h"
 #include "../Core/Timer.h"
+#include "Seed.h"
+#include "Crop.h"
+#include "Tool.h"
+#include "UIClockHand.h"
+#include "Tree.h"
+#include "Etc.h"
+#include "Rock.h"
+#include "RockCrab.h"
 
 Player::Player()	:
 	m_bAttack(false),
-	m_eType(PAT_NONE),
 	m_bColl(false),
 	m_pEnergyBar(nullptr),
 	m_pHPBar(nullptr),
 	m_pWeapon(nullptr),
 	m_pInventory(nullptr),
-	m_bWalk(false)
+	m_bWalk(false),
+	m_eAction(PA_IDLE)
 {
 	m_bTileEffect = true;
 }
@@ -37,6 +45,23 @@ Player::Player()	:
 Player::Player(const Player & player)	:
 	FightObj(player)
 {
+	m_bAttack = false;
+	m_bColl = false;
+
+	if (player.m_pEnergyBar)
+		m_pEnergyBar = player.m_pEnergyBar->Clone();
+
+	if (player.m_pHPBar)
+		m_pHPBar = player.m_pHPBar->Clone();
+
+	if (player.m_pWeapon)
+		m_pWeapon = player.m_pWeapon->Clone();
+
+	if (player.m_pInventory)
+		m_pInventory = player.m_pInventory->Clone();
+
+	m_bWalk = false;
+	m_eAction = player.m_eAction;
 }
 
 Player::~Player()
@@ -63,8 +88,11 @@ bool Player::Init()
 	SetSpeed(200.f);
 	SetPivot(0.5f, 1.f);
 	SetTag("Player");
-	m_iHP = 100;
-	m_iEnergy = 100;
+
+	m_iHP = 10000;
+	m_iEnergy = 10000;
+
+	SetAttack(10);
 
 	SetForce(200.f);
 
@@ -183,6 +211,10 @@ bool Player::Init()
 		1, 0, 2, 1, 0.f, "PlayerLiftDown", L"LiftDown.bmp");
 	SetAnimationClipColorKey("LiftDown", 0, 0, 0);
 
+	AddAnimationClip("Eat", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		0, 0, 5, 1, 0.f, "PlayerEat", L"Eat.bmp");
+	SetAnimationClipColorKey("Eat", 0, 0, 0);
+
 	SAFE_RELEASE(pAni);	
 
 	return true;
@@ -191,6 +223,12 @@ bool Player::Init()
 void Player::Input(float fDeltaTime)
 {
 	FightObj::Input(fDeltaTime);
+
+	if (m_pInventory->GetExtended())
+		return;
+
+	if (m_pInventory->IsShopPanelOn())
+		return;
 
 	bool bPress = false;
 
@@ -220,7 +258,7 @@ void Player::Input(float fDeltaTime)
 		m_tMoveDir = POSITION(-1.f, 0.f);
 		MoveAngle(fDeltaTime);
 
-		m_bWalk = true;
+		m_eAction = PA_WALK;
 	}
 
 	else if (KEYPRESS("MoveRight"))
@@ -242,7 +280,7 @@ void Player::Input(float fDeltaTime)
 		m_tMoveDir = POSITION(1.f, 0.f);
 		MoveAngle(fDeltaTime);
 
-		m_bWalk = true;
+		m_eAction = PA_WALK;
 	}
 
 	else if (KEYPRESS("MoveFront"))
@@ -264,7 +302,7 @@ void Player::Input(float fDeltaTime)
 		m_tMoveDir = POSITION(0.f, -1.f);
 		MoveAngle(fDeltaTime);
 
-		m_bWalk = true;
+		m_eAction = PA_WALK;
 	}
 
 	else if (KEYPRESS("MoveBack"))
@@ -286,11 +324,53 @@ void Player::Input(float fDeltaTime)
 		m_tMoveDir = POSITION(0.f, 1.f);
 		MoveAngle(fDeltaTime);
 
-		m_bWalk = true;
+		m_eAction = PA_WALK;
 	}
 
-	if (KEYDOWN("Fire"))
+	if ((KEYDOWN("Fire") || KEYDOWN("MouseLButton")) && m_eAction == PA_IDLE)
 	{
+		Stage* pStage = ((InGameScene*)m_pScene)->GetStage();
+
+		OBJ_BLOCK eBlock = pStage->GetBlock();
+
+		if (eBlock == OB_CROP)
+		{
+			Tile* pTile = pStage->GetSelectedTile();
+
+			Crop* pCrop = (Crop*)pTile->GetObj();
+
+			bool bHarvest = pCrop->IsHarvested();
+			CROP_TYPE eCropType = pCrop->GetCropType();
+
+			if (!bHarvest && eCropType == CROP_POTATO && ((Crop*)pCrop)->GetStage() == 6)
+			{
+				pCrop->SetSize(32.f, 32.f);
+				pCrop->SetTexture("items", TEXT("Item\\springobjects.bmp"));
+				pCrop->SetImageOffset(0.f, 256.f);
+
+				Collider* pCol = pCrop->GetCollider("ItemBody");
+
+				pCol->AddCollisionFunction(CS_ENTER, (Item*)pCrop, &Item::CollEnter);
+				pCol->AddCollisionFunction(CS_STAY, (Item*)pCrop, &Item::ColStay);
+				pCol->AddCollisionFunction(CS_LEAVE, (Item*)pCrop, &Item::ColEnd);
+
+				SAFE_RELEASE(pCol);
+
+				Obj* pEffect = CreateCloneObj("HoeEffect", "HarvestEffect", SC_CURRENT, m_pLayer);
+
+				pEffect->SetAnimationCurrentClip("HarvestEffect");
+				pEffect->SetPos(pCrop->GetPos());
+
+				SAFE_RELEASE(pEffect);
+
+				((Crop*)pCrop)->Harvest();
+
+				((Crop*)pCrop)->SetItemType(IT_CROP);
+
+				pStage->SetBlock(OB_NONE, nullptr);
+			}
+		}
+
 		if (eType == IT_TOOL && m_iEnergy >= 5.f)
 		{
 			TOOL_TYPE eToolType = ((Tool*)pItem)->GetToolType();
@@ -301,7 +381,9 @@ void Player::Input(float fDeltaTime)
 					((CWeapon*)m_pWeapon)->Attack();
 
 				Collider* pCol = GetCollider("attack");
+
 				pCol->SetEnable(true);
+
 				if (m_tMoveDir.x == -1.f)
 				{
 					((ColliderRect*)pCol)->SetRect(-96.f, -32.f, -32.f, 32.f);
@@ -325,11 +407,15 @@ void Player::Input(float fDeltaTime)
 					((ColliderRect*)pCol)->SetRect(-48.f, 16.f, 48.f, 64.f);
 					m_pAnimation->ChangeClip("AttackDown");
 				}
+
 				SAFE_RELEASE(pCol);
 			}
 
 			else if (eToolType == TOOL_HOE)
 			{
+				if (m_pWeapon)
+					((CWeapon*)m_pWeapon)->Attack();
+
 				Tile* pTile = ((InGameScene*)m_pScene)->GetStage()->GetSelectedTile();
 
 				if (pTile)
@@ -341,10 +427,120 @@ void Player::Input(float fDeltaTime)
 						pTile->SetTileOption(TO_HOEDIRT);
 					}
 				}
+
+				if (m_tMoveDir.x == -1.f)
+				{
+					m_pAnimation->ChangeClip("FarmLeft");
+				}
+
+				if (m_tMoveDir.y == -1.f)
+				{
+					m_pAnimation->ChangeClip("FarmUp");
+				}
+
+				if (m_tMoveDir.x == 1.f)
+				{
+					m_pAnimation->ChangeClip("FarmRight");
+				}
+
+				if (m_tMoveDir.y == 1.f)
+				{
+					m_pAnimation->ChangeClip("FarmDown");
+				}
+			}
+
+			else if (eToolType == TOOL_EX)
+			{
+				if (m_pWeapon)
+					((CWeapon*)m_pWeapon)->Attack();
+
+				Tile* pTile = ((InGameScene*)m_pScene)->GetStage()->GetSelectedTile();
+
+				if (pTile)
+				{
+					Obj* pObj = pTile->GetObj();
+
+					if (pObj)
+					{
+						OBJ_BLOCK eBlock = pObj->GetBlock();
+
+						if (eBlock == OB_TREE)
+						{
+							((CTree*)pObj)->ExTree();
+						}
+					}
+
+				}
+
+				if (m_tMoveDir.x == -1.f)
+				{
+					m_pAnimation->ChangeClip("FarmLeft");
+				}
+
+				if (m_tMoveDir.y == -1.f)
+				{
+					m_pAnimation->ChangeClip("FarmUp");
+				}
+
+				if (m_tMoveDir.x == 1.f)
+				{
+					m_pAnimation->ChangeClip("FarmRight");
+				}
+
+				if (m_tMoveDir.y == 1.f)
+				{
+					m_pAnimation->ChangeClip("FarmDown");
+				}
+			}
+
+			else if (eToolType == TOOL_PIKEX)
+			{
+				if (m_pWeapon)
+					((CWeapon*)m_pWeapon)->Attack();
+
+				Tile* pTile = ((InGameScene*)m_pScene)->GetStage()->GetSelectedTile();
+
+				if (pTile)
+				{
+					Obj* pObj = pTile->GetObj();
+
+					if (pObj)
+					{
+						OBJ_BLOCK eBlock = pObj->GetBlock();
+
+						if (eBlock == OB_ROCK)
+						{
+							((Rock*)pObj)->Pick();
+						}
+					}
+				}
+
+				if (m_tMoveDir.x == -1.f)
+				{
+					m_pAnimation->ChangeClip("FarmLeft");
+				}
+
+				if (m_tMoveDir.y == -1.f)
+				{
+					m_pAnimation->ChangeClip("FarmUp");
+				}
+
+				if (m_tMoveDir.x == 1.f)
+				{
+					m_pAnimation->ChangeClip("FarmRight");
+				}
+
+				if (m_tMoveDir.y == 1.f)
+				{
+					m_pAnimation->ChangeClip("FarmDown");
+				}
 			}
 
 			else if (eToolType == TOOL_WATER)
 			{
+				if (m_pWeapon)
+					((CWeapon*)m_pWeapon)->Attack();
+
 				Tile* pTile = ((InGameScene*)m_pScene)->GetStage()->GetSelectedTile();
 
 				if (pTile)
@@ -353,12 +549,108 @@ void Player::Input(float fDeltaTime)
 
 					if (eOption == TO_HOEDIRT)
 					{
-						pTile->SetTileOption(TO_WATERDIRT);
+						if (((Tool*)pItem)->GetWater())
+						{
+							pTile->SetTileOption(TO_WATERDIRT);
+							((Tool*)pItem)->SetWater(false);
+						}
 					}
+
+					else if (eOption == TO_WATER)
+						((Tool*)pItem)->SetWater(true);
+				}
+
+				if (m_tMoveDir.x == -1.f)
+				{
+					m_pAnimation->ChangeClip("FarmLeft");
+				}
+
+				if (m_tMoveDir.y == -1.f)
+				{
+					m_pAnimation->ChangeClip("FarmUp");
+				}
+
+				if (m_tMoveDir.x == 1.f)
+				{
+					m_pAnimation->ChangeClip("FarmRight");
+				}
+
+				if (m_tMoveDir.y == 1.f)
+				{
+					m_pAnimation->ChangeClip("FarmDown");
 				}
 			}
 
 			m_iEnergy -= 5;
+
+			m_eAction = PA_ATTACK;
+		}
+
+		else if (eType == IT_SEED)
+		{
+			CROP_TYPE eCropType = ((Seed*)pItem)->GetCropType();
+
+			if (eCropType == CROP_POTATO)
+			{
+				Stage* pStage = ((InGameScene*)m_pScene)->GetStage();
+
+				Tile* pTile = pStage->GetSelectedTile();
+
+				if (pTile)
+				{
+					if (!pTile->GetObj())
+					{
+						TILE_OPTION eOption = pTile->GetTileOption();
+
+						if (eOption == TO_HOEDIRT || eOption == TO_WATERDIRT)
+						{
+							Obj* pPotato = CreateCloneObj("Potato", "Potato", SC_CURRENT, m_pLayer);
+
+							pTile->SetObj(pPotato);
+
+							POSITION tPos = pPotato->GetSize() * pPotato->GetPivot();
+
+							tPos.y = 0.f;
+
+							pPotato->SetPos(pTile->GetPos() + tPos);
+
+							((UIClockHand*)GET_SINGLE(Timer)->GetClockHand())->AddCrop(pPotato);
+
+							Collider* pCol = pPotato->GetCollider("CropBody");
+
+							pCol->AddCollisionFunction(CS_STAY, (Crop*)pPotato, &Crop::MousePress);
+
+							SAFE_RELEASE(pCol);
+
+							pStage->SetBlock(OB_CROP, pPotato);
+
+							SAFE_RELEASE(pPotato);
+
+							m_pInventory->DeleteItem();	//	인벤토리에서 아이템 삭제
+						}
+					}
+				}
+			}
+		}
+
+		else if (eType == IT_CROP)
+		{
+			bool bHarvest = ((Crop*)pItem)->IsHarvested();
+			CROP_TYPE eCropType = ((Crop*)pItem)->GetCropType();
+
+			if (bHarvest && eCropType == CROP_POTATO)
+			{
+				m_pAnimation->SetCurrentClip("Eat");
+				m_eAction = PA_EAT;
+
+				if (eCropType == CROP_POTATO)
+				{
+					m_iEnergy += 30;
+					m_iHP += 30;
+				}
+
+				m_pInventory->DeleteItem();
+			}
 		}
 	}
 
@@ -398,6 +690,7 @@ void Player::Input(float fDeltaTime)
 	if (KEYDOWN("12"))
 		m_pInventory->SetCursor(11);
 
+#ifdef _DEBUG
 	if (KEYPRESS("TimeFaster"))
 	{
 		float fScale = GET_SINGLE(Timer)->GetTimeScale();
@@ -417,6 +710,7 @@ void Player::Input(float fDeltaTime)
 	{
 		GET_SINGLE(Timer)->SetTimeScale(1.f);
 	}
+#endif
 }
 
 int Player::Update(float fDeltaTime)
@@ -452,7 +746,8 @@ int Player::Update(float fDeltaTime)
 	if (pItem)
 		eType = pItem->GetType();
 
-	if (!m_bWalk)
+	if (m_eAction == PA_IDLE || (m_eAction == PA_ATTACK && m_pAnimation->GetMotionEnd())
+		|| (m_eAction == PA_EAT && m_pAnimation->GetMotionEnd()))
 	{
 		if (m_tMoveDir.x > 0.f)
 		{
@@ -489,7 +784,12 @@ int Player::Update(float fDeltaTime)
 			else
 				m_pAnimation->SetCurrentClip("IdleUp");
 		}
+
+		m_eAction = PA_IDLE;
 	}
+
+	if (m_eAction == PA_WALK)
+		m_eAction = PA_IDLE;
 
 	return 0;
 }
@@ -497,7 +797,9 @@ int Player::Update(float fDeltaTime)
 int Player::LateUpdate(float fDeltaTime)
 {
 	FightObj::LateUpdate(fDeltaTime);
+
 	m_bWalk = false;
+
 	return 0;
 }
 
@@ -535,20 +837,26 @@ void Player::Render(HDC hDC, float fDeltaTime)
 
 				SAFE_RELEASE(pTexture);
 			}
-				
 		}
 	}
 
 	Stage* pStage = ((InGameScene*)GET_SINGLE(SceneManager)->GetScene())->GetStage();
+
 	int iIndex = pStage->GetTileIndex(m_tPos);
 
 	if (iIndex == -1)
 		return;
 
-	TILE_OPTION eOption = pStage->GetTile(iIndex)->GetTileOption();
+	Tile* pTile = pStage->GetTile(iIndex);
+
+	TILE_OPTION eOption = TO_NONE;
+
+	if(pTile)
+		eOption = pTile->GetTileOption();
 
 	POSITION	tPos = m_tPos - m_tSize * m_tPivot;
 	tPos -= tCamPos;
+
 #ifdef _DEBUG
 	if (KEYPRESS("Debug"))
 	{
@@ -576,6 +884,7 @@ Player * Player::Clone()
 void Player::Hit(Collider * pSrc, Collider * pDest, float fDeltaTime)
 {
 	string strDest = pDest->GetTag();
+
 	if(strDest =="MinionBullet")
 		m_iHP -= 5;
 
@@ -584,29 +893,32 @@ void Player::Hit(Collider * pSrc, Collider * pDest, float fDeltaTime)
 		m_bColl = true;
 	}
 
-	else if (strDest == "MinionBody")
+	else if (strDest == "MinionBody" || strDest == "SlimeBody" ||
+		strDest == "BugBody" )
 	{
-		m_iHP -= 5;
+		Obj* pObj = pDest->GetObj();
+
+		POSITION tPos = pObj->GetPos();
+
+		Hitted(((FightObj*)pObj)->GetAttack(), tPos);
 
 		m_pHPBar->SetValue((float)m_iHP);
+	}
 
-		POSITION tPos = pDest->GetObj()->GetPos();
+	if (strDest == "RockCrabBody")
+	{
+		Obj* pObj = pDest->GetObj();
 
-		tPos -= m_tPos;
+		bool bAwake = ((RockCrab*)pObj)->GetAwake();
 
-		tPos *= -1;
+		if (bAwake)
+		{
+			POSITION tPos = pObj->GetPos();
 
-		SetAngle(tPos);
-		MoveAngle(fDeltaTime * 40.f);
+			Hitted(((FightObj*)pObj)->GetAttack(), tPos);
 
-		Layer* pLayer = m_pScene->FindLayer("UI");
-
-		Obj* pNum = CreateCloneObj("NumSm", "Num", SC_CURRENT, pLayer);
-
-		((UINum*)pNum)->CreateNum(5);
-		pNum->SetPos(m_tPos.x, m_tPos.y - m_tSize.y * m_tPivot.y);
-
-		SAFE_RELEASE(pNum);
+			m_pHPBar->SetValue((float)m_iHP);
+		}
 	}
 }
 

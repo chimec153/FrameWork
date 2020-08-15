@@ -1,6 +1,7 @@
 #include "SceneManager.h"
 #include "InGameScene.h"
 #include "StartScene.h"
+#include "SceneShop.h"
 #include "../Collider/CollisionManager.h"
 #include "..//Object/UIPanel.h"
 

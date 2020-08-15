@@ -26,9 +26,10 @@ Obj::Obj()	:
 	m_tPivot(),
 	m_pTexture(NULL),
 	m_pAnimation(NULL),
-	m_cAlpha(255),
-	m_bEnableCollide(true),
-	m_bAlphaOn(false)
+	m_cAlpha(0),
+	m_bAlphaOn(false),
+	m_eBlock(OB_NONE),
+	m_bEnableCollide(true)
 {
 }
 
@@ -252,7 +253,8 @@ void Obj::SetTexture(const string& strKey, const TCHAR* pFileName, int iCount, c
 
 void Obj::SetColorKey(unsigned char r, unsigned char g, unsigned char b)
 {
-	m_pTexture->SetColorKey(r, g, b);
+	if(m_pTexture)
+		m_pTexture->SetColorKey(r, g, b);
 }
 
 void Obj::Input(float fDeltaTime)
@@ -383,6 +385,7 @@ void Obj::Render(HDC hDC, float fDeltaTime)
 		}
 	}
 
+#ifdef _DEBUG
 	if (bInClient)
 	{
 		list<Collider*>::iterator	iter;
@@ -406,6 +409,7 @@ void Obj::Render(HDC hDC, float fDeltaTime)
 				++iter;
 		}
 	}
+#endif
 }
 
 void Obj::SaveFromPath(const char * pFileName, const string & strPathKey)
@@ -436,6 +440,7 @@ void Obj::SaveFromFullPath(const char * pFullPath)
 void Obj::Save(FILE * pFile)
 {
 	size_t iLength = m_strTag.length();
+
 	fwrite(&iLength, sizeof(iLength), 1, pFile);
 	fwrite(m_strTag.c_str(), 1, iLength, pFile);
 	fwrite(&m_blsPhysics, 1, 1, pFile);
@@ -470,16 +475,18 @@ void Obj::Save(FILE * pFile)
 	}
 
 	bool	bAnimation = false;
+
 	if (m_pAnimation)
 	{
 		bAnimation = true;
 		fwrite(&bAnimation, 1, 1, pFile);
 		m_pAnimation->Save(pFile);
 	}
+
 	else
-	{
 		fwrite(&bAnimation, 1, 1, pFile);
-	}
+
+	fwrite(&m_eBlock, sizeof(m_eBlock), 1, pFile);
 }
 
 void Obj::LoadFromPath(const char * pFileName, const string & strPathKey)
@@ -487,8 +494,10 @@ void Obj::LoadFromPath(const char * pFileName, const string & strPathKey)
 	const char* pPath = GET_SINGLE(PathManager)->FindPathMultiByte(DATA_PATH);
 
 	string	strFullPath;
+
 	if (pPath)
 		strFullPath = pPath;
+
 	strFullPath += pFileName;
 
 	LoadFromFullPath(strFullPath.c_str());
@@ -511,10 +520,13 @@ void Obj::Load(FILE * pFile)
 {
 	size_t iLength = 0;
 	char	strText[MAX_PATH] = {};
+
 	fread(&iLength, sizeof(size_t), 1, pFile);
 	fread(strText, 1, iLength, pFile);
+
 	strText[iLength] = 0;
 	m_strTag = strText;
+
 	fread(&m_blsPhysics, 1, 1, pFile);
 	fread(&m_tPos, sizeof(m_tPos), 1, pFile);
 	fread(&m_tSize, sizeof(m_tSize), 1, pFile);
@@ -523,11 +535,12 @@ void Obj::Load(FILE * pFile)
 
 	bool	bTexture = false;
 	fread(&bTexture, 1, 1, pFile);
+
 	SAFE_RELEASE(m_pTexture);
+
 	if (bTexture)
-	{
 		m_pTexture = GET_SINGLE(ResourcesManager)->LoadTexture(pFile);
-	}
+
 
 	iLength = 0;
 
@@ -569,13 +582,17 @@ void Obj::Load(FILE * pFile)
 
 	bool	bAnimation = false;
 	fread(&bAnimation, 1, 1, pFile);
+
 	SAFE_RELEASE(m_pAnimation);
+
 	if (bAnimation)
 	{
 		m_pAnimation = new Animation;
 		m_pAnimation->Init();
 		m_pAnimation->Load(pFile);
 	}
+
+	fread(&m_eBlock, sizeof(m_eBlock), 1, pFile);
 }
 
 void Obj::SaveToVector(vector<COLORREF>& vecColor, int iFrame, int iStart, POSITION tPos)

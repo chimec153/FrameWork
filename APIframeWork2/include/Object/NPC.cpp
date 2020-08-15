@@ -1,0 +1,119 @@
+#include "NPC.h"
+#include "../Animation/Animation.h"
+#include "../Collider/ColliderRect.h"
+#include "../Core/Input.h"
+#include "../Scene/Scene.h"
+#include "Player.h"
+#include "UIInventory.h"
+
+NPC::NPC()
+{
+}
+
+NPC::NPC(const NPC& npc)	:
+	FightObj(npc)
+{
+}
+
+NPC::~NPC()
+{
+}
+
+bool NPC::Init()
+{
+	SetSize(32.f, 64.f);
+	SetPivot(0.5f, 0.5f);
+
+	Animation* pAni = CreateAnimation("NPCAni");
+
+	AddAnimationClip("HarveyIdleDown", AT_ATLAS, AO_LOOP, 1.f, 4, 13, 0, 0, 1, 1, 1.f, "Harvey", TEXT("Characters\\NPC\\Harvey.bmp"));
+	SetAnimationClipColorKey("HarveyIdleDown", 255, 255, 255);
+
+	SAFE_RELEASE(pAni);
+
+	ColliderRect* pRC = AddCollider<ColliderRect>("NPCBody");
+
+	pRC->SetRect(-16.f, -32.f, 16.f, 32.f);
+
+	pRC->AddCollisionFunction(CS_ENTER, this, &NPC::ColEnter);
+	pRC->AddCollisionFunction(CS_STAY, this, &NPC::CollStay);
+	pRC->AddCollisionFunction(CS_LEAVE, this, &NPC::CollStay);
+
+	SAFE_RELEASE(pRC);
+
+	return true;
+}
+
+int NPC::Update(float fDeltaTime)
+{
+	FightObj::Update(fDeltaTime);
+
+	return 0;
+}
+
+int NPC::LateUpdate(float fDeltaTime)
+{
+	FightObj::LateUpdate(fDeltaTime);
+
+	return 0;
+}
+
+void NPC::Collision(float fDeltaTime)
+{
+	FightObj::Collision(fDeltaTime);
+}
+
+void NPC::Render(HDC hDC, float fDeltaTime)
+{
+	FightObj::Render(hDC, fDeltaTime);
+}
+
+NPC* NPC::Clone()
+{
+	return new NPC(*this);
+}
+
+void NPC::ColEnter(Collider* pSrc, Collider* pDest, float fDeltaTime)
+{
+	string strDest = pDest->GetTag();
+
+	if (strDest == "Mouse")
+	{
+		if (KEYDOWN("MouseLButton"))
+		{
+
+		}
+	}
+}
+
+void NPC::CollStay(Collider* pSrc, Collider* pDest, float fDeltaTime)
+{
+	string strDest = pDest->GetTag();
+
+	if (strDest == "Mouse")
+	{
+		if (KEYDOWN("MouseLButton"))
+		{
+			Player* pPlayer = (Player*)m_pScene->GetPlayer();
+
+			if (pPlayer)
+			{
+				UIInventory* pInven = pPlayer->GetInven();
+
+				if (pInven)
+					pInven->CreateShopPanel();
+
+				SAFE_RELEASE(pPlayer);
+			}
+		}
+	}
+}
+
+void NPC::CollEnd(Collider* pSrc, Collider* pDest, float fDeltaTime)
+{
+	string strDest = pDest->GetTag();
+
+	if (strDest == "Mouse")
+	{
+	}
+}

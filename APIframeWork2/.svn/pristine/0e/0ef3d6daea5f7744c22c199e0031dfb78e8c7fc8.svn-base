@@ -1,0 +1,68 @@
+#include "SceneHome.h"
+#include "../Object/Stage.h"
+#include "../Core/PathManager.h"
+#include "SceneManager.h"
+#include "InGameScene.h"
+#include "../Collider/ColliderRect.h"
+
+SceneHome::SceneHome()	:
+	m_pStage(nullptr)
+{
+}
+
+SceneHome::~SceneHome()
+{
+	SAFE_RELEASE(m_pStage);
+}
+
+bool SceneHome::Init()
+{
+	Layer* pStageLayer = FindLayer("Stage");
+
+	m_pStage = Obj::CreateObj<Stage>("Stage", pStageLayer);
+
+	m_pStage->CreateTile(100, 100, 16, 16, "Tiles", L"TileSheets\\Flooring.bmp");
+
+	char	strFileName[MAX_PATH] = {};
+
+	const char* strRootPath = GET_SINGLE(PathManager)->FindPathMultiByte(DATA_PATH);
+
+	if (strRootPath)
+		strcat_s(strFileName, strRootPath);
+
+	strcat_s(strFileName, "home.tmp");
+
+	FILE* pLoadFile = nullptr;
+
+	fopen_s(&pLoadFile, strFileName, "rb");
+
+	if (pLoadFile)
+	{
+		if (m_pStage)
+			m_pStage->Load(pLoadFile);
+
+		Layer* pLayer = FindLayer("Default");
+
+		if (pLayer)
+			pLayer->Load(pLoadFile);
+
+		fclose(pLoadFile);
+	}	//	3, 10 out
+
+	if (!Scene::Init(POSITION(32.f * 3.5f, 32.f * 9.f)))
+		return false;
+
+	ColliderRect* pPortal = m_pStage->AddCollider<ColliderRect>("OutPortal");
+
+	pPortal->SetRect(32.f * 3.f, 32.f * 11.f, 32.f * 4.f, 32.f * 12.f);
+	pPortal->AddCollisionFunction(CS_ENTER, this, &SceneHome::OutPortalCol);
+
+	SAFE_RELEASE(pPortal);
+
+	return true;
+}
+
+void SceneHome::OutPortalCol(Collider* pSrc, Collider* pDest, float fTime)
+{
+	GET_SINGLE(SceneManager)->CreateScene<InGameScene>(SC_NEXT);
+}

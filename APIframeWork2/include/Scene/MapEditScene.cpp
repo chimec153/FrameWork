@@ -21,6 +21,8 @@
 #include "..//Object/Building.h"
 #include "..//Object/UITilePanel.h"
 #include "../MapEditDlg.h"
+#include "../Object/Crop.h"
+#include "../Object/Rock.h"
 
 TCHAR MapEditScene::m_strText[MAX_PATH] = {};
 
@@ -28,7 +30,6 @@ static wchar_t* charToWChar(const char* text);
 
 MapEditScene::MapEditScene()	:
 	m_pTileUI(nullptr),
-	m_pStage(nullptr),
 	m_iEditTileTex(0),
 	m_eEditOption((TILE_OPTION)0),
 	m_pPanel(nullptr),
@@ -45,7 +46,6 @@ MapEditScene::~MapEditScene()
 	Safe_Release_VecList(m_vecTileTex);
 	SAFE_RELEASE(m_pStage);
 	SAFE_RELEASE(m_pTileUI);
-	Safe_Delete_VecList(m_vecstrProto);
 	SAFE_RELEASE(m_pPanel);
 	SAFE_DELETE(m_pMapEditDlg);
 
@@ -54,6 +54,7 @@ MapEditScene::~MapEditScene()
 bool MapEditScene::Init()
 {
 	GET_SINGLE(Camera)->SetWorldResolution(6400,6400);
+
 	SetEditMode(true);
 
 	Texture* pTexture = GET_SINGLE(ResourcesManager)->LoadTexture("Tile2", TEXT("Maps\\walls_and_floors.bmp"));
@@ -68,7 +69,9 @@ bool MapEditScene::Init()
 	Texture*	pNoneTex = GET_SINGLE(ResourcesManager)->LoadTexture(
 		"TileNone", L"TileSheets\\Move.bmp");
 	pNoneTex->SetColorKey(0, 32, 0);
+
 	SAFE_RELEASE(pNoneTex);
+
 	Texture*	pNoMoveTex = GET_SINGLE(ResourcesManager)->LoadTexture(
 		"TileNoMove", L"TileSheets\\Nomove.bmp");
 	pNoMoveTex->SetColorKey(0, 32, 0);
@@ -83,110 +86,6 @@ bool MapEditScene::Init()
 	m_pStage->SetTexture("Back", TEXT("AnimationUI\\BackGround.bmp"));
 
 	Layer* pLayer = FindLayer("UI");
-
-	m_pPanel = Obj::CreateObj<UITilePanel>("Panel", pLayer);
-	m_pPanel->SetSize(400.f, 400.f);
-	m_pPanel->SetTexture("panel", L"UI\\Panel.bmp");
-	m_pPanel->SetColorKey(0, 0, 0);
-	m_pPanel->SetPos(GETRESOLUTION.iW * 2.f / 3.f, GETRESOLUTION.iH / 8.f);
-
-	for (int j = 0; j < 8; ++j)	//	타일 버튼을 8 x 8 크기로 판넬위에 깔아놓는다.
-	{
-		for (int i = 0; i < 8; ++i)
-		{
-			CHAR strNum[32] = {};
-
-			sprintf_s(strNum, "%d", j * 8 + i);
-
-			CHAR strName[32] = {};
-
-			strcat(strName, "TileButton");
-			strcat(strName, strNum);
-
-			UIButton* pButton = Obj::CreateObj<UIButton>(strName, pLayer);
-
-			pButton->SetSize(32.f, 32.f);
-			pButton->SetParent(m_pPanel);
-			pButton->SetPos(40.f * i + 32.f + GETRESOLUTION.iW * 2.f / 3.f, 40.f * j + 32.f + GETRESOLUTION.iH / 8.f);			
-
-			pButton->SetTexture("Tiles");
-
-			POSITION tOffset = {};
-			tOffset.x = 32.f * ((j * 8 + i) % 4) + 128.f * ((j * 8 + i) / 16) - 512.f * ((j * 8 + i) / 64);
-			tOffset.y = 32.f * ((j * 8 + i) / 4) - 128.f * ((j * 8 + i) / 16) + 128.f * ((j * 8 + i) / 64);
-
-			pButton->SetImageOffset(tOffset);
-
-			pButton->SetCallback(this, &MapEditScene::TileButton0);
-			pButton->SetIndex(j * 8 + i);
-			ColliderRect* pRC = (ColliderRect*)pButton->GetCollider("ButtonBody");
-			pRC->SetRect(0.f, 0.f, 32.f, 32.f);
-			SAFE_RELEASE(pRC);
-
-			((UITilePanel*)m_pPanel)->AddButton(pButton);
-			SAFE_RELEASE(pButton);
-		}
-	}
-
-	UIButton* pNextButton = Obj::CreateObj<UIButton>("TileNextButton", pLayer);
-
-	pNextButton->SetSize(24.f, 24.f);
-	pNextButton->SetParent(m_pPanel);
-	pNextButton->SetPos(180.f + GETRESOLUTION.iW * 2.f / 3.f, 360.f + GETRESOLUTION.iH / 8.f);
-	pNextButton->SetTexture("Mouse");
-	pNextButton->SetImageOffset(730.f, 990.f);
-	pNextButton->SetCallback(this, &MapEditScene::TileNextButton);
-
-	ColliderRect* pRC = (ColliderRect*)pNextButton->GetCollider("ButtonBody");
-	pRC->SetRect(0.f, 0.f, 24.f, 24.f);
-
-	SAFE_RELEASE(pRC);
-	SAFE_RELEASE(pNextButton);
-
-	UIButton* pPrevButton = Obj::CreateObj<UIButton>("TilePrevButton", pLayer);
-
-	pPrevButton->SetSize(24.f, 24.f);
-	pPrevButton->SetParent(m_pPanel);
-	pPrevButton->SetPos(140.f + GETRESOLUTION.iW * 2.f / 3.f, 360.f + GETRESOLUTION.iH / 8.f);
-	pPrevButton->SetTexture("Mouse");
-	pPrevButton->SetImageOffset(704.f, 990.f);
-	pPrevButton->SetCallback(this, &MapEditScene::TilePrevButton);
-
-	ColliderRect* pPrevRC = (ColliderRect*)pPrevButton->GetCollider("ButtonBody");
-	pPrevRC->SetRect(0.f, 0.f, 24.f, 24.f);
-
-	SAFE_RELEASE(pPrevRC);
-	SAFE_RELEASE(pPrevButton);
-
-	UIButton* pUpButton = Obj::CreateObj<UIButton>("TileUpButton", pLayer);
-
-	pUpButton->SetSize(24.f, 24.f);
-	pUpButton->SetParent(m_pPanel);
-	pUpButton->SetPos(360.f + GETRESOLUTION.iW * 2.f / 3.f, 320.f + GETRESOLUTION.iH / 8.f);
-	pUpButton->SetTexture("Mouse");
-	pUpButton->SetImageOffset(842.f, 918.f);
-	pUpButton->SetCallback(this, &MapEditScene::TileUpButton);
-
-	ColliderRect* pUpRC = (ColliderRect*)pUpButton->GetCollider("ButtonBody");
-	pUpRC->SetRect(0.f, 0.f, 24.f, 24.f);
-
-	SAFE_RELEASE(pUpRC);
-	SAFE_RELEASE(pUpButton);
-
-	UIButton* pDownButton = Obj::CreateObj<UIButton>("TileDownButton", pLayer);
-
-	pDownButton->SetSize(24.f, 24.f);
-	pDownButton->SetParent(m_pPanel);
-	pDownButton->SetPos(360.f + GETRESOLUTION.iW * 2.f / 3.f, 360.f + GETRESOLUTION.iH / 8.f);
-	pDownButton->SetTexture("Mouse");
-	pDownButton->SetImageOffset(842.f, 944.f);
-	pDownButton->SetCallback(this, &MapEditScene::TileDownButton);
-
-	ColliderRect* pDownRC = (ColliderRect*)pDownButton->GetCollider("ButtonBody");
-	pDownRC->SetRect(0.f, 0.f, 24.f, 24.f);
-
-	SAFE_RELEASE(pDownRC);
-	SAFE_RELEASE(pDownButton);
 
 	m_pTileUI = Obj::CreateObj<UIPanel>("TilePanel",
 		pLayer);
@@ -203,7 +102,6 @@ bool MapEditScene::Init()
 	m_vecTileTex.push_back(pTex);
 	m_iEditTileTex = 0;
 	m_eEditOption = TO_NONE;
-
 
 	//GET_SINGLE(SoundManager)->LoadSound("system1", false, "PPong.mp3");
 	return true;
@@ -250,21 +148,28 @@ void MapEditScene::Input(float fDeltaTime)
 	if (GetAsyncKeyState(VK_F3) & 0x8000)
 	{
 		m_eTem = TEM_OBJECT;
+
 		size_t iSize = m_vecstrProto.size();
+
 		if (iSize <= m_iEditTileTex)
 			m_iEditTileTex = (int)iSize - 1;
+
 		m_pTileUI->SetEnable(false);
+
 		SAFE_RELEASE(m_pTileUI);
+
 		Layer* pLayer = FindLayer("UI");
-		m_pTileUI = Obj::CreateCloneObj(m_vecstrProto[0], "TreeUI", GetSceneType(), pLayer);
+
+		m_pTileUI = Obj::CreateCloneObj(m_vecstrProto[2], "TreeUI", GetSceneType(), pLayer);
 		m_pTileUI->SetPos(GETRESOLUTION.iW * 2.f / 3.f, GETRESOLUTION.iH / 3.f - 8.f);
 	}
 	if (KEYDOWN("PrevScene"))
 	{
 		m_pMapEditDlg->Clear();
-		GET_SINGLE(SceneManager)->CreateScene<StartScene>(SC_NEXT);
-		GET_SINGLE(Camera)->SetPos(0.f, 0.f);
 
+		GET_SINGLE(SceneManager)->CreateScene<StartScene>(SC_NEXT);
+
+		GET_SINGLE(Camera)->SetPos(0.f, 0.f);
 	}
 
 	if (KEYDOWN("TileSub"))	//	1번 키
@@ -335,22 +240,48 @@ void MapEditScene::Input(float fDeltaTime)
 
 	if (hActiveWnd == hWnd)
 	{
-		if (KEYPRESS("MouseLButton"))
+		BRUSH_MODE eMode = (BRUSH_MODE)m_pMapEditDlg->GetBrushMode();
+
+		if (KEYDOWN("CtrlLButton"))
 		{
-			if (!((UITilePanel*)m_pPanel)->GetMouseOn())
+
+		}
+
+		else if (KEYDOWN("MouseLButton"))
+		{
+			if (eMode == BM_RECT)
 			{
 				POSITION	tMouseWorldPos = MOUSEWORLDPOS;
-				POSITION tOffset = {};
-				Texture* pTex = nullptr;
-
-				Layer* pLayer = FindLayer("Default");
 
 				int iBrush = m_pMapEditDlg->GetBrush();
-				int iType = m_pMapEditDlg->GetType();
 
 				if (iBrush == TEM_TEXTURE)
 				{
+					m_tStartPos = tMouseWorldPos;
+				}
+			}
+		}
 
+		if (KEYPRESS("CtrlLButton"))
+		{
+
+		}
+
+		else if (KEYPRESS("MouseLButton"))
+		{
+			POSITION	tMouseWorldPos = MOUSEWORLDPOS;
+			POSITION tOffset = {};
+			Texture* pTex = nullptr;
+
+			Layer* pLayer = FindLayer("Default");
+
+			int iBrush = m_pMapEditDlg->GetBrush();
+			int iType = m_pMapEditDlg->GetType();
+
+			if (iBrush == TEM_TEXTURE)
+			{
+				if (eMode == BM_PEN)
+				{
 					m_pStage->ChangeTileTexture(tMouseWorldPos, m_pMapEditDlg->GetTexture(), m_iEditLayer);
 
 					Tile* pTile = m_pStage->GetTile(tMouseWorldPos);
@@ -373,9 +304,12 @@ void MapEditScene::Input(float fDeltaTime)
 
 						else
 						{
-							for (float fY = tTileStart.y; fY <= tTileEnd.y; fY += pTile->GetSize().y)
+							float fTileSizeX = pTile->GetSize().x;
+							float fTileSizeY = pTile->GetSize().y;
+
+							for (float fY = tTileStart.y; fY <= tTileEnd.y; fY += fTileSizeY)
 							{
-								for (float fX = tTileStart.x; fX <= tTileEnd.x; fX += pTile->GetSize().x)
+								for (float fX = tTileStart.x; fX <= tTileEnd.x; fX += fTileSizeX)
 								{
 									POSITION tOffSet = {};
 
@@ -399,73 +333,122 @@ void MapEditScene::Input(float fDeltaTime)
 						}
 					}
 				}
+			}
 
-				else if (iBrush == TEM_OPTION)
-				{
-					m_pStage->ChangeTileOption(tMouseWorldPos, (TILE_OPTION)iType);
-				}
+			else if (iBrush == TEM_OPTION)
+			{
+				m_pStage->ChangeTileOption(tMouseWorldPos, (TILE_OPTION)iType);
+			}
 
-				else if (iBrush == TEM_OBJECT)
+			else if (iBrush == TEM_OBJECT)
+			{
+				Tile* pTile = m_pStage->GetTile(tMouseWorldPos);
+
+				if (pTile)
 				{
-					int iIndex = m_pStage->GetTileIndex(tMouseWorldPos);
-					if (iIndex != -1)
+					Obj* pObj = pTile->GetObj();
+
+					if (!pObj)	//	블록을 검사하고 블록에 아무 오브젝트도 없을 경우이다.
 					{
-						if (!m_pStage->GetTile(iIndex)->GetObj())	//	블록을 검사하고 블록에 아무 오브젝트도 없을 경우이다.
+						size_t iSize = m_vecstrProto.size();
+
+						if (m_iEditTileTex < iSize)
 						{
-							size_t iSize = m_vecstrProto.size();
+							Obj* pTree = Obj::CreateCloneObj(m_vecstrProto[m_iEditTileTex], "Tree",
+								GetSceneType(), pLayer);
 
-							if (m_iEditTileTex < iSize)
+							int iTileSizeX = m_pStage->GetTileSizeX();
+							int iTileSizeY = m_pStage->GetTileSizeY();
+
+							POSITION tPos = pTile->GetPos();
+
+							if (pTree)
 							{
-								Obj* pTree = Obj::CreateCloneObj(m_vecstrProto[m_iEditTileTex], "Tree",
-									GetSceneType(), pLayer);
+								m_pStage->SetBlock(pTile, pTree->GetBlock(), pTree);
 
-								int iTileNumX = m_pStage->GetTileNumX();
-								int iTileSizeX = m_pStage->GetTileSizeX();
-								int iTileSizeY = m_pStage->GetTileSizeY();
-								pTree->SetPos(iIndex % iTileNumX * iTileSizeX + iTileSizeX / 2.f,
-									iIndex / iTileNumX * iTileSizeY + iTileSizeY / 2.f);
 								SAFE_RELEASE(pTree);
 							}
+
+							pTile->SetTileOption(TO_NOMOVE);
 						}
 					}
 				}
-				/*
-				switch (m_eTem)
+			}
+		}
+
+		if (KEYUP("CtrlLButton"))
+		{
+
+		}
+
+		else if (KEYUP("MouseLButton"))
+		{
+			if (eMode == BM_RECT)
+			{
+				POSITION	tMouseWorldPos = MOUSEWORLDPOS;
+
+				int iBrush = m_pMapEditDlg->GetBrush();
+
+				if (iBrush == TEM_TEXTURE)
 				{
-				case TEM_TEXTURE:
-					m_pStage->ChangeTileImageOffset(tMouseWorldPos, SetTileTexture(), m_iEditLayer);
-					if (m_iThema == 0)
-					{
-						pTex = GET_SINGLE(ResourcesManager)->FindTexture("Tiles");
-						m_pStage->ChangeTileTexture(tMouseWorldPos, pTex, m_iEditLayer);
-						SAFE_RELEASE(pTex);
-					}
-					else if (m_iThema == 1)
-					{
-						pTex = GET_SINGLE(ResourcesManager)->FindTexture("Tile2");
-						m_pStage->ChangeTileTexture(tMouseWorldPos, pTex, m_iEditLayer);
-						SAFE_RELEASE(pTex);
-					}
-					else if (m_iThema == 2)
-					{
-						pTex = GET_SINGLE(ResourcesManager)->FindTexture("springoutdoor");
-						m_pStage->ChangeTileTexture(tMouseWorldPos, pTex, m_iEditLayer);
-						SAFE_RELEASE(pTex);
-					}
-					else if (m_iThema == 3)
-					{
-						pTex = GET_SINGLE(ResourcesManager)->FindTexture("mine");
-						m_pStage->ChangeTileTexture(tMouseWorldPos, pTex,m_iEditLayer);
-						SAFE_RELEASE(pTex);
-					}
-					break;
-				case TEM_OPTION:
-					m_pStage->ChangeTileOption(tMouseWorldPos,
-						m_eEditOption);
-					break;
-				case TEM_OBJECT:
-					break;
-				}*/
+						m_pStage->ChangeTileTexture(tMouseWorldPos, m_pMapEditDlg->GetTexture(), m_iEditLayer);
+
+						POSITION tPos = m_pMapEditDlg->GetStartPos();
+
+						int iTileSizeX = m_pStage->GetTileSizeX();
+						int iTileSizeY = m_pStage->GetTileSizeY();
+
+						int iTileNumX = m_pStage->GetTileNumX();
+						int iTileNumY = m_pStage->GetTileNumY();
+
+						int iStartIndexX = (int)(m_tStartPos.x / iTileSizeX);
+						int iStartIndexY = (int)(m_tStartPos.y / iTileSizeY);
+
+						int iEndIndexX = (int)(tMouseWorldPos.x / iTileSizeX);
+						int iEndIndexY = (int)(tMouseWorldPos.y / iTileSizeY);
+
+						if (iStartIndexX > iEndIndexX)
+						{
+							int iTemp = iStartIndexX;
+							iStartIndexX = iEndIndexX;
+							iEndIndexX = iTemp;
+						}
+
+						if (iStartIndexY > iEndIndexY)
+						{
+							int iTemp = iStartIndexY;
+							iStartIndexY = iEndIndexY;
+							iEndIndexY = iTemp;
+						}
+
+						for (int i = iStartIndexY; i <= iEndIndexY; ++i)
+						{
+							for (int j = iStartIndexX; j <= iEndIndexX; ++j)
+							{
+								if (j >= iTileNumX || j < 0 ||
+									i >= iTileNumY || i < 0)
+									continue;
+
+								POSITION tOffSet = {};
+
+								tOffSet.x = (float)(j * iTileSizeX);
+								tOffSet.y = (float)(i * iTileSizeY);
+
+								m_pStage->ChangeTileTexture(tOffSet, m_pMapEditDlg->GetTexture(), m_iEditLayer);
+
+								Tile* pTile = m_pStage->GetTile(iTileNumX * i + j);
+
+								if (pTile)
+								{
+									if (m_iEditLayer == 0)
+										pTile->SetImageOffset(tPos);
+
+									else
+										pTile->SetUpperImageOffset(tPos);
+								}
+							}
+						}
+				}
 			}
 		}
 	}
@@ -653,133 +636,6 @@ void MapEditScene::Render(HDC hDC, float fDeltaTime)
 	TextOut(hDC, 0, 100, strDebug, lstrlen(strDebug));
 
 #endif
-}
-
-//	텍스트 파일로 읽어온 텍스쳐 정보로부터 텍스쳐를 등록하는 함수이다.
-void MapEditScene::LoadFile()
-{
-	FILE* pFile = nullptr;
-
-	const wchar_t* pFileName = TEXT("objdata.txt");
-
-	const wchar_t* pPath = GET_SINGLE(PathManager)->FindPath(DATA_PATH);
-	wchar_t pPathDest[MAX_PATH] = {};
-
-	wcscat(pPathDest, pPath);
-
-	wcscat(pPathDest, pFileName);
-
-	_bstr_t b(pPathDest);
-	const char* strPath = b;
-
-	fopen_s(&pFile, strPath, "rt");
-
-	if (!pFile)
-		return;
-
-	int iCount = 0;
-
-	char cLine[256] = {};
-
-	fgets(cLine, 256, pFile);
-
-	iCount = atoi(cLine);
-	m_vecstrProto.reserve(iCount);
-
-	for (int i = 0; i < iCount; ++i)
-	{
-		fgets(cLine, 256, pFile);
-		cLine[strlen(cLine) - 1] = 0;
-		Obj* pTree = Scene::CreateProtoType<CTree>(cLine, GetSceneType());
-
-		char* strProto = new char[MAX_PATH];
-		strcpy_s(strProto, MAX_PATH, cLine);
-		m_vecstrProto.push_back(strProto);
-
-		fgets(cLine, 256, pFile);
-		char* pContext = nullptr;
-		char* pResult = strtok_s(cLine, ", ", &pContext);
-
-		pContext[strlen(pContext) - 1] = 0;
-		std::string str(pContext);
-		std::wstring ws;
-		ws.assign(str.begin(), str.end());
-		const wchar_t* usern = ws.c_str();
-
-		Texture* pTex = GET_SINGLE(ResourcesManager)->LoadTexture(
-			pResult, usern);
-		((CTree*)pTree)->SetTreeTexture(pTex);
-		pTree->SetTexture(pTex);
-
-
-		fgets(cLine, 256, pFile);
-		pResult = strtok_s(cLine, ", ", &pContext);
-
-		int iRed = atoi(pResult);
-		pResult = strtok_s(nullptr, ", ", &pContext);
-
-		int iGreen = atoi(pResult);
-		int iBlue = atoi(pContext);
-		pTree->SetColorKey(iRed, iGreen, iBlue);
-		pTex->SetColorKey(iRed, iGreen, iBlue);
-
-		fgets(cLine, 256, pFile);
-		pResult = strtok_s(cLine, ", ", &pContext);
-
-		float iSize_x = (float)atof(pResult);
-		float iSize_y = (float)atof(pContext);
-		pTree->SetSize(iSize_x, iSize_y);
-
-		fgets(cLine, 256, pFile);
-		pResult = strtok_s(cLine, ", ", &pContext);
-		pTree->SetPivot((float)atof(pResult), (float)atof(pContext));
-
-		fgets(cLine, 256, pFile);
-		pResult = strtok_s(cLine, ", ", &pContext);
-		pTree->SetImageOffset((float)atof(pResult), (float)atof(pContext));
-
-		fgets(cLine, 256, pFile);
-		pResult = strtok_s(cLine, ", ", &pContext);
-		((CTree*)pTree)->SetTreeSize((float)atof(pResult), (float)atof(pContext));
-
-		fgets(cLine, 256, pFile);
-		pResult = strtok_s(cLine, ", ", &pContext);
-		((CTree*)pTree)->SetTreePivot((float)atof(pResult), (float)atof(pContext));
-
-		fgets(cLine, 256, pFile);
-		pResult = strtok_s(cLine, ", ", &pContext);
-		((CTree*)pTree)->SetTreeOffset((float)atof(pResult), (float)atof(pContext));
-
-		fgets(cLine, 256, pFile);
-		int iCollSize = atoi(cLine);
-
-		for (int j = 0; j < iCollSize; ++j)
-		{
-			fgets(cLine, 256, pFile);
-			cLine[strlen(cLine) - 1] = 0;
-			ColliderRect* pRC = pTree->AddCollider<ColliderRect>(cLine);
-
-			fgets(cLine, 256, pFile);
-			pResult = strtok_s(cLine, ", ", &pContext);
-			float fLeft = (float)atof(pResult);
-
-			pResult = strtok_s(nullptr, ", ", &pContext);
-			float fTop = (float)atof(pResult);
-
-			pResult = strtok_s(nullptr, ", ", &pContext);
-			float fRight = (float)atof(pResult);
-
-			pResult = strtok_s(nullptr, ", ", &pContext);
-			float fBottom = (float)atof(pResult);
-
-			pRC->SetRect(fLeft, fTop, fRight, fBottom);
-			SAFE_RELEASE(pRC);
-		}
-
-		SAFE_RELEASE(pTree);
-	}
-
-	fclose(pFile);
 }
 
 INT_PTR MapEditScene::DlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)

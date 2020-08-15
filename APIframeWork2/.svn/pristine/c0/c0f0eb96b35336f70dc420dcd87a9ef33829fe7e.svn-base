@@ -1,0 +1,66 @@
+#pragma once
+#include "UI.h"
+class UIInventory :
+	public UI
+{
+private:
+	friend class Obj;
+	friend class Scene;
+
+private:
+	UIInventory();
+	~UIInventory();
+
+private:
+	vector<class Item*>			m_vecItem;
+	int							m_iCount;
+	int							m_iCursor;
+	class Texture*				m_pCursorTex;
+	vector<class UIPanel*>		m_vecPanel;
+	class UIPanel*				m_pBackPanel;
+	int							m_iCountX;
+	int							m_iCountY;
+	class UIPanel*				m_pInventoryPanel;
+	vector<class UIPanel*>		m_vecInvenPanel;
+
+public:
+	class Item* GetItem(int iIndex)	const
+	{
+		return m_vecItem[iIndex];
+	}
+
+	class Item* GetItem()	const
+	{
+		return m_vecItem[m_iCursor];
+	}
+
+	void AddItem(class Item* pItem);
+	void DeleteItem();
+
+	void SetCursor(int iCursor)
+	{
+		m_iCursor = iCursor;
+	}
+
+	void AddCursor(int iNum)
+	{
+		m_iCursor += iNum;
+	}
+
+public:
+	virtual bool Init();
+	virtual void Input(float fDeltaTime);
+	virtual int Update(float fDeltaTime);
+	virtual int LateUpdate(float fDeltaTime);
+	virtual void Collision(float fDeltaTime);
+	virtual void Render(HDC hDC, float fDeltaTime);
+	virtual UIInventory* Clone();
+
+public:
+	void CreateInfoPanel(int iCountX, int iCountY);
+	void InfoPanelOn(POSITION tPos);
+	void InfoPanelUpdate(POSITION tPos);
+	void InfoPanelOff();
+	void CreateInventory();
+};
+

@@ -27,14 +27,12 @@ int FarmEffect::Update(float fDeltaTime)
 
 int FarmEffect::LateUpdate(float fDeltaTime)
 {
-	MoveObj::LateUpdate(fDeltaTime);
 
 	return 0;
 }
 
 void FarmEffect::Collision(float fDeltaTime)
 {
-	MoveObj::Collision(fDeltaTime);
 }
 
 void FarmEffect::Render(HDC hDC, float fDeltaTime)

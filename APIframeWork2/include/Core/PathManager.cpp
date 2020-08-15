@@ -4,6 +4,7 @@ DEFINITION_SINGLE(PathManager)
 
 PathManager::PathManager()
 {
+	memset(m_strPath, 0, sizeof(char) * MAX_PATH);
 }
 
 PathManager::~PathManager()

@@ -3,10 +3,10 @@
 #include "Object/Stage.h"
 #include "Core/PathManager.h"
 #include "Scene/SceneManager.h"
-#include "Scene/Scene.h"
 #include "Resources/ResourcesManager.h"
 #include "Resources/Texture.h"
 #include "Core/Input.h"
+#include "Scene/MapEditScene.h"
 
 CMapEditDlg*	g_pDlg = nullptr;
 
@@ -16,13 +16,20 @@ CMapEditDlg::CMapEditDlg()	:
 	m_pStage(nullptr),
 	m_hTypeCombo(0),
 	m_hBrushCombo(0),
+	m_hTextureList(0),
 	m_pTexture(nullptr),
 	m_iHPos(0),
 	m_iVPos(0),
 	m_hHScroll(0),
 	m_hVScroll(0),
 	m_hPicture(0),
-	m_bPictureClick(false)
+	m_hBackDC(0),
+	m_hBackBitmap(0),
+	m_hPrevBitmap(0),
+	m_bPictureClick(false),
+	m_hTreeObj(0),
+	m_pObjInfo(nullptr),
+	m_eBurshMode(BM_PEN)
 {
 	g_pDlg = this;
 	m_pBackBuffer = GET_SINGLE(ResourcesManager)->LoadTexture("BackBuffer", TEXT("Texture\\AnimationUI\\Panel.bmp"));
@@ -32,6 +39,7 @@ CMapEditDlg::~CMapEditDlg()
 {
 	SAFE_RELEASE(m_pTexture);
 	SAFE_RELEASE(m_pBackBuffer);
+	SAFE_DELETE_ARRAY(m_pObjInfo);
 }
 
 void CMapEditDlg::SetTexture(Texture* pTexture)
@@ -46,7 +54,9 @@ void CMapEditDlg::SetTexture(Texture* pTexture)
 
 void CMapEditDlg::OnDialog(int iID)
 {
-	m_hWnd = CreateDialog(GET_SINGLE(Core)->GetWindowInstance(), MAKEINTRESOURCE(iID),
+	HINSTANCE hWndInst = GET_SINGLE(Core)->GetWindowInstance();
+
+	m_hWnd = CreateDialog(hWndInst, MAKEINTRESOURCE(iID),
 		GET_SINGLE(Core)->GetWindowHandle(), CMapEditDlg::WndProc);
 
 	ShowWindow(m_hWnd, SW_SHOW);
@@ -66,9 +76,51 @@ void CMapEditDlg::OnDialog(int iID)
 		TEXT("오브젝트")
 	};
 
+	size_t iSize = ((MapEditScene*)GET_SINGLE(SceneManager)->GetScene())->GetProtoSize();
+
+	m_pObjInfo = new ObjInfo[iSize];
+
+	ObjInfo objInfo[] = {
+		{-1, 0},
+		{0, 1},
+		{1, 2},
+		{1, 2},
+		{1, 2},
+		{0, 1},
+		{5, 2},
+		{5, 2},
+		{5, 2},
+		{5, 2},
+		{5, 2},
+		{5, 2},
+		{5, 2},
+		{0, 1},
+		{13, 2},
+		{13, 2},
+		{13, 2},
+		{13, 2},
+		{13, 2},
+		{13, 2},
+		{13, 2},
+		{13, 2},
+		{13, 2}
+	};
+
+	memcpy(m_pObjInfo, objInfo, sizeof(ObjInfo) * (sizeof(objInfo) / sizeof(objInfo[0])));
+
 	m_hTypeCombo = GetDlgItem(m_hWnd, IDC_COMBO_TYPE);
 	m_hBrushCombo = GetDlgItem(m_hWnd, IDC_COMBO_BRUSH);
+
 	m_hTextureList = GetDlgItem(m_hWnd, IDC_LIST_TEXTURE);
+
+	m_hTreeObj = GetDlgItem(m_hWnd, IDC_TREE_OBJ);
+
+	// 트리뷰에 사용할 이미지 리스트를 만들어 트리뷰에 연결한다.
+	//HIMAGELIST hImageList = ImageList_LoadBitmap(hWndInst, MAKEINTRESOURCE(IDB_BITMAP1), 16, 1, RGB(255, 255, 255));
+
+	//TreeView_SetImageList(m_hTreeObj, hImageList, TVSIL_NORMAL);
+
+	InsertChild((HTREEITEM)0, -1);
 
 	m_hHScroll = GetDlgItem(m_hWnd, IDC_SCROLLBAR_H);
 	m_hVScroll = GetDlgItem(m_hWnd, IDC_SCROLLBAR_V);
@@ -91,6 +143,21 @@ void CMapEditDlg::OnDialog(int iID)
 	SetDlgItemInt(m_hWnd, IDC_EDIT_COUNTY, 50, true);
 	SetDlgItemInt(m_hWnd, IDC_EDIT_SIZEX, 32, true);
 	SetDlgItemInt(m_hWnd, IDC_EDIT_SIZEY, 32, true);
+
+	Texture* pTexture = GET_SINGLE(ResourcesManager)->LoadTexture("Tile2", TEXT("Maps\\walls_and_floors.bmp"));
+	SAFE_RELEASE(pTexture);
+
+	SendMessage(m_hTextureList, LB_ADDSTRING, 0, (LPARAM)TEXT("Tile2"));
+
+	pTexture = GET_SINGLE(ResourcesManager)->LoadTexture("springoutdoor", TEXT("Maps\\spring_outdoorsTileSheet.bmp"));
+	SAFE_RELEASE(pTexture);
+
+	SendMessage(m_hTextureList, LB_ADDSTRING, 0, (LPARAM)TEXT("springoutdoor"));
+
+	pTexture = GET_SINGLE(ResourcesManager)->LoadTexture("mine", TEXT("Maps\\TheMines.bmp"));
+	SAFE_RELEASE(pTexture);
+
+	SendMessage(m_hTextureList, LB_ADDSTRING, 0, (LPARAM)TEXT("mine"));
 }
 
 void CMapEditDlg::CreateTileMap()
@@ -102,7 +169,7 @@ void CMapEditDlg::CreateTileMap()
 	int iSizeX = GetDlgItemInt(m_hWnd, IDC_EDIT_SIZEX, &bTran, true);
 	int iSizeY = GetDlgItemInt(m_hWnd, IDC_EDIT_SIZEY, &bTran, true);
 
-	m_pStage->CreateTile(iCountX, iCountY, iSizeX, iSizeY, "Tile2", TEXT("Maps\\walls_and_floors.bmp"));
+	m_pStage->CreateTile(iCountX, iCountY, iSizeX, iSizeY, "springoutdoor", TEXT("Maps\\spring_outdoorsTileSheet.bmp"));
 }
 
 void CMapEditDlg::SetStage(Stage* pStage)
@@ -233,7 +300,7 @@ void CMapEditDlg::Render(HDC hDC, float fTime)
 			}
 			else
 			{
-				BLENDFUNCTION	tBF = {};
+				/*BLENDFUNCTION	tBF = {};
 
 				tBF.BlendOp = 0;
 				tBF.BlendFlags = 0;
@@ -242,11 +309,11 @@ void CMapEditDlg::Render(HDC hDC, float fTime)
 				tBF.AlphaFormat = AC_SRC_ALPHA;
 
 				GdiAlphaBlend(hDC, (int)(tRC.left + pt.x), (int)(tRC.top + pt.y), (int)tRC.right - tRC.left, (int)tRC.bottom - tRC.top,
-					m_pTexture->GetDC(), (int)m_tImageOffSet.x, (int)m_tImageOffSet.y, (int)tRC.right - tRC.left, (int)tRC.bottom - tRC.top, tBF);
+					m_pTexture->GetDC(), (int)m_tImageOffSet.x, (int)m_tImageOffSet.y, (int)tRC.right - tRC.left, (int)tRC.bottom - tRC.top, tBF);*/
 
-/*
+
 				BitBlt(hDC, (int)(tRC.left + pt.x), (int)(tRC.top + pt.y), (int)tRC.right - tRC.left, (int)tRC.bottom - tRC.top, m_pTexture->GetDC(),
-					(int)m_tImageOffSet.x, (int)m_tImageOffSet.y, SRCCOPY);*/
+					(int)m_tImageOffSet.x, (int)m_tImageOffSet.y, SRCCOPY);
 			}
 		}
 
@@ -410,11 +477,11 @@ void CMapEditDlg::Save(TCHAR* pFile)
 
 	if (m_pStage)
 		m_pStage->Save(pSaveFile);
-
+/*
 	Layer* pLayer = GET_SINGLE(SceneManager)->GetScene()->FindLayer("Default");
 
 	if (pLayer)
-		pLayer->Save(pSaveFile);
+		pLayer->Save(pSaveFile);*/
 
 	fclose(pSaveFile);
 }
@@ -439,10 +506,10 @@ void CMapEditDlg::Load(TCHAR* pFile)
 	if (m_pStage)
 		m_pStage->Load(pLoadFile);
 
-	Layer* pLayer = GET_SINGLE(SceneManager)->GetScene()->FindLayer("Default");
+	/*Layer* pLayer = GET_SINGLE(SceneManager)->GetScene()->FindLayer("Default");
 
 	if (pLayer)
-		pLayer->Load(pLoadFile);
+		pLayer->Load(pLoadFile);*/
 
 	fclose(pLoadFile);
 }
@@ -481,6 +548,7 @@ LRESULT CMapEditDlg::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lPa
 	HDC hDC = GetDC(hWnd);
 	int iPos;
 	RECT tRC = {};
+	TVITEMEX TvEx;
 
 
 	if (g_pDlg)
@@ -500,6 +568,21 @@ LRESULT CMapEditDlg::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lPa
 		}
 		break;
 	case WM_COMMAND:
+		if (HIWORD(wParam) == BN_CLICKED)
+		{
+				switch (LOWORD(wParam))
+				{
+				case IDC_RADIO_PEN:
+					if (g_pDlg)
+					g_pDlg->m_eBurshMode = BM_PEN;
+					break;
+				case IDC_RADIO_RECT:
+					if (g_pDlg)
+					g_pDlg->m_eBurshMode = BM_RECT;
+					break;
+				}
+		}
+
 		switch (LOWORD(wParam))
 		{
 		case IDOK:
@@ -524,13 +607,48 @@ LRESULT CMapEditDlg::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lPa
 
 			HWND hCheck = GetDlgItem(hWnd, IDC_CHECK_COLORKEY);
 
-			if (SendMessage(hCheck, BM_GETCHECK, 0, 0) == BST_UNCHECKED)
-				g_pDlg->SetWindowOffSet();
+			if (g_pDlg)
+			{
+				if (SendMessage(hCheck, BM_GETCHECK, 0, 0) == BST_UNCHECKED)
+					g_pDlg->SetWindowOffSet();
 
-			else
-				g_pDlg->SetTextureColorKey();
+				else
+					g_pDlg->SetTextureColorKey();
+
+				SendMessage(g_pDlg->m_hBrushCombo, CB_SETCURSEL, 0, 0);
+			}
 
 			break;
+		}
+		break;
+	case WM_NOTIFY:
+		LPNMHDR hdr;
+		LPNMTREEVIEW ntv;
+		TCHAR strCap[32];
+
+		hdr = (LPNMHDR)lParam;
+		ntv = (LPNMTREEVIEW)lParam;
+
+		if (g_pDlg)
+		{
+			if (hdr->hwndFrom == g_pDlg->m_hTreeObj)
+			{
+				switch (hdr->code)
+				{
+				case TVN_SELCHANGED:
+					TvEx.mask = TVIF_PARAM | TVIF_IMAGE | TVIF_TEXT;
+					TvEx.hItem = ntv->itemNew.hItem;
+					TvEx.pszText = strCap;
+					TvEx.cchTextMax = 30;
+					TreeView_GetItem(g_pDlg->m_hTreeObj, &TvEx);
+					MapEditScene* pScene = (MapEditScene*)GET_SINGLE(SceneManager)->GetScene();
+					pScene->SetEditTileTex((int)TvEx.lParam);
+
+					SendMessage(g_pDlg->m_hBrushCombo, CB_SETCURSEL, 2, 0);
+
+					break;
+				}
+			}
 		}
 		break;
 	case WM_HSCROLL:
@@ -608,4 +726,42 @@ LRESULT CMapEditDlg::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lPa
 	ReleaseDC(hWnd, hDC);
 
 	return LRESULT();
+}
+
+void CMapEditDlg::InsertChild(HTREEITEM pNode, int iPid)
+{
+	TVINSERTSTRUCT tTI;
+	HTREEITEM hNode;
+
+	MapEditScene* pScene = (MapEditScene*)GET_SINGLE(SceneManager)->GetScene();
+
+	size_t n = pScene->GetProtoSize();
+
+	for (size_t i = 0; i < n; ++i)
+	{
+		if (m_pObjInfo[i].iParent == iPid)
+		{
+			tTI.hParent = pNode;
+			tTI.hInsertAfter = TVI_LAST;
+			tTI.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM;
+			tTI.item.iImage = m_pObjInfo[i].iImage;
+			tTI.item.iSelectedImage = m_pObjInfo[i].iImage + 4;
+
+			TCHAR strName[MAX_PATH] = {};
+			char* strMultibyteName = pScene->GetProtoName((int)i);
+
+			MultiByteToWideChar(CP_ACP, NULL, strMultibyteName, -1, strName, (int)strlen(strMultibyteName));
+
+			tTI.item.pszText = strName;
+			tTI.item.lParam = i;
+
+			hNode = TreeView_InsertItem(m_hTreeObj, &tTI);
+
+			InsertChild(hNode, (int)i);
+		}
+	}
+}
+
+void CMapEditDlg::SelectTreeItem()
+{
 }

@@ -4,12 +4,18 @@
 #include "UIInventory.h"
 #include "UIPanel.h"
 #include "../Scene/Scene.h"
+#include "UINum.h"
+#include "../Core/Input.h"
 
 Item::Item()	:
 	m_eType(IT_NONE),
 	m_bInventory(false),
 	m_bMouseOn(false),
-	m_pInventory(nullptr)
+	m_pInventory(nullptr),
+	m_iCount(0),
+	m_pNumber(nullptr),
+	m_iIndex(0),
+	m_bDrag(false)
 {
 }
 
@@ -20,10 +26,36 @@ Item::Item(const Item& item)	:
 	m_bInventory = item.m_bInventory;
 	m_pInventory = item.m_pInventory;
 	m_bMouseOn = false;
+	m_iCount = item.m_iCount;
+
+	if (item.m_pNumber)
+		m_pNumber = item.m_pNumber->Clone();
+
+	else
+		m_pNumber = nullptr;	
+
+	m_iIndex = item.m_iIndex;
+	m_bDrag = false;
 }
 
 Item::~Item()
 {
+	if(m_pNumber)
+		m_pNumber->Die();
+
+	SAFE_RELEASE(m_pNumber);
+}
+
+void Item::AddItemCount(int iCount)
+{
+	m_iCount += iCount;
+
+	if (m_pNumber)
+	{
+		m_pNumber->DeleteNum();
+
+		m_pNumber->CreateNum(m_iCount);
+	}
 }
 
 bool Item::Init()
@@ -43,12 +75,54 @@ bool Item::Init()
 int Item::Update(float fDeltaTime)
 {
 	MoveObj::Update(fDeltaTime);
+
+	if (m_bInventory && m_pNumber)
+	{
+		POSITION tSize = m_pNumber->GetSize();
+
+		POSITION tPos = m_tPos + m_tSize * m_tPivot - tSize;
+
+		m_pNumber->SetPosAll(tPos);
+	}
+
+	if (m_bInventory)
+	{
+		if (KEYPRESS("MouseLButton"))
+		{
+			POSITION tMousePos = GET_SINGLE(Input)->GetMouseClientPos();
+
+			SetPos(m_tStartPos + tMousePos);
+		}
+
+		else if (KEYUP("MouseLButton"))
+		{
+			if (m_bDrag)
+			{
+				POSITION tMousePos = GET_SINGLE(Input)->GetMouseClientPos();
+
+				m_pInventory->SwapItem(this, tMousePos);
+
+				m_bDrag = false;
+			}
+		}
+	}
+
 	return 0;
 }
 
 int Item::LateUpdate(float fDeltaTime)
 {
 	MoveObj::LateUpdate(fDeltaTime);
+
+	if (m_bInventory && m_pNumber)
+	{
+		POSITION tSize = m_pNumber->GetSize();
+
+		POSITION tPos = m_tPos + m_tSize * m_tPivot - tSize;
+
+		m_pNumber->SetPosAll(tPos);
+	}
+
 	return 0;
 }
 
@@ -94,6 +168,26 @@ void Item::ColStay(Collider* pSrc, Collider* pDest, float fTime)
 		{
 			if (m_bMouseOn)
 				m_pInventory->InfoPanelUpdate(pDest->GetObj()->GetPos());
+
+			else
+				m_bMouseOn = true;
+
+			if (KEYDOWN("MouseLButton"))
+			{
+				m_bDrag = true;
+
+				m_tStartPos = m_tPos - pDest->GetObj()->GetPos();
+			}
+
+			else if (KEYPRESS("MouseLButton"))
+			{
+				if (m_bDrag)
+				{
+					POSITION tMousePos = GET_SINGLE(Input)->GetMouseClientPos();
+
+					SetPos(m_tStartPos + tMousePos);
+				}
+			}
 		}
 	}
 }
@@ -110,4 +204,23 @@ void Item::ColEnd(Collider* pSrc, Collider* pDest, float fTime)
 		}
 	}
 		
+}
+
+void Item::CreateItemNumber()
+{
+	Layer* pLayer = m_pScene->FindLayer("HUD");
+
+	m_pNumber = (UINum*)CreateCloneObj("NumSm", "ItemNumber", m_pScene->GetSceneType(), pLayer);
+
+	m_pNumber->CreateNum(m_iCount);
+
+	m_pNumber->SetSpeed(0.f);
+}
+
+void Item::DeleteItemNumber()
+{
+	if (m_pNumber)
+		m_pNumber->Die();
+
+	SAFE_RELEASE(m_pNumber);
 }

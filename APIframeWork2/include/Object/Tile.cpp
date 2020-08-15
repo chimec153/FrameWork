@@ -10,6 +10,10 @@
 #include "..//Core.h"
 #include "../Object/Stage.h"
 #include "FarmEffect.h"
+#include "Building.h"
+#include "Etc.h"
+#include "Crop.h"
+#include "Rock.h"
 
 Tile::Tile()	:
 	m_eOption(TO_NONE),
@@ -21,7 +25,6 @@ Tile::Tile()	:
 	m_bSelect(false),
 	m_pStage(nullptr)
 {
-	//m_pOptionTex = GET_SINGLE(ResourcesManager)->FindTexture("TileNone");
 }
 
 Tile::Tile(const Tile & tile)	:
@@ -29,12 +32,23 @@ Tile::Tile(const Tile & tile)	:
 {
 	m_eOption = tile.m_eOption;
 	m_pOptionTex = tile.m_pOptionTex;
+	m_pSelectTex = tile.m_pSelectTex;
+	m_pUpperTex = tile.m_pUpperTex;
+
 	m_pObj = nullptr;
 
 	if(m_pOptionTex)
 		m_pOptionTex->AddRef();
 
+	if (m_pSelectTex)
+		m_pSelectTex->AddRef();
+
+	if (m_pUpperTex)
+		m_pUpperTex->AddRef();
+
 	m_pStage = tile.m_pStage;
+
+	m_bSelect = false;
 }
 
 Tile::~Tile()
@@ -42,6 +56,7 @@ Tile::~Tile()
 	SAFE_RELEASE(m_pOptionTex);
 	SAFE_RELEASE(m_pUpperTex);
 	SAFE_RELEASE(m_pSelectTex);
+	SAFE_RELEASE(m_pObj);
 }
 
 void Tile::SetUpperTexture(Texture* pTexture)
@@ -105,7 +120,7 @@ void Tile::SetTileOption(TILE_OPTION eOption)
 		break;
 	case TO_NONE:
 		SAFE_RELEASE(m_pOptionTex);
-		m_pOptionTex = nullptr;//GET_SINGLE(ResourcesManager)->FindTexture("TileNone");
+		m_pOptionTex = nullptr;
 		break;
 	case TO_NOMOVE:
 		SAFE_RELEASE(m_pOptionTex);
@@ -141,27 +156,25 @@ bool Tile::Init()
 
 void Tile::Input(float fDeltaTime)
 {
-	StaticObj::Input(fDeltaTime);
-
-	
+	//StaticObj::Input(fDeltaTime);	
 }
 
 int Tile::Update(float fDeltaTime)
 {
-	StaticObj::Update(fDeltaTime);
+	//StaticObj::Update(fDeltaTime);
 
 	return 0;
 }
 
 int Tile::LateUpdate(float fDeltaTime)
 {
-	StaticObj::LateUpdate(fDeltaTime);
+	//StaticObj::LateUpdate(fDeltaTime);
 	return 0;
 }
 
 void Tile::Collision(float fDeltaTime)
 {
-	StaticObj::Collision(fDeltaTime);
+	//StaticObj::Collision(fDeltaTime);
 }
 
 void Tile::Render(HDC hDC, float fDeltaTime)
@@ -218,7 +231,7 @@ void Tile::Render(HDC hDC, float fDeltaTime)
 				tBF.AlphaFormat = AC_SRC_ALPHA;
 
 				GdiAlphaBlend(hDC, (int)tPos.x, (int)tPos.y, (int)m_tSize.x, (int)m_tSize.y,
-					m_pUpperTex->GetDC(), (float)tImagePos.x, (float)tImagePos.y, (int)m_tSize.x, (int)m_tSize.y, tBF);
+					m_pUpperTex->GetDC(), (int)tImagePos.x, (int)tImagePos.y, (int)m_tSize.x, (int)m_tSize.y, tBF);
 			}
 		}
 	}
@@ -304,6 +317,11 @@ void Tile::Save(FILE * pFile)
 	if (m_pObj)
 	{
 		fwrite(&bObj, sizeof(bool), 1, pFile);
+
+		OBJ_BLOCK eBlock = m_pObj->GetBlock();
+
+		fwrite(&eBlock, sizeof(OBJ_BLOCK), 1, pFile);
+
 		m_pObj->Save(pFile);
 	}
 	else
@@ -340,17 +358,40 @@ void Tile::Load(FILE * pFile)
 		SAFE_RELEASE(pRC);
 	}
 
-
 	bool bObj = false;
+
 	fread(&bObj, sizeof(bool), 1, pFile);
+
 	if (bObj)
 	{
-		Obj* pObj = Obj::CreateObj<CTree>("", NULL);
-		pObj->Load(pFile);
-		m_pObj = pObj;
+		OBJ_BLOCK eBlock = OB_NONE;
 
-		Layer* pLayer = GET_SINGLE(SceneManager)->GetScene()->FindLayer("Default");
-		pLayer->AddObject(pObj);
+		fread(&eBlock, sizeof(OBJ_BLOCK), 1, pFile);
+
+		Obj* pObj = nullptr;
+
+		switch (eBlock)
+		{
+		case OB_NONE:
+			pObj = Obj::CreateObj<CTree>("", m_pLayer);
+			break;
+		case OB_TREE:
+			pObj = Obj::CreateObj<CTree>("", m_pLayer);
+			break;
+		case OB_BUILDING:
+			pObj = Obj::CreateObj<CBuilding>("", m_pLayer);
+			break;
+		case OB_CROP:
+			pObj = Obj::CreateObj<Crop>("", m_pLayer);
+			break;
+		case OB_ROCK:
+			pObj = Obj::CreateObj<Rock>("", m_pLayer);
+			break;
+		}		
+
+		pObj->Load(pFile);
+
+		SetObj(pObj);
 
 		SAFE_RELEASE(pObj);
 	}

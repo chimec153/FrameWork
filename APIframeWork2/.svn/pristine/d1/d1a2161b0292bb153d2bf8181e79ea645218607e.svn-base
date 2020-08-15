@@ -1,0 +1,55 @@
+#include "Tool.h"
+
+Tool::Tool()	:
+	m_bWater(false)
+{
+	m_eType = IT_TOOL;
+}
+
+Tool::Tool(const Tool& tool)	:
+	Item(tool)
+{
+	m_bWater = false;
+	m_eType = tool.m_eType;
+}
+
+Tool::~Tool()
+{
+}
+
+bool Tool::Init()
+{
+	if (!Item::Init())
+		return false;
+
+	SetSize(32.f, 32.f);
+
+	return true;
+}
+
+int Tool::Update(float fDeltaTime)
+{
+	Item::Update(fDeltaTime);
+	return 0;
+}
+
+int Tool::LateUpdate(float fDeltaTime)
+{
+	Item::LateUpdate(fDeltaTime);
+	return 0;
+}
+
+void Tool::Collision(float fDeltaTime)
+{
+	Item::Collision(fDeltaTime);
+}
+
+void Tool::Render(HDC hDC, float fDeltaTime)
+{
+	Item::Render(hDC, fDeltaTime);
+}
+
+Tool* Tool::Clone()
+{
+	return new Tool(*this);
+}

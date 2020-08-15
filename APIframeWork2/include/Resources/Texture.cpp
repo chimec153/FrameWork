@@ -4,8 +4,11 @@
 
 Texture::Texture()	:
 	m_hMemDC(NULL),
-	m_bColorKeyEnable(false),
-	m_ColorKey(RGB(255,0,255))
+	m_hBitmap(0),
+	m_hOldBitmap(NULL),
+	m_tInfo(),
+	m_ColorKey(RGB(255, 0, 255)),
+	m_bColorKeyEnable(false)
 {
 }
 
@@ -196,7 +199,7 @@ void Texture::RenderByAlpha(unsigned char cAlpha, HDC hDC, POSITION tPos, POSITI
 	tBF.SourceConstantAlpha = cAlpha;
 
 	GdiAlphaBlend(hDC, (int)tPos.x, (int)tPos.y, (int)tSize.x, (int)tSize.y, m_vecTexture[iIndex]->hDC,
-		(int)tImagePos.x, tImagePos.y, (int)tSize.x, (int)tSize.y, tBF);
+		(int)tImagePos.x, (int)tImagePos.y, (int)tSize.x, (int)tSize.y, tBF);
 }
 
 void Texture::SaveFromPath(const char * pFileName, const string & strPathKey)

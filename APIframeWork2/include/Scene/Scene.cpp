@@ -20,13 +20,30 @@
 #include "../Object/Tool.h"
 #include "../Object/PadeEffect.h"
 #include "../Core.h"
+#include "../Object/Crop.h"
+#include "../Object/Seed.h"
+#include "../Object/Etc.h"
+#include "..//Sound/SoundManager.h"
+#include "../Core/PathManager.h"
+#include "../Resources/ResourcesManager.h"
+#include "../Object/Tree.h"
+#include "../Object/Building.h"
+#include "../Object/Rock.h"
+#include "../Resources/Texture.h"
+#include "../Object/SlimeHead.h"
+#include "../Object/Bug.h"
+#include "../Object/Fly.h"
+#include "../Object/RockCrab.h"
+#include "../Object/Text.h"
+#include "../Object/Stage.h"
 
 unordered_map<string, Obj*> Scene::m_mapPrototype[SC_END];
 
 Scene::Scene()	:
 	m_bEditMode(false),
 	m_pPlayer(nullptr),
-	m_pPadeEffect(nullptr)
+	m_pPadeEffect(nullptr),
+	m_pStage(nullptr)
 {
 	Layer* pLayer = CreateLayer("UI", INT_MAX);
 	pLayer = CreateLayer("HUD", INT_MAX - 1);
@@ -42,6 +59,8 @@ Scene::~Scene()
 	Safe_Delete_VecList(m_LayerList);
 	SAFE_RELEASE(m_pPlayer);
 	SAFE_RELEASE(m_pPadeEffect);
+	Safe_Delete_VecList(m_vecstrProto);
+	SAFE_RELEASE(m_pStage);
 }
 
 void Scene::ErasePrototype(const string & strTag,
@@ -107,9 +126,13 @@ Layer * Scene::FindLayer(const string & strTag)
 
 bool Scene::Init(POSITION tPos)
 {
-	Player* pPlayer = (Player*)CreatePlayer();
+	GET_SINGLE(SoundManager)->LoadSound("RoadBGM", true, "RoadBgm.wav");
+	GET_SINGLE(SoundManager)->LoadSound("wood", false, "wood.wav");
+	GET_SINGLE(SoundManager)->LoadSound("rock", false, "poll.wav");
 
-	CreateProtoNumberSmall();
+	CreateProtoNumber();
+
+	Player* pPlayer = (Player*)CreatePlayer();
 
 	CreateUI(pPlayer);
 
@@ -188,6 +211,24 @@ bool Scene::Init(POSITION tPos)
 
 	pPlayer->GetInven()->AddItem(pEx);
 
+	Item* pWateringCan = Obj::CreateObj<Tool>("wateringcan", pLayer);
+
+	pWateringCan->SetTexture("tool", TEXT("Item\\tools.bmp"));
+	pWateringCan->SetColorKey(255, 255, 255);
+	pWateringCan->SetImageOffset(64.f, 446.f);
+	((Tool*)pWateringCan)->SetToolType(TOOL_WATER);
+
+	Collider* pWateringCanCol = pWateringCan->GetCollider("ItemBody");
+
+	pWateringCanCol->AddCollisionFunction(CS_ENTER, pWateringCan, &Item::CollEnter);
+	pWateringCanCol->AddCollisionFunction(CS_STAY, pWateringCan, &Item::ColStay);
+	pWateringCanCol->AddCollisionFunction(CS_LEAVE, pWateringCan, &Item::ColEnd);
+
+	SAFE_RELEASE(pWateringCanCol);
+
+	pPlayer->GetInven()->AddItem(pWateringCan);
+
+	SAFE_RELEASE(pWateringCan);
 	SAFE_RELEASE(pSword);
 	SAFE_RELEASE(pHoe);
 	SAFE_RELEASE(pPikEx);
@@ -339,9 +380,9 @@ void Scene::ChangePrototype()
 
 void Scene::CreateUI(class Obj* pObj)
 {
-	Layer* pUILayer = FindLayer("UI");
+	Layer* pHUDLayer = FindLayer("HUD");
 
-	UIPanel* pClockPanel = Obj::CreateObj<UIPanel>("ClockPanel", pUILayer);
+	UIPanel* pClockPanel = Obj::CreateObj<UIPanel>("ClockPanel", pHUDLayer);
 
 	pClockPanel->SetTexture("Mouse");
 	pClockPanel->SetImageOffset(664.f, 864.f);
@@ -353,7 +394,7 @@ void Scene::CreateUI(class Obj* pObj)
 
 	SAFE_RELEASE(pClockPanel);
 
-	UIPanel* pBarPanel = Obj::CreateObj<UIPanel>("BarPanel", pUILayer);
+	UIPanel* pBarPanel = Obj::CreateObj<UIPanel>("BarPanel", pHUDLayer);
 
 	pBarPanel->SetTexture("Mouse");
 	pBarPanel->SetImageOffset(512.f, 816.f);
@@ -363,7 +404,7 @@ void Scene::CreateUI(class Obj* pObj)
 
 	SAFE_RELEASE(pBarPanel);
 
-	UIBar* pEnergyBar = Obj::CreateObj<UIBar>("EnergyBar", pUILayer,
+	UIBar* pEnergyBar = Obj::CreateObj<UIBar>("EnergyBar", pHUDLayer,
 		POSITION(1006.f, 626.f), POSITION(12.f, 82.f));
 
 	pEnergyBar->SetTexture("Mouse");
@@ -372,7 +413,7 @@ void Scene::CreateUI(class Obj* pObj)
 	pEnergyBar->SetMax(100.f);
 	pEnergyBar->SetValue(100.f);
 
-	UIBar* pHPBar = Obj::CreateObj<UIBar>("HPBar", pUILayer,
+	UIBar* pHPBar = Obj::CreateObj<UIBar>("HPBar", pHUDLayer,
 		POSITION(1030.f, 626.f), POSITION(12.f, 82.f));
 
 	pHPBar->SetTexture("Mouse");
@@ -388,7 +429,7 @@ void Scene::CreateUI(class Obj* pObj)
 
 	SAFE_RELEASE(pEnergyBar);
 
-	UIInventory* pInven = Obj::CreateObj<UIInventory>("Inventory", pUILayer,
+	UIInventory* pInven = Obj::CreateObj<UIInventory>("Inventory", pHUDLayer,
 		POSITION(400.f, 700.f), POSITION(12.f, 82.f));
 
 	((Player*)pObj)->SetInven(pInven);
@@ -406,7 +447,13 @@ void Scene::CreateSlimeClone()
 
 	Slime* pSlime = (Slime*)Obj::CreateCloneObj("Slime","slime", SC_NEXT, pLayer);
 
-	pSlime->SetPos(500.f, 600.f);
+	pSlime->SetPos(400.f, 400.f);
+
+	SlimeHead* pHead = (SlimeHead*)Obj::CreateCloneObj("SlimeHead", "Head", SC_NEXT, pLayer);
+
+	pSlime->SetHead(pHead);
+
+	SAFE_RELEASE(pHead);
 
 	Collider* pCol = pSlime->GetCollider("SlimeBody");
 
@@ -416,22 +463,20 @@ void Scene::CreateSlimeClone()
 	SAFE_RELEASE(pSlime);
 }
 
-void Scene::CreateSlimeProto()
+void Scene::CreateBugClone()
 {
-	Slime* pSlime = CreateProtoType<Slime>("Slime", SC_NEXT);
+	Layer* pLayer = FindLayer("Default");
 
-	SAFE_RELEASE(pSlime);
+	Bug* pBug = (Bug*)Obj::CreateCloneObj("Bug", "Bug", SC_NEXT, pLayer);
 
-	Effect* pEffect = CreateProtoType<Effect>("slimeEffect", SC_NEXT);
+	pBug->SetPos(100.f, 400.f);
 
-	pEffect->SetPhysics(true);
-	pEffect->SetSpeed(30.f);
-	pEffect->SetSize(16.f, 16.f);
-	pEffect->SetPivot(0.5f, 0.5f);
-	pEffect->SetTexture("slime", TEXT("Characters\\Monsters\\Green Slime.bmp"));
-	pEffect->SetTileEffect(false);
+	Collider* pCol = pBug->GetCollider("BugBody");
 
-	SAFE_RELEASE(pEffect);
+	pCol->AddCollisionFunction(CS_ENTER, pBug, &Bug::Collision);
+
+	SAFE_RELEASE(pCol);
+	SAFE_RELEASE(pBug);
 }
 
 void Scene::CreateBatClone()
@@ -453,34 +498,68 @@ void Scene::CreateBatClone()
 	SAFE_RELEASE(pMinion);
 }
 
-void Scene::CreateBatProto()
+void Scene::CreateFlyClone()
 {
-	Minion* pMinionProto = CreateProtoType<Minion>("Minion", SC_NEXT);
+	Layer* pLayer = FindLayer("Default");
 
-	SAFE_RELEASE(pMinionProto);
+	Obj* pFly = Obj::CreateCloneObj("Fly", "Fly", SC_NEXT, pLayer);
 
-	Effect* pBatEffect = CreateProtoType<Effect>("batEffect", SC_NEXT);
+	pFly->SetPos(52.f, 500.f);
 
-	pBatEffect->SetPhysics(true);
-	pBatEffect->SetSpeed(30.f);
-	pBatEffect->SetSize(16.f, 16.f);
-	pBatEffect->SetPivot(0.5f, 0.5f);
-	pBatEffect->SetTexture("monster");
-	pBatEffect->SetTileEffect(false);
+	Collider* pCol = pFly->GetCollider("FlyBody");
 
-	SAFE_RELEASE(pBatEffect);
+	pCol->AddCollisionFunction(CS_ENTER, (Fly*)pFly,
+		&Fly::Collision);
+	pCol->AddCollisionFunction(CS_STAY, (Fly*)pFly,
+		&Fly::Collision);
+
+	SAFE_RELEASE(pCol);
+	SAFE_RELEASE(pFly);
 }
 
-void Scene::CreateProtoNumberSmall()
+void Scene::CreateRockCrabClone()
+{
+	Layer* pLayer = FindLayer("Default");
+
+	Obj* pRockCrab = Obj::CreateCloneObj("RockCrab", "RockCrab", SC_NEXT, pLayer);
+
+	pRockCrab->SetPos(400.f, 200.f);
+
+	Collider* pCol = pRockCrab->GetCollider("RockCrabBody");
+
+	pCol->AddCollisionFunction(CS_ENTER, (RockCrab*)pRockCrab,
+		&RockCrab::Collision);
+	pCol->AddCollisionFunction(CS_STAY, (RockCrab*)pRockCrab,
+		&RockCrab::Collision);
+
+	SAFE_RELEASE(pCol);
+	SAFE_RELEASE(pRockCrab);
+}
+
+void Scene::CreateProtoNumber()
 {//	736, 111, 10, 15
-	UINum* pNum = CreateProtoType<UINum>("NumSm", SC_NEXT);
+	UINum* pNum = CreateProtoType<UINum>("Num", SC_NEXT);
 
 	pNum->SetTexture("Mouse", TEXT("UI\\Cursors.bmp"));
 	pNum->SetColorKey(0, 0, 0);
 	pNum->SetSize(16.f, 16.f);
-	pNum->SetImageOffset(1025.f, 255.f);
+	pNum->SetOriginOffset(1025.f, 255.f);
+	pNum->SetAlpha(255);
+	pNum->EnableAlpha(true);
 
 	SAFE_RELEASE(pNum);
+
+	UINum* pNumSm = CreateProtoType<UINum>("NumSm", SC_NEXT);
+
+	pNumSm->SetTexture("Mouse", TEXT("UI\\Cursors.bmp"));
+	pNumSm->SetColorKey(0, 0, 0);
+	pNumSm->SetSize(10.f, 14.f);
+	pNumSm->SetOriginOffset(736.f, 112.f);
+	pNumSm->SetAlpha(255);
+	pNumSm->EnableAlpha(true);
+	pNumSm->SetOneLine(true);
+
+	SAFE_RELEASE(pNumSm);
 }
 
 void Scene::CreateClockHand()
@@ -501,6 +580,18 @@ void Scene::CreateClockHand()
 	pNightPanel->EnableAlpha(true);
 
 	pClockHand->SetNightPanel(pNightPanel);
+
+	Layer* pHUDLayer = FindLayer("HUD");
+
+	Text* pText = Obj::CreateObj<Text>("WeekDayText", pHUDLayer);
+
+	pText->SetFont("NormalFont");
+	pText->SetColor(102, 28, 28);
+	pText->SetPos(1056.f, 50.f);
+
+	pClockHand->SetWeekText(pText);
+
+	SAFE_RELEASE(pText);
 
 	SAFE_RELEASE(pNightPanel);
 
@@ -525,9 +616,194 @@ void Scene::CreateFarmEffect()
 		"FarmAni", TEXT("TileSheets\\animations.bmp"));
 	pEffect->SetAnimationClipColorKey("WaterSplashing", 255, 255, 255);
 
+	pEffect->AddAnimationClip("HarvestEffect", AT_ATLAS, AO_ONCE_DESTROY, 0.6f, 10, 52, 0, 17, 7, 1, 1.f,
+		"FarmAni", TEXT("TileSheets\\animations.bmp"));
+	pEffect->SetAnimationClipColorKey("HarvestEffect", 255, 255, 255);
+
+	pEffect->AddAnimationClip("RockEffect", AT_ATLAS, AO_ONCE_DESTROY, 0.6f, 10, 52, 0, 5, 8, 1, 1.f,
+		"FarmAni", TEXT("TileSheets\\animations.bmp"));
+	pEffect->SetAnimationClipColorKey("RockEffect", 255, 255, 255);
+
+	pEffect->AddAnimationClip("Rain", AT_ATLAS, AO_ONCE_DESTROY, 0.5f, 4, 1, 0, 0, 4, 1, 1.f,
+		"rain", TEXT("TileSheets\\rain.bmp"));
+	pEffect->SetAnimationClipColorKey("Rain", 255, 255, 255);
+
 	SAFE_RELEASE(pAni);
 
 	SAFE_RELEASE(pEffect);
+}
+
+void Scene::CreateProtoTypes()
+{
+	Crop* pCrop = CreateProtoType<Crop>("Potato", SC_NEXT);
+
+	POSITION tSize = pCrop->GetSize() * POSITION(8.f, 1.f);
+
+	pCrop->SetImageOffset(tSize);
+	pCrop->SetCropType(CROP_POTATO);
+	pCrop->SetIndex(192);
+
+	SAFE_RELEASE(pCrop);
+
+	Minion* pMinionProto = CreateProtoType<Minion>("Minion", SC_NEXT);
+
+	SAFE_RELEASE(pMinionProto);
+
+	Effect* pBatEffect = CreateProtoType<Effect>("batEffect", SC_NEXT);
+
+	pBatEffect->SetPhysics(true);
+	pBatEffect->SetSpeed(30.f);
+	pBatEffect->SetSize(16.f, 16.f);
+	pBatEffect->SetPivot(0.5f, 0.5f);
+	pBatEffect->SetTexture("monster");
+	pBatEffect->SetTileEffect(false);
+
+	SAFE_RELEASE(pBatEffect);
+
+	SlimeHead* pHead = CreateProtoType<SlimeHead>("SlimeHead", GetSceneType());
+
+	SAFE_RELEASE(pHead);
+
+	Slime* pSlime = CreateProtoType<Slime>("Slime", SC_NEXT);
+
+	SAFE_RELEASE(pSlime);
+
+	Effect* pEffect = CreateProtoType<Effect>("slimeEffect", SC_NEXT);
+
+	pEffect->SetPhysics(true);
+	pEffect->SetSpeed(30.f);
+	pEffect->SetSize(16.f, 16.f);
+	pEffect->SetPivot(0.5f, 0.5f);
+	pEffect->SetTexture("slime", TEXT("Characters\\Monsters\\Green Slime.bmp"));
+	pEffect->SetTileEffect(false);
+
+	SAFE_RELEASE(pEffect);
+
+	Bug* pBug = CreateProtoType<Bug>("Bug", SC_NEXT);
+
+	SAFE_RELEASE(pBug);
+
+	Effect* pBugEffect = CreateProtoType<Effect>("BugEffect", SC_NEXT);
+
+	pBugEffect->SetPhysics(true);
+	pBugEffect->SetSpeed(30.f);
+	pBugEffect->SetSize(16.f, 16.f);
+	pBugEffect->SetPivot(0.5f, 0.5f);
+	pBugEffect->SetTexture("Bug", TEXT("Characters\\Monsters\\Bug.bmp"));
+	pBugEffect->SetColorKey(255, 255, 255);
+	pBugEffect->SetTileEffect(false);
+
+	SAFE_RELEASE(pBugEffect);
+
+	Fly* pFly = CreateProtoType<Fly>("Fly", SC_NEXT);
+
+	SAFE_RELEASE(pFly);
+
+	Effect* pFlyEffect = CreateProtoType<Effect>("FlyEffect", SC_NEXT);
+
+	pFlyEffect->SetPhysics(true);
+	pFlyEffect->SetSpeed(30.f);
+	pFlyEffect->SetSize(16.f, 16.f);
+	pFlyEffect->SetPivot(0.5f, 0.5f);
+	pFlyEffect->SetTexture("Fly", TEXT("Characters\\Monsters\\Fly.bmp"));
+	pFlyEffect->SetColorKey(255, 255, 255);
+	pFlyEffect->SetTileEffect(false);
+
+	SAFE_RELEASE(pFlyEffect);
+
+	RockCrab* pRockCrab = CreateProtoType<RockCrab>("RockCrab", SC_NEXT);
+
+	SAFE_RELEASE(pRockCrab);
+
+	Effect* pRockCrabEffect = CreateProtoType<Effect>("RockCrabEffect", SC_NEXT);
+
+	pRockCrabEffect->SetPhysics(true);
+	pRockCrabEffect->SetSpeed(30.f);
+	pRockCrabEffect->SetSize(16.f, 16.f);
+	pRockCrabEffect->SetPivot(0.5f, 0.5f);
+	pRockCrabEffect->SetTexture("RockCrab", TEXT("Characters\\Monsters\\Rock Crab.bmp"));
+	pRockCrabEffect->SetColorKey(255, 255, 255);
+	pRockCrabEffect->SetTileEffect(false);
+
+	SAFE_RELEASE(pRockCrabEffect);
+
+	Item* pSeed = CreateProtoType<Seed>("PotatoSeed",SC_NEXT);
+
+	pSeed->SetImageOffset(pSeed->GetSize() * POSITION(19.f, 19.f));
+	pSeed->SetIndex(475);
+	((Seed*)pSeed)->SetCropType(CROP_POTATO);
+
+	SAFE_RELEASE(pSeed);
+
+	Etc* pWood = CreateProtoType<Etc>("Wood", GetSceneType());
+
+	pWood->SetImageOffset(pWood->GetSize() * POSITION(4.f, 16.f));
+	pWood->SetIndex(388);
+
+	SAFE_RELEASE(pWood);
+
+	Etc* pShingle = CreateProtoType<Etc>("Shingle", GetSceneType());
+
+	pShingle->SetImageOffset(pShingle->GetSize() * POSITION(6.f, 16.f));
+	pShingle->SetIndex(390);
+
+	SAFE_RELEASE(pShingle);
+
+	Etc* pEmerald = CreateProtoType<Etc>("Emerald", GetSceneType());
+
+	pEmerald->SetImageOffset(pEmerald->GetSize() * POSITION(12.f, 2.f));
+	pEmerald->SetIndex(60);
+
+	SAFE_RELEASE(pEmerald);
+
+	Etc* pAquamarine = CreateProtoType<Etc>("Aquamarine", GetSceneType());
+
+	pAquamarine->SetImageOffset(pAquamarine->GetSize() * POSITION(14.f, 2.f));
+	pAquamarine->SetIndex(62);
+
+	SAFE_RELEASE(pAquamarine);
+
+	Etc* pRuby = CreateProtoType<Etc>("Ruby", GetSceneType());
+
+	pRuby->SetImageOffset(pRuby->GetSize() * POSITION(16.f, 2.f));
+	pRuby->SetIndex(64);
+
+	SAFE_RELEASE(pRuby);
+
+	Etc* pAmethyst = CreateProtoType<Etc>("Amethyst", GetSceneType());
+
+	pAmethyst->SetImageOffset(pAmethyst->GetSize() * POSITION(18.f, 2.f));
+	pAmethyst->SetIndex(66);
+
+	SAFE_RELEASE(pAmethyst);
+
+	Etc* pTopaz = CreateProtoType<Etc>("Topaz", GetSceneType());
+
+	pTopaz->SetImageOffset(pTopaz->GetSize() * POSITION(20.f, 2.f));
+	pTopaz->SetIndex(68);
+
+	SAFE_RELEASE(pTopaz);
+
+	Etc* pJade = CreateProtoType<Etc>("Jade", GetSceneType());
+
+	pJade->SetImageOffset(pJade->GetSize()* POSITION(22.f, 2.f));
+	pJade->SetIndex(70);
+
+	SAFE_RELEASE(pJade);
+
+	Etc* pDiamond = CreateProtoType<Etc>("Diamond", GetSceneType());
+
+	pDiamond->SetImageOffset(pDiamond->GetSize()* POSITION(0.f, 3.f));
+	pDiamond->SetIndex(72);
+
+	SAFE_RELEASE(pDiamond);
+
+	Etc* pPrismaticShard = CreateProtoType<Etc>("PrismaticShard", GetSceneType());
+
+	pPrismaticShard->SetImageOffset(pPrismaticShard->GetSize()* POSITION(2.f, 3.f));
+	pPrismaticShard->SetIndex(74);
+
+	SAFE_RELEASE(pPrismaticShard);
 }
 
 Obj* Scene::CreatePlayer()
@@ -548,6 +824,196 @@ Obj* Scene::CreatePlayer()
 	GET_SINGLE(Camera)->SetPivot(0.5f, 0.5f);
 
 	return pPlayer;
+}
+
+	//	텍스트 파일로 읽어온 오브젝트 및 텍스쳐 정보로부터 오브젝트와 오브젝트의 텍스쳐를 등록하는 함수이다.
+void Scene::LoadFile()
+{
+	FILE* pFile = nullptr;
+
+	const wchar_t* pFileName = TEXT("objdata.txt");
+
+	const wchar_t* pPath = GET_SINGLE(PathManager)->FindPath(DATA_PATH);
+	wchar_t pPathDest[MAX_PATH] = {};
+
+	wcscat(pPathDest, pPath);
+
+	wcscat(pPathDest, pFileName);
+
+	_bstr_t b(pPathDest);
+	const char* strPath = b;
+
+	fopen_s(&pFile, strPath, "rt");
+
+	if (!pFile)
+		return;
+
+	int iCount = 0;
+
+	char cLine[256] = {};
+
+	fgets(cLine, 256, pFile);
+
+	iCount = atoi(cLine);
+	m_vecstrProto.reserve(iCount);
+
+	for (int i = 0; i < iCount; ++i)
+	{
+		fgets(cLine, 256, pFile);
+
+		fgets(cLine, 256, pFile);
+
+		int iObj = atoi(cLine);
+
+		if (iObj == 0)
+		{
+			fgets(cLine, 256, pFile);
+
+			char* strProto = new char[MAX_PATH];
+			strcpy_s(strProto, MAX_PATH, cLine);
+
+			m_vecstrProto.push_back(strProto);
+		}
+
+		else if (iObj == 1)
+		{
+			fgets(cLine, 256, pFile);
+
+			OBJ_BLOCK eBlock = (OBJ_BLOCK)atoi(cLine);
+
+			Obj* pProto = nullptr;
+
+			fgets(cLine, 256, pFile);
+			cLine[strlen(cLine) - 1] = 0;
+
+			char* strProto = new char[MAX_PATH];
+			strcpy_s(strProto, MAX_PATH, cLine);
+			m_vecstrProto.push_back(strProto);
+
+			switch (eBlock)
+			{
+			case OB_TREE:
+				pProto = Scene::CreateProtoType<CTree>(cLine, GetSceneType());
+				break;
+			case OB_BUILDING:
+				pProto = Scene::CreateProtoType<CBuilding>(cLine, GetSceneType());
+				break;
+			case OB_CROP:
+				pProto = Scene::CreateProtoType<Crop>(cLine, GetSceneType());
+				break;
+			case OB_ROCK:
+				pProto = Scene::CreateProtoType<Rock>(cLine, GetSceneType());
+				break;
+			}
+
+			fgets(cLine, 256, pFile);
+			char* pContext = nullptr;
+			char* pResult = strtok_s(cLine, ", ", &pContext);
+
+			pContext[strlen(pContext) - 1] = 0;
+			std::string str(pContext);
+			std::wstring ws;
+			ws.assign(str.begin(), str.end());
+			const wchar_t* usern = ws.c_str();
+
+			Texture* pTex = GET_SINGLE(ResourcesManager)->LoadTexture(
+				pResult, usern);
+
+			pProto->SetTexture(pTex);
+
+			if (eBlock == OB_TREE)
+				((CTree*)pProto)->SetTreeTexture(pTex);
+
+			fgets(cLine, 256, pFile);
+			pResult = strtok_s(cLine, ", ", &pContext);
+
+			int iRed = atoi(pResult);
+			pResult = strtok_s(nullptr, ", ", &pContext);
+
+			int iGreen = atoi(pResult);
+			int iBlue = atoi(pContext);
+
+			pProto->SetColorKey(iRed, iGreen, iBlue);
+			pTex->SetColorKey(iRed, iGreen, iBlue);
+
+			fgets(cLine, 256, pFile);
+			pResult = strtok_s(cLine, ", ", &pContext);
+
+			float iSize_x = (float)atof(pResult);
+			float iSize_y = (float)atof(pContext);
+			pProto->SetSize(iSize_x, iSize_y);
+
+			fgets(cLine, 256, pFile);
+			pResult = strtok_s(cLine, ", ", &pContext);
+			pProto->SetPivot((float)atof(pResult), (float)atof(pContext));
+
+			fgets(cLine, 256, pFile);
+			pResult = strtok_s(cLine, ", ", &pContext);
+			pProto->SetImageOffset((float)atof(pResult), (float)atof(pContext));
+
+			if (eBlock == OB_TREE)
+			{
+				fgets(cLine, 256, pFile);
+				pResult = strtok_s(cLine, ", ", &pContext);
+				((CTree*)pProto)->SetTreeSize((float)atof(pResult), (float)atof(pContext));
+
+				fgets(cLine, 256, pFile);
+				pResult = strtok_s(cLine, ", ", &pContext);
+				((CTree*)pProto)->SetTreePivot((float)atof(pResult), (float)atof(pContext));
+
+				fgets(cLine, 256, pFile);
+				pResult = strtok_s(cLine, ", ", &pContext);
+				((CTree*)pProto)->SetTreeOffset((float)atof(pResult), (float)atof(pContext));
+			}
+
+			else if (eBlock == OB_ROCK)
+			{
+				fgets(cLine, 256, pFile);
+
+				ROCK_TYPE eType = (ROCK_TYPE)atoi(cLine);
+
+				((Rock*)pProto)->SetRockType(eType);
+
+				fgets(cLine, 256, pFile);
+
+				float fRate = (float)atof(cLine);
+
+				((Rock*)pProto)->SetDropRate(fRate);
+			}
+
+			fgets(cLine, 256, pFile);
+			int iCollSize = atoi(cLine);
+
+			for (int j = 0; j < iCollSize; ++j)
+			{
+				fgets(cLine, 256, pFile);
+				cLine[strlen(cLine) - 1] = 0;
+				ColliderRect* pRC = pProto->AddCollider<ColliderRect>(cLine);
+
+				fgets(cLine, 256, pFile);
+				pResult = strtok_s(cLine, ", ", &pContext);
+				float fLeft = (float)atof(pResult);
+
+				pResult = strtok_s(nullptr, ", ", &pContext);
+				float fTop = (float)atof(pResult);
+
+				pResult = strtok_s(nullptr, ", ", &pContext);
+				float fRight = (float)atof(pResult);
+
+				pResult = strtok_s(nullptr, ", ", &pContext);
+				float fBottom = (float)atof(pResult);
+
+				pRC->SetRect(fLeft, fTop, fRight, fBottom);
+				SAFE_RELEASE(pRC);
+			}
+
+			SAFE_RELEASE(pTex);
+
+			SAFE_RELEASE(pProto);
+		}
+	}
+
+	fclose(pFile);
 }
 
 bool Scene::LayerSort(Layer * pL1, Layer * pL2)

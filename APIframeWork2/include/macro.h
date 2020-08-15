@@ -43,7 +43,9 @@
 #define MOUSEMOVE		Input::GetInst()->GetMouseMove()
 #define MOUSE			Input::GetInst()->GetMouse()
 
-#define INVENTORY_MAX	36
+#define INVENTORY_MAX			36
+#define INVENTORY_SHORT			12
+#define SHOP_PAGE				4
 
 #define _CRTDBG_MAP_ALLOC
 

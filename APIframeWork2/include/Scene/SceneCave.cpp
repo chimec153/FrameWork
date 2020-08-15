@@ -13,15 +13,22 @@
 #include "..//Object/Slime.h"
 #include "../Animation/Animation.h"
 #include "InGameScene.h"
+#include "../Object/Tile.h"
+#include "../Sound/SoundManager.h"
+#include "../Object/UINum.h"
+#include "../Core/Camera.h"
+#include "../Object/Portal.h"
 
 SceneCave::SceneCave()	:
-	m_pStage(nullptr)
+	m_iLevel(0),
+	m_pLevelNum(nullptr)
 {
 }
 
 SceneCave::~SceneCave()
 {
 	SAFE_RELEASE(m_pStage);
+	SAFE_RELEASE(m_pLevelNum);
 }
 
 bool SceneCave::Init()
@@ -29,8 +36,6 @@ bool SceneCave::Init()
 	Layer* pStageLayer = FindLayer("Stage");
 
 	m_pStage = Obj::CreateObj<Stage>("Stage", pStageLayer);
-
-	m_pStage->CreateTile(100, 100, 16, 16, "Tiles", L"TileSheets\\Flooring.bmp");
 
 	char	strFileName[MAX_PATH] = {};
 
@@ -50,36 +55,184 @@ bool SceneCave::Init()
 		if (m_pStage)
 			m_pStage->Load(pLoadFile);
 
-		Layer* pLayer = FindLayer("Default");
-
-		if (pLayer)
-			pLayer->Load(pLoadFile);
-
 		fclose(pLoadFile);
 	}
 
-	if (!Scene::Init(POSITION(32.f * 8.5f, 32.f * 7.f)))	//	8,5 out
+	if (!Scene::Init(POSITION(32.f * 8.5f, 32.f * 7.f)))
 		return false;
 
-	CreateBatProto();
+	POSITION tCamPos = GET_SINGLE(Camera)->GetPos();
+
+	Layer* pHUDLayer = FindLayer("HUD");
+
+	Layer* pUILayer = FindLayer("UI");
+
+	UIPanel* pLevelPanel = Obj::CreateObj<UIPanel>("LevelPanel", pHUDLayer, POSITION(50.f, 50.f), POSITION(50.f, 36.f));
+
+	pLevelPanel->SetTexture("Mouse");
+	pLevelPanel->SetImageOffset(650.f, 636.f);
+	
+	m_pLevelNum = (UINum*)Obj::CreateCloneObj("Num", "Num", GetSceneType(), pUILayer);
+
+	m_pLevelNum->CreateNum(m_iLevel);
+	m_pLevelNum->SetSpeed(0.f);
+
+	m_pLevelNum->SetPosAll(POSITION(70.f, 62.f) + tCamPos);
+
+	SAFE_RELEASE(pLevelPanel);
+
+	CreateFarmEffect();
+
+	CreateProtoTypes();
 
 	CreateBatClone();
 
-	CreateSlimeProto();
-
 	CreateSlimeClone();
+
+	CreateBugClone();
+
+	CreateFlyClone();
+
+	CreateRockCrabClone();
 
 	ColliderRect* pPortal = m_pStage->AddCollider<ColliderRect>("OutPortal");
 
-	pPortal->SetRect(32.f * 8.f, 32.f * 2.f, 32.f * 9.f, 32.f * 3.f);
+	pPortal->SetRect(32.f * 5.f, 32.f * 2.f, 32.f * 6.f, 32.f * 3.f);
 	pPortal->AddCollisionFunction(CS_ENTER, this, &SceneCave::OutPortalCol);
 
-	SAFE_RELEASE(pPortal);
+	SAFE_RELEASE(pPortal); 
+	
+	LoadFile();
+
+	int iTileSizeX = m_pStage->GetTileSizeX();
+	int iTileSizeY = m_pStage->GetTileSizeY();
+
+	while (true)
+	{
+		float fIndexX = (float)(rand() % 14 + 2);
+		float fIndexY = (float)(rand() % 9 + 8);
+
+		Tile* pTile = m_pStage->GetTile((float)iTileSizeX * fIndexX, (float)iTileSizeY * fIndexY);
+
+		POSITION tPos = pTile->GetPos();
+
+		TILE_OPTION eOption = pTile->GetTileOption();
+
+		if (eOption == TO_NONE)
+		{
+			pTile->SetUpperImageOffset(416.f, 320.f);
+
+			Layer* pLayer = FindLayer("Default");
+
+			Portal* pPortal = Obj::CreateObj<Portal>("DownPortal", pLayer);
+
+			pPortal->SetCallback(this, &SceneCave::NextLevel);
+			pPortal->SetPos(iTileSizeX * fIndexX, iTileSizeY * fIndexY);
+
+			ColliderRect* pDownPortal = pPortal->AddCollider<ColliderRect>("PortalBody");
+
+			pDownPortal->SetRect(0.f, 0.f, 32.f, 32.f);
+			pDownPortal->AddCollisionFunction(CS_ENTER, pPortal, &Portal::ColEnter);
+
+			SAFE_RELEASE(pDownPortal);
+
+			SAFE_RELEASE(pPortal);
+
+			break;
+		}
+	}
+
+	Layer* pLayer = FindLayer("Default");
+
+	for (int i = 0; i < 20; ++i)
+	{
+		int iIndex = rand() % 8 + 15;
+
+		float fIndexX = (float)(rand() % 14 + 2);
+		float fIndexY = (float)(rand() % 12 + 5);
+
+		Tile* pTile = m_pStage->GetTile((float)iTileSizeX * fIndexX, (float)iTileSizeY * fIndexY);
+
+		POSITION tPos = pTile->GetPos();
+
+		TILE_OPTION eOption = pTile->GetTileOption();
+
+		if (eOption == TO_NOMOVE)
+			continue;
+
+		Obj* pRock = Obj::CreateCloneObj(m_vecstrProto[iIndex], "Rock",
+			GetSceneType(), pLayer);
+
+		if (pRock)
+			m_pStage->SetBlock(pTile, pRock->GetBlock(), pRock);
+
+		SAFE_RELEASE(pRock);
+
+		pTile->SetTileOption(TO_NOMOVE);
+	}
 
 	return true;
 }
 
+int SceneCave::Update(float fTime)
+{
+	Scene::Update(fTime);
+
+	POSITION tCamPos = GET_SINGLE(Camera)->GetPos();
+
+	m_pLevelNum->CreateNum(m_iLevel);
+
+	m_pLevelNum->SetPosAll(POSITION(70.f, 62.f) + tCamPos);
+
+	return 0;
+}
+
 void SceneCave::OutPortalCol(Collider* pSrc, Collider* pDest, float fTime)
 {
-	GET_SINGLE(SceneManager)->CreateScene<InGameScene>(SC_NEXT);
+	string strDest = pDest->GetTag();
+
+	if (strDest == "PlayerBody")
+	{
+
+		if (m_iLevel == 0)
+			GET_SINGLE(SceneManager)->CreateScene<InGameScene>(SC_NEXT);
+
+		else
+		{
+			SceneCave* pScene = GET_SINGLE(SceneManager)->CreateScene<SceneCave>(SC_NEXT);
+
+			pScene->SetLevel(m_iLevel - 1);
+		}
+
+		GET_SINGLE(SoundManager)->Stop(ST_BGM);
+		GET_SINGLE(SoundManager)->Stop(ST_EFFECT);
+	}
+}
+
+void SceneCave::NextLevel(Collider* pSrc, Collider* pDest, float fTime)
+{
+	string strDest = pDest->GetTag();
+
+	if (strDest == "PlayerBody")
+	{
+		RECTANGLE tRC = ((ColliderRect*)pSrc)->GetWorldInfo();
+
+		Tile* pTile = m_pStage->GetTile(tRC.l, tRC.t);
+
+		if (pTile)
+		{
+			TILE_OPTION eOption = pTile->GetTileOption();
+
+			if (eOption != TO_NOMOVE)
+			{
+				SceneCave* pScene = GET_SINGLE(SceneManager)->CreateScene<SceneCave>(SC_NEXT);
+
+				pScene->SetLevel(m_iLevel + 1);
+
+				GET_SINGLE(SoundManager)->Stop(ST_BGM);
+				GET_SINGLE(SoundManager)->Stop(ST_EFFECT);
+			}
+		}
+
+	}
 }

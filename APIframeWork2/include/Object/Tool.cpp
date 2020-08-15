@@ -1,6 +1,8 @@
 #include "Tool.h"
 
-Tool::Tool()
+Tool::Tool()	:
+	m_bWater(false),
+	m_eToolType(TOOL_SWORD)
 {
 	m_eType = IT_TOOL;
 }
@@ -8,6 +10,8 @@ Tool::Tool()
 Tool::Tool(const Tool& tool)	:
 	Item(tool)
 {
+	m_bWater = false;
+	m_eToolType = tool.m_eToolType;
 }
 
 Tool::~Tool()

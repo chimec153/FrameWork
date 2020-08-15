@@ -12,6 +12,7 @@ public:
 		const string& strBaseKey=ROOT_PATH);
 	const wchar_t* FindPath(const string& strKey);
 	const char* FindPathMultiByte(const string& strKey);
+
 	DECLARE_SINGLE(PathManager)
 };
 

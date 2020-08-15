@@ -19,20 +19,21 @@
 #include "../Object/Seed.h"
 #include "SceneHome.h"
 #include "../Object/PadeEffect.h"
+#include "SceneRoad.h"
 
-InGameScene::InGameScene()	:
-	m_pStage(nullptr)
+InGameScene::InGameScene()
 {
 }
 
 InGameScene::~InGameScene()
 {
-	SAFE_RELEASE(m_pStage);
 }
 
 bool InGameScene::Init()
 {
-	GET_SINGLE(SoundManager)->LoadSound("RoadBGM", true, "RoadBgm.wav");
+	if (!Scene::Init(POSITION(32.f * 8.f, 32.f * 14.f)))
+		return false;
+
 	GET_SINGLE(SoundManager)->Play("RoadBGM");
 
 	SetEditMode(false);
@@ -62,8 +63,6 @@ bool InGameScene::Init()
 
 	m_pStage = Obj::CreateObj<Stage>("Stage", pStageLayer);
 
-	m_pStage->CreateTile(100, 100, 32, 32, "Tiles", L"TileSheets\\Flooring.bmp");
-
 	char	strFileName[MAX_PATH] = {};
 
 	const char* strRootPath = GET_SINGLE(PathManager)->FindPathMultiByte(DATA_PATH);
@@ -71,7 +70,7 @@ bool InGameScene::Init()
 	if (strRootPath)
 		strcat_s(strFileName, strRootPath);
 
-	strcat_s(strFileName, "200808.tmp");	//	29, 34 cave
+	strcat_s(strFileName, "200808.tmp");
 
 	FILE* pLoadFile = nullptr;
 
@@ -82,49 +81,52 @@ bool InGameScene::Init()
 		if (m_pStage)
 			m_pStage->Load(pLoadFile);
 
-		Layer* pLayer = FindLayer("Default");
-
-		if (pLayer)
-			pLayer->Load(pLoadFile);
-
 		fclose(pLoadFile);
 	}
 
-	if (!Scene::Init(POSITION(32.f * 8.f, 32.f * 14.f)))
-		return false;
-
 	CreateFarmEffect();
+
+	CreateProtoTypes();
 
 	ColliderRect* pPortal = m_pStage->AddCollider<ColliderRect>("CavePortal");
 
-	pPortal->SetRect(32.f * 29.f, 32.f * 32.f, 32.f * 30.f, 32.f * 33.f);
+	pPortal->SetRect(32.f * 23.f, 32.f * 15.f, 32.f * 24.f, 32.f * 16.f);
 	pPortal->AddCollisionFunction(CS_ENTER, this, &InGameScene::Cave);
 
 	SAFE_RELEASE(pPortal);
 
 	ColliderRect* pHomePortal = m_pStage->AddCollider<ColliderRect>("HomePortal");
 
-	pHomePortal->SetRect(32.f * 8.f, 32.f * 9.f, 32.f * 9.f, 32.f * 10.f);
+	pHomePortal->SetRect(32.f * 6.f, 32.f * 10.f, 32.f * 7.f, 32.f * 11.f);
 	pHomePortal->AddCollisionFunction(CS_ENTER, this, &InGameScene::HomePortalCol);
 
 	SAFE_RELEASE(pHomePortal);
 
+	ColliderRect* pRoadPortal = m_pStage->AddCollider<ColliderRect>("RoadPortal");
+
+	pRoadPortal->SetRect(32.f * 49.f, 32.f * 10.f, 32.f * 50.f, 32.f * 11.f);
+	pRoadPortal->AddCollisionFunction(CS_ENTER, this, &InGameScene::RoadPortalCol);
+
+	SAFE_RELEASE(pRoadPortal);
+
 	Layer* pLayer = FindLayer("Default");
 
-	Item* pSeed = Obj::CreateObj<Seed>("PotatoSeed", pLayer);
-	
-	pSeed->SetImageOffset(pSeed->GetSize() * POSITION(19.f, 19.f));
-	pSeed->SetPos(512.f, 512.f);
+	for (int i = 0; i < 5; ++i)
+	{
+		Item* pSeed = (Item*)Obj::CreateCloneObj("PotatoSeed", "PotatoSeed", SC_NEXT, pLayer);
 
-	Collider* pCol = pSeed->GetCollider("ItemBody");
+		pSeed->SetPos(600.f + 100 * i, 600.f);
 
-	pCol->AddCollisionFunction(CS_ENTER, pSeed, &Item::CollEnter);
-	pCol->AddCollisionFunction(CS_STAY, pSeed, &Item::ColStay);
-	pCol->AddCollisionFunction(CS_LEAVE, pSeed, &Item::ColEnd);
+		Collider* pCol = pSeed->GetCollider("ItemBody");
 
-	SAFE_RELEASE(pCol);
-	
-	SAFE_RELEASE(pSeed);
+		pCol->AddCollisionFunction(CS_ENTER, pSeed, &Item::CollEnter);
+		pCol->AddCollisionFunction(CS_STAY, pSeed, &Item::ColStay);
+		pCol->AddCollisionFunction(CS_LEAVE, pSeed, &Item::ColEnd);
+
+		SAFE_RELEASE(pCol);
+
+		SAFE_RELEASE(pSeed);
+	}
 
 	return true;
 }
@@ -137,7 +139,6 @@ void InGameScene::Cave(Collider* pSrc, Collider* pDest, float fTime)
 
 		GET_SINGLE(SceneManager)->CreateScene<SceneCave>(SC_NEXT);
 	}
-
 }
 
 void InGameScene::HomePortalCol(Collider* pSrc, Collider* pDest, float fTime)
@@ -147,5 +148,15 @@ void InGameScene::HomePortalCol(Collider* pSrc, Collider* pDest, float fTime)
 		GET_SINGLE(SoundManager)->Stop(ST_BGM);
 
 		GET_SINGLE(SceneManager)->CreateScene<SceneHome>(SC_NEXT);
+	}
+}
+
+void InGameScene::RoadPortalCol(Collider* pSrc, Collider* pDest, float fTime)
+{
+	if (pDest->GetTag() == "PlayerBody")
+	{
+		GET_SINGLE(SoundManager)->Stop(ST_BGM);
+
+		GET_SINGLE(SceneManager)->CreateScene<SceneRoad>(SC_NEXT);
 	}
 }

@@ -1,54 +1,134 @@
 #include "Crop.h"
+#include "../Scene/Scene.h"
+#include "../Scene/InGameScene.h"
+#include "Stage.h"
+#include "Tile.h"
+#include "../Collider/ColliderRect.h"
+#include "../Core/Input.h"
+#include "Player.h"
+#include "UIInventory.h"
+
 
 Crop::Crop()	:
-	m_eType(CROP_APRICOT),
-	m_iLevel(1)
+	m_eCropType(CROP_APRICOT),
+	m_iDay(0),
+	m_iStage(0),
+	m_bTimeStart(false),
+	m_bHarvested(false)
 {
+	m_eBlock = OB_CROP;
 }
 
 Crop::Crop(const Crop& crop)	:
-	MoveObj(crop)
+	Item(crop)
 {
-	m_eType = crop.m_eType;
-	m_iLevel = crop.m_iLevel;
+	m_eCropType = crop.m_eCropType;
+	m_iStage = crop.m_iStage;
+	m_iDay = crop.m_iDay;
+	m_bTimeStart = false;
+	m_bHarvested = false;
 }
 
 Crop::~Crop()
 {
 }
 
+void Crop::AddDay(int iDay)
+{
+	Tile* pTile = ((InGameScene*)m_pScene)->GetStage()->GetTile(m_tPos);
+
+	if(pTile->GetTileOption() == TO_WATERDIRT && m_iStage >=1)
+		m_iDay += iDay;
+
+	if ((m_iStage == 1 && m_iDay >= 1) ||
+		(m_iStage == 2 && m_iDay >= 2) ||
+		(m_iStage == 3 && m_iDay >= 3) ||
+		(m_iStage == 4 && m_iDay >= 5) ||
+		(m_iStage == 5 && m_iDay >= 6))
+		Grow();
+}
+
+void Crop::Grow()
+{
+	POSITION tSize = GetSize();
+
+	tSize.y = 0;
+
+	POSITION tOffset = GetImageOffset();
+
+	SetImageOffset(tSize + tOffset);	//	이미지 오프셋을 작물 가로 크기만큼 한칸 오른쪽으로 이동시킨다.
+
+	++m_iStage;
+}
+
 bool Crop::Init()
 {
+	if (!Item::Init())
+		return false;
+
 	SetSize(32.f, 64.f);
 	SetPivot(0.5f, 0.5f);
 	SetTexture("crops", TEXT("TileSheets\\crops.bmp"));
+	SetColorKey(255, 255, 255);
+
+	ColliderRect* pRC = AddCollider<ColliderRect>("CropBody");
+
+	pRC->SetRect(-16.f, -32.f, 16.f, 32.f);
+
+	SAFE_RELEASE(pRC);
 
 	return true;
 }
 
 int Crop::Update(float fDeltaTime)
 {
-	MoveObj::Update(fDeltaTime);
+	Item::Update(fDeltaTime);
+
 	return 0;
 }
 
 int Crop::LateUpdate(float fDeltaTime)
 {
-	MoveObj::LateUpdate(fDeltaTime);
+	Item::LateUpdate(fDeltaTime);
 	return 0;
 }
 
 void Crop::Collision(float fDeltaTime)
 {
-	MoveObj::Collision(fDeltaTime);
+	Item::Collision(fDeltaTime);
 }
 
 void Crop::Render(HDC hDC, float fDeltaTime)
 {
-	MoveObj::Render(hDC, fDeltaTime);
+	Item::Render(hDC, fDeltaTime);
 }
 
 Crop* Crop::Clone()
 {
 	return new Crop(*this);
+}
+
+void Crop::MouseOn(Collider* pSrc, Collider* pDest, float fTime)
+{
+}
+
+void Crop::MousePress(Collider* pSrc, Collider* pDest, float fTime)
+{
+	if (m_bHarvested && !m_bInventory)
+	{
+			if (pDest->GetTag() == "PlayerBody")
+				((Player*)pDest->GetObj())->GetInven()->AddItem(this);
+
+
+
+			Collider* pRC = GetCollider("CropBody");
+
+			pRC->Die();
+
+			SAFE_RELEASE(pRC);
+	}
+}
+
+void Crop::MouseOff(Collider* pSrc, Collider* pDest, float fTime)
+{
 }

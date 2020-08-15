@@ -17,6 +17,11 @@ protected:
 	bool						m_bInventory;
 	bool						m_bMouseOn;
 	class UIInventory*			m_pInventory;
+	int							m_iCount;
+	class UINum*				m_pNumber;
+	int							m_iIndex;
+	POSITION					m_tStartPos;
+	bool						m_bDrag;
 
 public:
 	void SetInventory(class UIInventory* pInven)
@@ -32,6 +37,33 @@ public:
 		return m_eType;
 	}
 
+	void SetItemType(ITEM_TYPE eType)
+	{
+		m_eType = eType;
+	}
+
+	int GetItemCount()
+	{
+		return m_iCount;
+	}
+
+	void AddItemCount(int iCount);
+
+	int GetIndex()	const
+	{
+		return m_iIndex;
+	}
+
+	void SetIndex(int iIndex)
+	{
+		m_iIndex = iIndex;
+	}
+
+	bool IsDrag()	const
+	{
+		return m_bDrag;
+	}
+
 public:
 	virtual bool Init();
 	virtual int Update(float fDeltaTime);
@@ -44,5 +76,9 @@ public:
 	void CollEnter(class Collider* pSrc, class Collider* pDest, float fTime);
 	void ColStay(class Collider* pSrc, class Collider* pDest, float fTime);
 	void ColEnd(class Collider* pSrc, class Collider* pDest, float fTime);
+
+public:
+	void CreateItemNumber();
+	void DeleteItemNumber();
 };
 

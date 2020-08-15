@@ -1,0 +1,96 @@
+﻿  AniEditDlg.cpp
+  Animation.cpp
+  Collider.cpp
+  ColliderPixel.cpp
+  ColliderPoint.cpp
+  ColliderRect.cpp
+  ColliderSphere.cpp
+  CollisionManager.cpp
+  Core.cpp
+  Camera.cpp
+  FontManager.cpp
+  Input.cpp
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.h(67,1): warning C4311:  '형식 캐스트': 'const char *'에서 'DWORD'(으)로 포인터가 잘립니다.
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.cpp(45): message :  컴파일되는 함수 템플릿 인스턴스화 'bool Input::AddKey<char[9],char>(const T (&),const char &)'에 대한 참조를 확인하세요.
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.cpp(45): message :         with
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.cpp(45): message :         [
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.cpp(45): message :             T=char [9]
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.cpp(45): message :         ]
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.h(67,1): warning C4302:  '형식 캐스트': 'const char *'에서 'DWORD'(으)로 잘립니다.
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.h(55,1): warning C4311:  '형식 캐스트': 'const char *'에서 'DWORD'(으)로 포인터가 잘립니다.
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.h(67): message :  컴파일되는 함수 템플릿 인스턴스화 'bool Input::AddKey<char[10]>(const T (&))'에 대한 참조를 확인하세요.
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.h(67): message :         with
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.h(67): message :         [
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.h(67): message :             T=char [10]
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.h(67): message :         ]
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.cpp(43): message :  컴파일되는 함수 템플릿 인스턴스화 'bool Input::AddKey<char,char[10]>(const T &,const char (&)[10])'에 대한 참조를 확인하세요.
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.cpp(43): message :         with
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.cpp(43): message :         [
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.cpp(43): message :             T=char
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.cpp(43): message :         ]
+  PathManager.cpp
+  Timer.cpp
+  main.cpp
+  MapEditDlg.cpp
+  Math.cpp
+  Mathm.cpp
+  Bug.cpp
+  Building.cpp
+  컴파일하고 있습니다...
+  Bullet.cpp
+  Crop.cpp
+  Effect.cpp
+  Etc.cpp
+  FarmEffect.cpp
+  FightObj.cpp
+  Fly.cpp
+  Item.cpp
+  Minion.cpp
+  Mouse.cpp
+  MoveObj.cpp
+  Obj.cpp
+  PadeEffect.cpp
+  Player.cpp
+  Portal.cpp
+  Rock.cpp
+  RockCrab.cpp
+  Seed.cpp
+  Slime.cpp
+  SlimeHead.cpp
+  컴파일하고 있습니다...
+  Stage.cpp
+  StaticObj.cpp
+  Text.cpp
+  Tile.cpp
+  Tool.cpp
+  Tree.cpp
+  UI.cpp
+  UIBar.cpp
+  UIButton.cpp
+  UIClockHand.cpp
+  UIInventory.cpp
+  UINum.cpp
+  UIPanel.cpp
+  UITilePanel.cpp
+  Weapon.cpp
+  Ref.cpp
+  ResourcesManager.cpp
+  Texture.cpp
+  AnimationEditScene.cpp
+  InGameScene.cpp
+  컴파일하고 있습니다...
+  Layer.cpp
+  MapEditScene.cpp
+  Scene.cpp
+  SceneCave.cpp
+  SceneHome.cpp
+  SceneManager.cpp
+  StartScene.cpp
+  SoundManager.cpp
+C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\Core\Input.h(55,1): warning C4302:  '형식 캐스트': 'const char *'에서 'DWORD'(으)로 잘립니다.
+  코드를 생성하고 있습니다.
+  1327 of 5140 functions (25.8%) were compiled, the rest were copied from previous compilation.
+    607 functions were new in current compilation
+    1049 functions had inline decision re-evaluated but remain unchanged
+  코드를 생성했습니다.
+  APIframeWork.vcxproj -> C:\Users\assort\Documents\GitHub\FrameWork\APIframeWork2\include\../Bin/APIframeWork64.exe

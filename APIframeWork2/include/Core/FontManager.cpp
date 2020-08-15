@@ -1,0 +1,48 @@
+#include "FontManager.h"
+
+DEFINITION_SINGLE(FontManager)
+
+FontManager::FontManager()
+{
+
+}
+
+FontManager::~FontManager()
+{
+	auto iter = m_mapFont.begin();
+	auto iterEnd = m_mapFont.end();
+
+	for (; iter != iterEnd; ++iter)
+		DeleteObject(iter->second);
+
+	m_mapFont.clear();
+}
+
+bool FontManager::Init()
+{
+	AddFont("NormalFont", 16, 3, false, false, false, TEXT("±Ã¼­"));
+
+	return true;
+}
+
+void FontManager::AddFont(const string& strName, int iHeight, int iWeight, bool bItalic, bool bUnderLine, bool bStrikeOut, const TCHAR* pFontName)
+{
+	HFONT hFont = FindFont(strName);
+
+	if (hFont)
+		return;
+
+	hFont = CreateFont(iHeight, 0, 0, 0, iWeight, bItalic, bUnderLine, bStrikeOut, HANGEUL_CHARSET, 0, 0, 0, 0, pFontName);
+
+	m_mapFont.insert(make_pair(strName, hFont));
+}
+
+HFONT FontManager::FindFont(const string& strName)
+{
+	auto iter = m_mapFont.find(strName);
+
+	if (iter == m_mapFont.end())
+		return 0;
+
+	return iter->second;
+}

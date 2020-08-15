@@ -1,6 +1,9 @@
 #include "ResourcesManager.h"
 #include "Texture.h"
+#include "../Core/PathManager.h"
+
 DEFINITION_SINGLE(ResourcesManager)
+
 ResourcesManager::ResourcesManager()	:
 	m_hInst(nullptr),
 	m_hDC(nullptr),
@@ -12,6 +15,7 @@ ResourcesManager::~ResourcesManager()
 {
 	SAFE_RELEASE(m_pBackBuffer);
 	Safe_Release_Map(m_mapTexture);
+	Safe_Delete_VecList(m_vecItemInfo);
 }
 
 Texture * ResourcesManager::GetBackBuffer() const
@@ -25,6 +29,9 @@ bool ResourcesManager::Init(HINSTANCE hInst,HDC hDC)
 	m_hInst = hInst;
 	m_hDC = hDC;
 	m_pBackBuffer = LoadTexture("BackBuffer", L"backbuffer.bmp");
+
+	LoadItemInfo(TEXT("SeedData.txt"));
+
 	return true;
 }
 
@@ -156,4 +163,86 @@ Texture * ResourcesManager::FindTexture(const string & strKey)
 	iter->second->AddRef();
 
 	return iter->second;
+}
+
+bool ResourcesManager::LoadItemInfo(const TCHAR* pFileName, const string& strPathKey)
+{
+	TCHAR strFullPath[MAX_PATH] = {};
+
+	const TCHAR* pDataPath = GET_SINGLE(PathManager)->FindPath(strPathKey);
+
+	if (pDataPath)
+		lstrcat(strFullPath, pDataPath);
+
+	lstrcat(strFullPath, pFileName);
+
+	char pMultibytePath[MAX_PATH] = {};
+
+#ifdef _UNICODE
+	WideCharToMultiByte(CP_ACP, NULL, strFullPath, -1, pMultibytePath, lstrlen(strFullPath), NULL, NULL);
+#else
+	strcpy_s(pMultibytePath, strFullPath);
+#endif
+
+	FILE* pFile = nullptr;
+
+	fopen_s(&pFile, pMultibytePath, "rt");
+
+	if (pFile)
+	{
+		char cLine[256] = {};
+
+		fgets(cLine, 256, pFile);
+
+		int iCount = atoi(cLine);
+
+		for (int i = 0; i < iCount; ++i)
+		{
+			fgets(cLine, 256, pFile);
+
+			PITEMINFO pInfo = new ITEMINFO;
+
+			fgets(cLine, 256, pFile);
+
+			size_t iSize = strlen(cLine);
+
+			for (size_t i = 0; i < iSize; ++i)
+			{
+				if (cLine[i] == '\t')
+				{
+					cLine[i] = 0;
+					break;
+				}
+			}
+
+			pInfo->strName = cLine;
+
+			fgets(cLine, 256, pFile);
+
+			int iPriceCount = atoi(cLine);
+
+			for (int i = 0; i < iPriceCount; ++i)
+			{
+				fgets(cLine, 256, pFile);
+
+				pInfo->vecPrice.push_back(atoi(cLine));
+			}
+
+			m_vecItemInfo.push_back(pInfo);
+		}
+
+		fclose(pFile);
+	}
+
+	return true;
+}
+
+PITEMINFO ResourcesManager::FindItemInfo(int iIndex)
+{
+	size_t iSize = m_vecItemInfo.size();
+
+	if (iSize <= iIndex)
+		return	nullptr;
+
+	return m_vecItemInfo[iIndex];
 }

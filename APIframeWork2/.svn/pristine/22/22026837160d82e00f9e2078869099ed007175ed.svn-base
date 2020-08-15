@@ -1,0 +1,143 @@
+11
+SpringTree
+SpringTree,TileSheets\tree1_spring.bmp
+255, 255, 255
+32, 32
+0.5, 0.5
+0, 288
+96, 192
+0.5, 0.917
+0, 0		offset2
+2
+TreeBody
+-16, -16, 16, 16
+TreeLeavesBody
+-48, -176, 48, 0
+SpringTree2
+SpringTree2,TileSheets\tree2_spring.bmp
+255, 255, 255
+32, 32
+0.5, 0.5
+0, 288
+96, 192
+0.5, 0.917
+0, 0		offset2
+2
+TreeBody
+-16, -16, 16, 16
+TreeLeavesBody
+-48, -176, 48, 0
+SpringTree3
+SpringTree3,TileSheets\tree3_spring.bmp
+255, 255, 255	colorkey
+32, 32	size
+0.5, 0.5	pivot
+0, 288		offset2
+96, 192		size2
+0.5, 0.917	pivot2
+0, 0		offset2
+2		collider Number
+TreeBody
+-16, -16, 16, 16
+TreeLeavesBody
+-48, -176, 48, 0
+Barn
+Barn,Buildings\Barn.bmp
+255, 255, 255
+224, 224
+0.5, 0.5
+0, 0		offset1
+64, 32		size2
+0.25, -2.5		pivot2
+0, 224		offset2
+2
+BuildingBody
+-112, -112, 112, 112
+BuildingDoorBody
+-16, 48, 48, 80
+Coop
+Coop,Buildings\Coop.bmp
+255, 255, 255
+192, 224
+0.417, 0.643
+0, 0		offset1
+32, 32		size2
+0.5, -1.5		pivot2
+0, 224		offset2
+2
+BuildingBody
+-80, -144, 112, 80
+BuildingDoorBody
+-16, 48, 16, 80
+House1
+House1,Buildings\houses.bmp
+255, 0, 255
+288, 288
+0.5, 0.5
+20, 0		offset1
+0, 0		size2
+0.0, 0.0		pivot2
+0, 0		offset2
+1
+BuildingBody
+-144, -144, 144, 144
+House2
+House2,Buildings\houses.bmp
+255, 0, 255
+288, 288
+0.5, 0.5
+20, 288		offset1
+0, 0		size2
+0.0, 0.0		pivot2
+0, 0		offset2
+1
+BuildingBody
+-144 -144, 144, 144
+House3
+House3,Buildings\houses.bmp
+255, 0, 255
+288, 288
+0.5, 0.5
+20, 576		offset1
+0, 0		size2
+0.0, 0.0		pivot2
+0, 0		offset2
+1
+BuildingBody
+-144, -144, 144, 144
+HouseGlass
+HouseGlass,Buildings\houses.bmp
+255, 0, 255
+224, 320
+0.5, 0.5
+310, 0		offset1
+0, 0		size2
+0.0, 0.0		pivot2
+0, 0		offset2
+1
+BuildingBody
+-144, -144, 144, 144
+HouseGlass2
+HouseGlass2,Buildings\houses.bmp
+255, 0, 255
+224, 320
+0.5, 0.5
+310, 320		offset1
+0, 0		size2
+0.0, 0.0		pivot2
+0, 0		offset2
+1
+BuildingBody
+-144, -144, 144, 144
+Rock
+Rock,Maps\paths.bmp
+255, 0, 255
+32, 32
+0.5, 0.5
+32, 128		offset1
+0, 0		size2
+0.0, 0.0		pivot2
+0, 0		offset2
+1
+BuildingBody
+-16, -16, 16, 16

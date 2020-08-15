@@ -44,10 +44,12 @@ bool Input::Init(HWND hWnd)
 	AddKey('S', "MoveBack");
 	AddKey("MoveLeft", 'A');
 	AddKey("MoveRight", 'D');
+	AddKey("Inventory", 'E');
 	AddKey("Fire", VK_SPACE);
 	AddKey("NextFrame", 'N', VK_CONTROL);
 	AddKey(VK_CONTROL, "Skill_First", '1');
 	AddKey(VK_LBUTTON, "MouseLButton");
+	AddKey(VK_LBUTTON, VK_CONTROL, "CtrlLButton");
 	AddKey(VK_RBUTTON, "MouseRButton");
 	AddKey("TileSub", '1');
 	AddKey("TileAdd", '2');

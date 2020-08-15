@@ -5,7 +5,8 @@ UINum::UINum()	:
 	m_iNum(0),
 	m_fDist(0.f),
 	m_fLimitDist(30.f),
-	m_fSpeed(30.f)
+	m_fSpeed(30.f),
+	m_bOneLine(false)
 {
 }
 
@@ -16,6 +17,8 @@ UINum::UINum(const UINum& num)	:
 	m_fLimitDist = num.m_fLimitDist;
 	m_fSpeed = num.m_fSpeed;
 	m_fDist = 0.f;
+	m_bOneLine = num.m_bOneLine;
+	m_tOriginOffset = num.m_tOriginOffset;
 }
 
 UINum::~UINum()
@@ -27,28 +30,50 @@ void UINum::SetNum(int iNum)
 {
 	m_iNum = iNum % 10;
 
-	if (m_iNum > 5)
+	if (m_iNum > 5 && !m_bOneLine)
+		SetImageOffset(m_tOriginOffset.x + m_tSize.x * (m_iNum-6), m_tOriginOffset.y + m_tSize.y);
+
+	else
+		SetImageOffset(m_tOriginOffset.x + m_tSize.x * m_iNum, m_tOriginOffset.y);
+}
+
+void UINum::SetPosAll(const POSITION& tPos)
+{
+	size_t iSize = m_vecNum.size();
+
+	SetPos(tPos);
+
+	for (size_t i = 0; i < iSize; ++i)
 	{
-		m_tImageOffset.x -= m_tSize.x * 6;
-		m_tImageOffset.y += m_tSize.y;
+		POSITION tNewPos = tPos;
+
+		tNewPos.x -= m_tSize.x * (i +1);
+
+		if(m_vecNum[i])
+			m_vecNum[i]->SetPos(tNewPos);
 	}
-
-	POSITION tPos = m_tImageOffset;
-
-	tPos.x += m_tSize.x* m_iNum;
-
-	SetImageOffset(tPos);
 }
 
 void UINum::CreateNum(int iNum)
 {
+	DeleteNum();
+
 	int i = 1;
 
 	SetNum(iNum);
 
 	while (iNum >= 10)
 	{
-		UINum* pObj = (UINum*)CreateCloneObj("NumSm", "num", SC_CURRENT, m_pLayer);
+		UINum* pObj = nullptr;
+
+		if(m_bOneLine)
+			pObj = (UINum*)CreateCloneObj("NumSm", "num", SC_CURRENT, m_pLayer);
+
+		else
+			pObj = (UINum*)CreateCloneObj("Num", "num", SC_CURRENT, m_pLayer);
+		
+		if(m_fSpeed == 0.f)
+			pObj->SetSpeed(0.f);
 
 		POSITION tPos = m_tPos;
 
@@ -66,10 +91,31 @@ void UINum::CreateNum(int iNum)
 	}
 }
 
+void UINum::DeleteNum()
+{
+
+	auto iter = m_vecNum.begin();
+	auto iterEnd = m_vecNum.end();
+
+	for (; iter != iterEnd;)
+	{
+		(*iter)->Die();
+
+		SAFE_RELEASE((*iter));
+
+		iter = m_vecNum.erase(iter);
+		iterEnd = m_vecNum.end();
+	}
+
+	m_vecNum.clear();
+}
+
 bool UINum::Init()
 {
 	if (!UI::Init())
 		return false;
+
+	m_tOriginOffset = m_tImageOffset;
 
 	return true;
 }

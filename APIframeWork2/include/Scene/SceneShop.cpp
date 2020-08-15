@@ -1,0 +1,58 @@
+#include "SceneShop.h"
+#include "SceneTown.h"
+#include "../Object/Stage.h"
+#include "../Collider/ColliderRect.h"
+#include "../Scene/SceneManager.h"
+#include "../Sound/SoundManager.h"
+#include "../Object/NPC.h"
+
+SceneShop::SceneShop()
+{
+}
+
+SceneShop::~SceneShop()
+{
+}
+
+bool SceneShop::Init()
+{
+	Layer* pStageLayer = FindLayer("Stage");
+
+	m_pStage = Obj::CreateObj<Stage>("TownStage", pStageLayer);
+
+	m_pStage->LoadFromPath("Shop.tmp");
+
+	if (!Scene::Init(POSITION(32.f * 6.5f, 32.f * 17.f)))
+		return false;
+
+	CreateFarmEffect();
+
+	CreateProtoTypes();
+
+	ColliderRect* pTownPortal = m_pStage->AddCollider<ColliderRect>("TownPortal");
+
+	pTownPortal->SetRect(32.f * 6.f, 32.f * 18.f, 32.f * 7.f, 32.f * 19.f);
+	pTownPortal->AddCollisionFunction(CS_ENTER, this, &SceneShop::TownPortalCol);
+
+	SAFE_RELEASE(pTownPortal);
+
+	Layer* pLayer = FindLayer("Default");
+
+	NPC* pNPC = Obj::CreateObj<NPC>("NPC", pLayer);
+
+	pNPC->SetPos(32.f * 7.5f, 32.f * 4.5f);
+
+	SAFE_RELEASE(pNPC);
+
+	return true;
+}
+
+void SceneShop::TownPortalCol(Collider* pSrc, Collider* pDest, float fTime)
+{
+	if (pDest->GetTag() == "PlayerBody")
+	{
+		GET_SINGLE(SoundManager)->Stop(ST_BGM);
+
+		GET_SINGLE(SceneManager)->CreateScene<SceneTown>(SC_NEXT);
+	}
+}

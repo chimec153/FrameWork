@@ -37,7 +37,8 @@ CAnimationEditScene::CAnimationEditScene()	:
 	m_iDir(0),
 	m_pHair(nullptr),
 	m_pShirt(nullptr),
-	m_pAniEditDlg(nullptr)
+	m_pAniEditDlg(nullptr),
+	m_hWnd(0)
 {
 	m_vecPixel.resize(32 * 64 * 6);
 	m_vecHair.resize(32 * 64 * 6);
@@ -544,11 +545,11 @@ void CAnimationEditScene::Input(float fDeltaTime)
 				for (int j = 0; j < 32 * 6; ++j)
 				{
 					tPixel[(63 - i) * 32 * 6 + j].r = 
-						m_vecPixel[i * 32 * 6 + j] & 0x000000ff;
+						(unsigned char)(m_vecPixel[i * 32 * 6 + j] & 0x000000ff);
 					tPixel[(63 - i) * 32 * 6 + j].g = 
-						(m_vecPixel[i * 32 * 6 + j] & 0x0000ff00) >> 8;
+						(unsigned char)((m_vecPixel[i * 32 * 6 + j] & 0x0000ff00) >> 8);
 					tPixel[(63 - i) * 32 * 6 + j].b = 
-						(m_vecPixel[i * 32 * 6 + j] & 0x00ff0000) >> 16;
+						(unsigned char)((m_vecPixel[i * 32 * 6 + j] & 0x00ff0000) >> 16);
 				}
 			}
 

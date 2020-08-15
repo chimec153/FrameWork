@@ -7,6 +7,8 @@
 #include "../Core/Input.h"
 #include "..//Scene/Scene.h"
 #include "Player.h"
+#include "../Core/Timer.h"
+#include "UIClockHand.h"
 
 Stage::Stage()	:
 	m_iTileNumX(0),
@@ -27,6 +29,22 @@ Stage::Stage(const Stage & stage)	:
 	{
 		m_vecTile.push_back(stage.m_vecTile[i]->Clone());
 	}
+
+	m_iTileNumX = stage.m_iTileNumX;
+	m_iTileNumY = stage.m_iTileNumY;
+	m_iTileSizeX = stage.m_iTileSizeX;
+	m_iTileSizeY = stage.m_iTileSizeY;
+
+	m_ppBlock = new char* [m_iTileNumY];
+
+	for (int i = 0; i < m_iTileNumY; ++i)
+	{
+		m_ppBlock[i] = new char[m_iTileNumX];
+
+		memcpy(m_ppBlock[i], stage.m_ppBlock[i], sizeof(char) * m_iTileNumX);
+	}
+
+	m_pSelectTile = nullptr;
 }
 
 Stage::~Stage()
@@ -57,7 +75,9 @@ void Stage::CreateTile(int iNumX, int iNumY,
 			Tile* pTile = Obj::CreateObj<Tile>("Tile");
 
 			pTile->SetSize((float)iSizeX, (float)iSizeY);
-			pTile->SetPos((float)j*iSizeX, (float)i*iSizeY);
+			pTile->SetPos((float)j*iSizeX + m_tStart.x, (float)i*iSizeY + m_tStart.y);
+
+			pTile->SetImageOffset(32.f, 224.f);
 
 			pTile->SetTexture(strKey, pFileName, strPathKey);
 			pTile->SetStage(this);
@@ -76,10 +96,10 @@ void Stage::CreateTile(int iNumX, int iNumY,
 bool Stage::Init()
 {
 	SetPos(0.f, 0.f);
-	SetSize(1920.f, 1080.f);
+	SetSize(1280.f, 800.f);
 	SetPivot(0.f, 0.f);
 
-	SetTexture("Stage", L"stage1.bmp");
+	SetTexture("Stage", TEXT("AnimationUI\\BackGround.bmp"));
 	return true;
 }
 
@@ -126,6 +146,13 @@ int Stage::Update(float fDeltaTime)
 		}
 	}
 
+	UIClockHand* pHand = (UIClockHand*)GET_SINGLE(Timer)->GetClockHand();
+
+	bool bRain = false;
+
+	if(pHand)
+		bRain = pHand->IsRain();
+
 	for (int i = 0; i < m_iTileNumY; ++i)
 	{
 		for (int j = 0; j < m_iTileNumX; ++j)
@@ -136,6 +163,9 @@ int Stage::Update(float fDeltaTime)
 			if (eOption != TO_WATERDIRT &&
 				eOption != TO_HOEDIRT)
 				continue;
+
+			if (eOption == TO_HOEDIRT && bRain)
+				m_vecTile[i * m_iTileNumX + j]->SetTileOption(TO_WATERDIRT);
 
 			Tile* pLeftTile = nullptr;
 
@@ -280,18 +310,44 @@ void Stage::Render(HDC hDC, float fDeltaTime)
 	{
 		m_vecTile[i]->Render(hDC, fDeltaTime);
 	}
-	/*
-	POSITION	tCamPos = GET_SINGLE(Camera)->GetPos();
-	for (int i = 1; i < m_iTileNumY; ++i)
+	
+	if (m_pScene->IsEditMode())
 	{
-		MoveToEx(hDC, 0.f, i*m_iTileSizeY-tCamPos.y, NULL);
-		LineTo(hDC, m_iTileNumX * m_iTileSizeX, i*m_iTileSizeY - tCamPos.y);
+		POSITION	tCamPos = GET_SINGLE(Camera)->GetPos();
+		for (int i = 1; i < m_iTileNumY; ++i)
+		{
+			MoveToEx(hDC, 0, (int)(i * m_iTileSizeY - tCamPos.y), NULL);
+			LineTo(hDC, (int)(m_iTileNumX * m_iTileSizeX), (int)(i * m_iTileSizeY - tCamPos.y));
+		}
+		for (int i = 1; i < m_iTileNumX; ++i)
+		{
+			MoveToEx(hDC, (int)(i * m_iTileSizeX - tCamPos.x), 0, NULL);
+			LineTo(hDC, (int)(i * m_iTileSizeX - tCamPos.x), (int)(m_iTileNumY * m_iTileSizeY));
+		}
 	}
-	for (int i = 1; i < m_iTileNumX; ++i)
-	{
-		MoveToEx(hDC, i*m_iTileSizeX - tCamPos.x, 0, NULL);
-		LineTo(hDC, i*m_iTileSizeX - tCamPos.x, m_iTileNumY * m_iTileSizeY);
-	}*/
+
+#ifdef _DEBUG
+		list<Collider*>::iterator	iter;
+		list<Collider*>::iterator	iterEnd = m_ColliderList.end();
+
+		for (iter = m_ColliderList.begin(); iter != iterEnd;)
+		{
+			if (!(*iter)->GetEnable())
+			{
+				++iter;
+				continue;
+			}
+			(*iter)->Render(hDC, fDeltaTime);
+			if (!(*iter)->GetLife())
+			{
+				SAFE_RELEASE((*iter));
+				iter = m_ColliderList.erase(iter);
+				iterEnd = m_ColliderList.end();
+			}
+			else
+				++iter;
+		}
+#endif
 }
 
 Stage * Stage::Clone()
@@ -336,9 +392,11 @@ void Stage::Load(FILE * pFile)
 	{
 		Tile* pTile = Obj::CreateObj<Tile>("Tile");
 
-		pTile->Load(pFile);
 		pTile->m_pScene = m_pScene;
 		pTile->m_pLayer = m_pLayer;
+
+		pTile->Load(pFile);
+
 		pTile->SetAlpha(255);
 		pTile->EnableAlpha(true);
 
@@ -365,9 +423,11 @@ void Stage::ChangeTileImageOffset(const POSITION& tPos,
 
 void Stage::ChangeTileTexture(const POSITION& tPos, Texture* pTexture, int iLayer)
 {
+	size_t iSize = m_vecTile.size();
+
 	int iIndex = GetTileIndex(tPos);
 
-	if (iIndex == -1)
+	if (iIndex <= -1 || iIndex >= (int)iSize)
 		return;
 
 	if(iLayer == 0)
@@ -382,26 +442,31 @@ void Stage::ChangeTileOption(const POSITION & tPos,
 {
 	int iIndex = GetTileIndex(tPos);
 
-	if (iIndex == -1)
+	size_t iSize = m_vecTile.size();
+
+	if (iIndex == -1 || iSize <= iIndex)
 		return;
+
 	m_vecTile[iIndex]->SetTileOption(eOption);
 }
 
 int Stage::GetTileIndex(const POSITION & tPos)	const
 {
-	return GetTileIndex(tPos.x, tPos.y);
+	POSITION tNewPos = tPos - m_tStart;
+
+	return GetTileIndex(tNewPos.x, tNewPos.y);
 }
 
 int Stage::GetTileIndex(float x, float y)	const
 {
-	int idxX = (int)x / m_iTileSizeX;
+	int idxX = (int)x/ m_iTileSizeX;
 	int idxY = (int)y / m_iTileSizeY;
 
-	if (idxX < 0 || idxX >= m_iTileNumX)
+	/*if (idxX < 0 || idxX >= m_iTileNumX)
 		return -1;
 
 	else if (idxY < 0 || idxY >= m_iTileNumY)
-		return -1;
+		return -1;*/
 
 	return idxY * m_iTileNumX +idxX;
 }
@@ -410,26 +475,75 @@ Tile* Stage::GetTile(const POSITION& tPos) const
 {
 	int iIndex = GetTileIndex(tPos);
 
-	if (iIndex < 0)
+	size_t iSize = m_vecTile.size();
+
+	if (iIndex < 0 || iIndex >= iSize)
 		return nullptr;
 
 	return m_vecTile[iIndex];
 }
 
-void Stage::SetBlock(int iTileIndex, OBJ_BLOCK eBlock, class Obj* obj)
+void Stage::SetBlock(OBJ_BLOCK eBlock, Obj* pObj)
 {
-	//m_vecTile[iTileIndex]->DeleteObj();
-	m_vecTile[iTileIndex]->SetObj(obj);
+	POSITION tPos = m_pSelectTile->GetPos() - m_tStart;
 
-	obj->SetPos(iTileIndex % m_iTileNumX * m_iTileSizeX + m_iTileSizeX / 2.f, 
+	int iIndexX = (int)(tPos.x / m_iTileSizeX);
+	int iIndexY = (int)(tPos.y / m_iTileSizeY);
+
+	tPos.x += m_iTileSizeX / 2.f;
+
+	m_pSelectTile->SetObj(pObj);
+
+	if(pObj)
+		pObj->SetPos(tPos);
+
+	m_ppBlock[iIndexY][iIndexX] = eBlock;
+}
+
+void Stage::SetBlock(int iTileIndex, OBJ_BLOCK eBlock, class Obj* pObj)
+{
+	m_vecTile[iTileIndex]->SetObj(pObj);
+
+	pObj->SetPos(iTileIndex % m_iTileNumX * m_iTileSizeX + m_iTileSizeX / 2.f,
 		iTileIndex / m_iTileNumX * m_iTileSizeY + m_iTileSizeY / 2.f);
 
 	m_ppBlock[iTileIndex / m_iTileNumX][iTileIndex % m_iTileNumX] = eBlock;
 }
 
+void Stage::SetBlock(const POSITION& tPos, OBJ_BLOCK eBlock, Obj* pObj)
+{
+	int iIndex = GetTileIndex(tPos);
+
+	SetBlock(iIndex, eBlock, pObj);
+}
+
+void Stage::SetBlock(Tile* pTile, OBJ_BLOCK eBlock, Obj* pObj)
+{
+	size_t iSize = m_vecTile.size();
+
+	for (size_t i = 0; i < iSize; ++i)
+	{
+		if (m_vecTile[i] == pTile)
+			SetBlock((int)i, eBlock, pObj);
+	}
+}
+
 OBJ_BLOCK Stage::GetBlock(int iTileIndex)	const
 {
 	return OBJ_BLOCK(m_ppBlock[iTileIndex / m_iTileNumX][iTileIndex % m_iTileNumX]);
+}
+
+OBJ_BLOCK Stage::GetBlock() const
+{
+	if (!m_pSelectTile)
+		return OB_NONE;
+
+	POSITION tPos = m_pSelectTile->GetPos() - m_tStart;
+
+	int iIndexX = (int)(tPos.x / m_iTileSizeX);
+	int iIndexY = (int)(tPos.y / m_iTileSizeY);
+
+	return (OBJ_BLOCK)m_ppBlock[iIndexY][iIndexX];
 }
 
 void Stage::ClearTile()

@@ -1,0 +1,76 @@
+#pragma once
+#include "../game.h"
+
+class Camera
+{
+private:
+	POSITION	m_tPos;
+	RESOLUTION	m_tClientRS;
+	RESOLUTION	m_tWorldRS;
+	POSITION	m_tPivot;
+	class Obj* m_pTarget;
+
+public:
+	POSITION GetPos()	const
+	{
+		return m_tPos;
+	}
+
+	RESOLUTION	GetClientRS()	const
+	{
+		return m_tClientRS;
+	}
+
+public:
+	void SetTarget(class Obj* pObj);
+
+	void SetPivot(const POSITION& tPivot)
+	{
+		m_tPivot = tPivot;
+	}
+
+	void SetPivot(float x, float y)
+	{
+		m_tPivot = POSITION(x,y);
+	}
+
+	void SetPos(const POSITION& tPos)
+	{
+		m_tPos = tPos;
+	}
+
+	void SetPos(float x, float y)
+	{
+		m_tPos = POSITION(x, y);
+	}
+
+	void SetClientResolution(const RESOLUTION& tRS)
+	{
+		m_tClientRS = tRS;
+	}
+
+	void SetClientResolution(int x, int y)
+	{
+		m_tClientRS = RESOLUTION(x, y);
+	}
+
+	void SetWorldResolution(const RESOLUTION& tRS)
+	{
+		m_tWorldRS = tRS;
+	}
+
+	void SetWorldResolution(int x, int y)
+	{
+		m_tWorldRS = RESOLUTION(x, y);
+	}
+
+public:
+	bool Init(const POSITION& tPos, const RESOLUTION& tRS,
+		const RESOLUTION& tWorldRS);
+	void Input(float fDeltaTime);
+	void Update(float fDeltaTime);
+	void Scroll(float x, float y);
+
+	DECLARE_SINGLE(Camera);
+
+};
