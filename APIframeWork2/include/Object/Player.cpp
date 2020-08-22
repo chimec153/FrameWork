@@ -31,6 +31,14 @@
 #include "ObjManager.h"
 #include "../Scene/SceneHome.h"
 #include "../Resources/ResourcesManager.h"
+#include "UIShop.h"
+#include "Arm.h"
+#include "Pants.h"
+#include "Hair.h"
+#include "Shirt.h"
+#include "../Scene/SceneCrapentersShop.h"
+#include "../Scene/SceneShop.h"
+#include "../Scene/SceneWeaponShop.h"
 
 Player::Player()	:
 	m_bAttack(false),
@@ -39,7 +47,12 @@ Player::Player()	:
 	m_pHPBar(nullptr),
 	m_bWalk(false),
 	m_eAction(PA_IDLE),
-	m_iGold(0)
+	m_iGold(0),
+	m_iBuildings(0),
+	m_pArm(nullptr),
+	m_pPants(nullptr),
+	m_pHair(nullptr),
+	m_pShirt(nullptr)
 {
 	m_bTileEffect = true;
 }
@@ -59,6 +72,19 @@ Player::Player(const Player & player)	:
 	m_bWalk = false;
 	m_eAction = player.m_eAction;
 	m_iGold = player.m_iGold;
+	m_iBuildings = player.m_iBuildings;
+
+	if (player.m_pArm)
+		m_pArm = player.m_pArm->Clone();
+
+	if (player.m_pPants)
+		m_pPants = player.m_pPants->Clone();
+
+	if (player.m_pHair)
+		m_pHair = player.m_pHair->Clone();
+
+	if (player.m_pShirt)
+		m_pShirt = player.m_pShirt->Clone();
 }
 
 Player::~Player()
@@ -144,6 +170,38 @@ void Player::SetHP(int iHP)
 	m_pHPBar->SetValue((float)iHP);
 }
 
+void Player::SetArm(Arm* pArm)
+{
+	m_pArm = pArm;
+
+	if (m_pArm)
+		m_pArm->SetPlayer(this);
+}
+
+void Player::SetPants(Pants* pPants)
+{
+	m_pPants = pPants;
+
+	if (m_pPants)
+		m_pPants->SetPlayer(this);
+}
+
+void Player::SetHair(Hair* pHair)
+{
+	m_pHair = pHair;
+
+	if (m_pHair)
+		m_pHair->SetPlayer(this);
+}
+
+void Player::SetShirt(Shirt* pShirt)
+{
+	m_pShirt = pShirt;
+
+	if (m_pShirt)
+		m_pShirt->SetPlayer(this);
+}
+
 bool Player::Init()
 {
 	Obj::SetCollide(true);
@@ -161,13 +219,16 @@ bool Player::Init()
 	SetForce(200.f);
 
 	ColliderRect* pRC = AddCollider<ColliderRect>("attack");
+
 	pRC->SetRect(-96.f, 32.f, 96.f, 128.f);
 	pRC->SetEnable(false);
+
 	SAFE_RELEASE(pRC);
 
 	ColliderSphere* pSphere = AddCollider<ColliderSphere>("PlayerBody");
 
 	pSphere->SetSphere(POSITION(0.f, -16.f), 16.f);
+
 	pSphere->AddCollisionFunction(CS_ENTER, this,
 		&Player::Hit);
 	pSphere->AddCollisionFunction(CS_STAY, this,
@@ -179,105 +240,7 @@ bool Player::Init()
 
 	Animation* pAni = CreateAnimation("PlayerAnimation");
 
-	AddAnimationClip("IdleRight", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
-		0, 0, 1, 1, 0.f, "PlayerIdleRight", L"WalkRight.bmp");
-	SetAnimationClipColorKey("IdleRight", 0, 0, 0);
-
-	AddAnimationClip("IdleLeft", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
-		0, 0, 1, 1, 0.f, "PlayerIdleLeft", L"walkLeft.bmp");
-	SetAnimationClipColorKey("IdleLeft", 0, 0, 0);
-
-	AddAnimationClip("IdleUp", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
-		0, 0, 1, 1, 0.f, "PlayerIdleUp", L"WalkUp.bmp");
-	SetAnimationClipColorKey("IdleUp", 0, 0, 0);
-
-	AddAnimationClip("IdleDown", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
-		0, 0, 1, 1, 0.f, "PlayerIdleDown", L"aniii.bmp");
-	SetAnimationClipColorKey("IdleDown", 0, 0, 0);
-
-	AddAnimationClip("RunRight", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
-		1, 0, 2, 1, 0.f, "PlayerRunRight", L"WalkRight.bmp");
-	SetAnimationClipColorKey("RunRight", 0, 0, 0);
-
-	AddAnimationClip("RunLeft", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
-		1, 0, 2, 1, 0.f, "PlayerRunLeft", L"walkLeft.bmp");
-	SetAnimationClipColorKey("RunLeft", 0, 0, 0);
-
-	AddAnimationClip("RunUp", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
-		1, 0, 2, 1, 0.f, "PlayerRunUp", L"WalkUp.bmp");
-	SetAnimationClipColorKey("RunUp", 0, 0, 0);
-
-	AddAnimationClip("RunDown", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
-		1, 0, 2, 1, 0.f, "PlayerRunDown", L"aniii.bmp");
-	SetAnimationClipColorKey("RunDown", 0, 0, 0);
-
-	AddAnimationClip("AttackRight", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
-		0, 0, 6, 1, 0.f, "PlayerAttackRight", L"AttackRight.bmp");
-	SetAnimationClipColorKey("AttackRight", 0, 0, 0);
-
-	AddAnimationClip("AttackLeft", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
-		0, 0, 6, 1, 0.f, "PlayerAttackLeft", L"AttackLeft.bmp");
-	SetAnimationClipColorKey("AttackLeft", 0, 0, 0);
-
-	AddAnimationClip("AttackUp", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
-		0, 0, 6, 1, 0.f, "PlayerAttackUp", L"AttackUp.bmp");
-	SetAnimationClipColorKey("AttackUp", 0, 0, 0);
-
-	AddAnimationClip("AttackDown", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
-		0, 0, 6, 1, 0.f, "PlayerAttackDown", L"attackDown.bmp");
-	SetAnimationClipColorKey("AttackDown", 0, 0, 0);
-
-	AddAnimationClip("FarmRight", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
-		0, 0, 6, 1, 0.f, "PlayerFarmRight", L"farmRight.bmp");
-	SetAnimationClipColorKey("FarmRight", 0, 0, 0);
-
-	AddAnimationClip("FarmLeft", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
-		0, 0, 6, 1, 0.f, "PlayerFarmLeft", L"FarmLeft.bmp");
-	SetAnimationClipColorKey("FarmLeft", 0, 0, 0);
-
-	AddAnimationClip("FarmUp", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
-		0, 0, 6, 1, 0.f, "PlayerFarmUp", L"farmUp.bmp");
-	SetAnimationClipColorKey("FarmUp", 0, 0, 0);
-
-	AddAnimationClip("FarmDown", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
-		0, 0, 6, 1, 0.f, "PlayerFarmDown", L"farmDown.bmp");
-	SetAnimationClipColorKey("FarmDown", 0, 0, 0);
-
-	AddAnimationClip("LiftIdleRight", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
-		0, 0, 1, 1, 0.f, "PlayerLiftIdleRight", L"LiftRight.bmp");
-	SetAnimationClipColorKey("LiftIdleRight", 0, 0, 0);
-
-	AddAnimationClip("LiftIdleLeft", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
-		0, 0, 1, 1, 0.f, "PlayerLiftIdleLeft", L"LiftLeft.bmp");
-	SetAnimationClipColorKey("LiftIdleLeft", 0, 0, 0);
-
-	AddAnimationClip("LiftIdleUp", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
-		0, 0, 1, 1, 0.f, "PlayerLiftIdleUp", L"LiftUp.bmp");
-	SetAnimationClipColorKey("LiftIdleUp", 0, 0, 0);
-
-	AddAnimationClip("LiftIdleDown", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
-		0, 0, 1, 1, 0.f, "PlayerLiftIdleDown", L"LiftDown.bmp");
-	SetAnimationClipColorKey("LiftIdleDown", 0, 0, 0);
-
-	AddAnimationClip("LiftRight", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
-		1, 0, 2, 1, 0.f, "PlayerLiftRight", L"LiftRight.bmp");
-	SetAnimationClipColorKey("LiftRight", 0, 0, 0);
-
-	AddAnimationClip("LiftLeft", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
-		1, 0, 2, 1, 0.f, "PlayerLiftLeft", L"LiftLeft.bmp");
-	SetAnimationClipColorKey("LiftLeft", 0, 0, 0);
-
-	AddAnimationClip("LiftUp", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
-		1, 0, 2, 1, 0.f, "PlayerLiftUp", L"LiftUp.bmp");
-	SetAnimationClipColorKey("LiftUp", 0, 0, 0);
-
-	AddAnimationClip("LiftDown", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
-		1, 0, 2, 1, 0.f, "PlayerLiftDown", L"LiftDown.bmp");
-	SetAnimationClipColorKey("LiftDown", 0, 0, 0);
-
-	AddAnimationClip("Eat", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
-		0, 0, 5, 1, 0.f, "PlayerEat", L"Eat.bmp");
-	SetAnimationClipColorKey("Eat", 0, 0, 0);
+	pAni->LoadFromPath("base.sac");
 
 	SAFE_RELEASE(pAni);	
 
@@ -292,16 +255,21 @@ void Player::Input(float fDeltaTime)
 
 	if (pInventory)
 	{
+		UIShop* pShop = pInventory->GetShop();
+
 		if (pInventory->GetExtended())
 		{
 			SAFE_RELEASE(pInventory);
 			return;
 		}
 
-		else if (pInventory->IsShopPanelOn())
+		if (pShop)
 		{
-			SAFE_RELEASE(pInventory);
-			return;
+			if (pShop->IsShopPanelOn())
+			{
+				SAFE_RELEASE(pInventory);
+				return;
+			}
 		}
 	}
 
@@ -323,16 +291,9 @@ void Player::Input(float fDeltaTime)
 	{
 		bPress = true;
 
-		if (eType == IT_SEED)
 		{
-			m_pAnimation->ChangeClip("LiftLeft");
-			m_pAnimation->SetDefaultClip("LiftIdleLeft");
-		}
-
-		else
-		{
-			m_pAnimation->ChangeClip("RunLeft");
-			m_pAnimation->SetDefaultClip("IdleLeft");
+			m_pAnimation->ChangeClip("PlayerWalkLeft");
+			m_pAnimation->SetDefaultClip("PlayerIdleLeft");
 		}
 
 		m_tMoveDir = POSITION(-1.f, 0.f);
@@ -343,7 +304,7 @@ void Player::Input(float fDeltaTime)
 		CWeapon* pWeapon = (CWeapon*)GET_SINGLE(ObjManager)->GetWeapon();
 
 		if (pWeapon)
-			pWeapon->SetPos(m_tPos + m_tMoveDir * 16.f);
+			pWeapon->SetPos(m_tPos.x + m_tMoveDir.x * 16.f, m_tPos.y - 0.5f * m_tSize.y + m_tMoveDir.y * 16.f);// +m_tMoveDir * 16.f);
 
 		SAFE_RELEASE(pWeapon);
 
@@ -353,16 +314,9 @@ void Player::Input(float fDeltaTime)
 	{
 		bPress = true;
 
-		if (eType == IT_SEED)
 		{
-			m_pAnimation->ChangeClip("LiftRight");
-			m_pAnimation->SetDefaultClip("LiftIdleRight");
-		}
-
-		else
-		{
-			m_pAnimation->ChangeClip("RunRight");
-			m_pAnimation->SetDefaultClip("IdleRight");
+			m_pAnimation->ChangeClip("PlayerWalkRight");
+			m_pAnimation->SetDefaultClip("PlayerIdleRight");
 		}
 
 		m_tMoveDir = POSITION(1.f, 0.f);
@@ -373,7 +327,7 @@ void Player::Input(float fDeltaTime)
 		CWeapon* pWeapon = (CWeapon*)GET_SINGLE(ObjManager)->GetWeapon();
 
 		if (pWeapon)
-			pWeapon->SetPos(m_tPos + m_tMoveDir * 16.f);
+			pWeapon->SetPos(m_tPos.x + m_tMoveDir.x * 16.f, m_tPos.y - 0.5f * m_tSize.y + m_tMoveDir.y * 16.f);// +m_tMoveDir * 16.f);
 
 		SAFE_RELEASE(pWeapon);
 
@@ -383,16 +337,9 @@ void Player::Input(float fDeltaTime)
 	{
 		bPress = true;
 
-		if (eType == IT_SEED)
 		{
-			m_pAnimation->ChangeClip("LiftUp");
-			m_pAnimation->SetDefaultClip("LiftIdleUp");
-		}
-
-		else
-		{
-			m_pAnimation->ChangeClip("RunUp");
-			m_pAnimation->SetDefaultClip("IdleUp");
+			m_pAnimation->ChangeClip("PlayerWalkUp");
+			m_pAnimation->SetDefaultClip("PlayerIdleUp");
 		}
 
 		m_tMoveDir = POSITION(0.f, -1.f);
@@ -403,7 +350,7 @@ void Player::Input(float fDeltaTime)
 		CWeapon* pWeapon = (CWeapon*)GET_SINGLE(ObjManager)->GetWeapon();
 
 		if (pWeapon)
-			pWeapon->SetPos(m_tPos + m_tMoveDir * 16.f);
+			pWeapon->SetPos(m_tPos.x + m_tMoveDir.x * 16.f, m_tPos.y - 0.5f * m_tSize.y );// +m_tMoveDir * 16.f);
 
 		SAFE_RELEASE(pWeapon);
 
@@ -413,16 +360,9 @@ void Player::Input(float fDeltaTime)
 	{
 		bPress = true;
 
-		if (eType == IT_SEED)
 		{
-			m_pAnimation->ChangeClip("LiftDown");
-			m_pAnimation->SetDefaultClip("LiftIdleDown");
-		}
-
-		else
-		{
-			m_pAnimation->ChangeClip("RunDown");
-			m_pAnimation->SetDefaultClip("IdleDown");
+			m_pAnimation->ChangeClip("PlayerWalkDown");
+			m_pAnimation->SetDefaultClip("PlayerIdleDown");
 		}
 
 		m_tMoveDir = POSITION(0.f, 1.f);
@@ -433,7 +373,7 @@ void Player::Input(float fDeltaTime)
 		CWeapon* pWeapon = (CWeapon*)GET_SINGLE(ObjManager)->GetWeapon();
 
 		if (pWeapon)
-			pWeapon->SetPos(m_tPos + m_tMoveDir * 16.f);
+			pWeapon->SetPos(m_tPos.x + m_tMoveDir.x * 16.f, m_tPos.y - 0.5f * m_tSize.y );
 
 		SAFE_RELEASE(pWeapon);
 
@@ -481,7 +421,9 @@ void Player::Input(float fDeltaTime)
 				CWeapon* pWeapon = (CWeapon*)GET_SINGLE(ObjManager)->GetWeapon();
 
 				if (pWeapon)
+				{
 					pWeapon->Attack();
+				}
 
 				SAFE_RELEASE(pWeapon);
 
@@ -492,28 +434,30 @@ void Player::Input(float fDeltaTime)
 				if (m_tMoveDir.x == -1.f)
 				{
 					((ColliderRect*)pCol)->SetRect(-96.f, -32.f, -32.f, 32.f);
-					m_pAnimation->ChangeClip("AttackLeft");
+					m_pAnimation->ChangeClip("PlayerAttackLeft");
 				}
 
 				if (m_tMoveDir.y == -1.f)
 				{
 					((ColliderRect*)pCol)->SetRect(-48.f, -64.f, 48.f, -16.f);
-					m_pAnimation->ChangeClip("AttackUp");
+					m_pAnimation->ChangeClip("PlayerAttackUp");
 				}
 
 				if (m_tMoveDir.x == 1.f)
 				{
 					((ColliderRect*)pCol)->SetRect(32.f, -32.f, 96.f, 32.f);
-					m_pAnimation->ChangeClip("AttackRight");
+					m_pAnimation->ChangeClip("PlayerAttackRight");
 				}
 
 				if (m_tMoveDir.y == 1.f)
 				{
 					((ColliderRect*)pCol)->SetRect(-48.f, 16.f, 48.f, 64.f);
-					m_pAnimation->ChangeClip("AttackDown");
+					m_pAnimation->ChangeClip("PlayerAttackDown");
 				}
 
 				SAFE_RELEASE(pCol);
+
+				m_eAction = PA_ATTACK;
 			}
 
 			else if (eToolType == TOOL_HOE)
@@ -539,23 +483,25 @@ void Player::Input(float fDeltaTime)
 
 				if (m_tMoveDir.x == -1.f)
 				{
-					m_pAnimation->ChangeClip("FarmLeft");
+					m_pAnimation->ChangeClip("PlayerAttackLeft");
 				}
 
 				if (m_tMoveDir.y == -1.f)
 				{
-					m_pAnimation->ChangeClip("FarmUp");
+					m_pAnimation->ChangeClip("PlayerAttackUp");
 				}
 
 				if (m_tMoveDir.x == 1.f)
 				{
-					m_pAnimation->ChangeClip("FarmRight");
+					m_pAnimation->ChangeClip("PlayerAttackRight");
 				}
 
 				if (m_tMoveDir.y == 1.f)
 				{
-					m_pAnimation->ChangeClip("FarmDown");
+					m_pAnimation->ChangeClip("PlayerAttackDown");
 				}
+
+				m_eAction = PA_FARM;
 			}
 
 			else if (eToolType == TOOL_EX)
@@ -563,8 +509,9 @@ void Player::Input(float fDeltaTime)
 				CWeapon* pWeapon = (CWeapon*)GET_SINGLE(ObjManager)->GetWeapon();
 
 				if (pWeapon)
+				{
 					pWeapon->Attack();
-
+				}
 				SAFE_RELEASE(pWeapon);
 
 				Tile* pTile = ((InGameScene*)m_pScene)->GetStage()->GetSelectedTile();
@@ -587,23 +534,25 @@ void Player::Input(float fDeltaTime)
 
 				if (m_tMoveDir.x == -1.f)
 				{
-					m_pAnimation->ChangeClip("FarmLeft");
+					m_pAnimation->ChangeClip("PlayerAttackLeft");
 				}
 
 				if (m_tMoveDir.y == -1.f)
 				{
-					m_pAnimation->ChangeClip("FarmUp");
+					m_pAnimation->ChangeClip("PlayerAttackUp");
 				}
 
 				if (m_tMoveDir.x == 1.f)
 				{
-					m_pAnimation->ChangeClip("FarmRight");
+					m_pAnimation->ChangeClip("PlayerAttackRight");
 				}
 
 				if (m_tMoveDir.y == 1.f)
 				{
-					m_pAnimation->ChangeClip("FarmDown");
+					m_pAnimation->ChangeClip("PlayerAttackDown");
 				}
+
+				m_eAction = PA_FARM;
 			}
 
 			else if (eToolType == TOOL_PIKEX)
@@ -634,23 +583,25 @@ void Player::Input(float fDeltaTime)
 
 				if (m_tMoveDir.x == -1.f)
 				{
-					m_pAnimation->ChangeClip("FarmLeft");
+					m_pAnimation->ChangeClip("PlayerAttackLeft");
 				}
 
 				if (m_tMoveDir.y == -1.f)
 				{
-					m_pAnimation->ChangeClip("FarmUp");
+					m_pAnimation->ChangeClip("PlayerAttackUp");
 				}
 
 				if (m_tMoveDir.x == 1.f)
 				{
-					m_pAnimation->ChangeClip("FarmRight");
+					m_pAnimation->ChangeClip("PlayerAttackRight");
 				}
 
 				if (m_tMoveDir.y == 1.f)
 				{
-					m_pAnimation->ChangeClip("FarmDown");
+					m_pAnimation->ChangeClip("PlayerAttackDown");
 				}
+
+				m_eAction = PA_FARM;
 			}
 
 			else if (eToolType == TOOL_WATER)
@@ -683,28 +634,29 @@ void Player::Input(float fDeltaTime)
 
 				if (m_tMoveDir.x == -1.f)
 				{
-					m_pAnimation->ChangeClip("FarmLeft");
+					m_pAnimation->ChangeClip("PlayerWaterLeft");
 				}
 
 				if (m_tMoveDir.y == -1.f)
 				{
-					m_pAnimation->ChangeClip("FarmUp");
+					m_pAnimation->ChangeClip("PlayerWaterUp");
 				}
 
 				if (m_tMoveDir.x == 1.f)
 				{
-					m_pAnimation->ChangeClip("FarmRight");
+					m_pAnimation->ChangeClip("PlayerWaterRight");
 				}
 
 				if (m_tMoveDir.y == 1.f)
 				{
-					m_pAnimation->ChangeClip("FarmDown");
+					m_pAnimation->ChangeClip("PlayerWaterDown");
 				}
+
+				m_eAction = PA_WATER;
 			}
 
 			AddEnergy(-5);
 
-			m_eAction = PA_ATTACK;
 		}
 
 		else if (eType == IT_SEED)
@@ -844,6 +796,29 @@ void Player::Input(float fDeltaTime)
 	{
 		GET_SINGLE(Timer)->SetTimeScale(1.f);
 	}
+
+	else if (KEYDOWN("CarpenterShop"))
+	{
+		GET_SINGLE(SceneManager)->CreateScene<SceneCrapentersShop>("CarpentersShop", SC_NEXT);
+
+		SetPos(32.f * 4.5f, 32.f * 9.5f);
+	}
+
+	else if (KEYDOWN("Shop"))
+	{
+		GET_SINGLE(SceneManager)->CreateScene<SceneShop>("Shop", SC_NEXT);
+
+		SetPos(32.f * 6.5f, 32.f * 17.f);
+	}
+
+	else if (KEYDOWN("WeaponShop"))
+	{
+		GET_SINGLE(SceneManager)->CreateScene<SceneWeaponShop>("WeaponShop", SC_NEXT);
+
+		GET_SINGLE(Camera)->SetPos(0.f, 0.f);
+
+		SetPos(32.f * 6.5f, 32.f * 17.5f);
+	}
 #endif
 }
 
@@ -851,9 +826,36 @@ int Player::Update(float fDeltaTime)
 {
 	FightObj::Update(fDeltaTime);
 
+	if (m_pArm)
+	{
+		m_pArm->SetPos(m_tPos.x, m_tPos.y - 0.5f * m_tSize.y);
+		m_pArm->Update(fDeltaTime);
+	}
+
+	if (m_pPants)
+	{
+		m_pPants->SetPos(m_tPos.x, m_tPos.y - 0.5f * m_tSize.y);
+		m_pPants->Update(fDeltaTime);
+	}
+
+	if (m_pShirt)
+	{
+		POSITION tSize = m_pShirt->GetSize();
+		POSITION tPivot = m_pShirt->GetPivot();
+
+		m_pShirt->SetPos(m_tPos-m_tPivot * m_tSize + tSize * tPivot);
+
+		m_pShirt->Update(fDeltaTime);
+	}
+
+	if (m_pHair)
+	{
+		m_pHair->SetPos(m_tPos.x, m_tPos.y - 0.5f * m_tSize.y);
+		m_pHair->Update(fDeltaTime);
+	}
+
 	if (m_bAttack && m_pAnimation->GetMotionEnd())
 		m_bAttack = false;
-
 
 	if (m_pAnimation->GetMotionEnd())
 	{
@@ -876,43 +878,30 @@ int Player::Update(float fDeltaTime)
 	if (pItem)
 		eType = pItem->GetType();
 
-	if (m_eAction == PA_IDLE || (m_eAction == PA_ATTACK && m_pAnimation->GetMotionEnd())
-		|| (m_eAction == PA_EAT && m_pAnimation->GetMotionEnd()))
+	if (m_eAction == PA_IDLE || 
+		(m_eAction == PA_ATTACK && m_pAnimation->GetMotionEnd()) ||
+		(m_eAction == PA_FARM && m_pAnimation->GetMotionEnd()) ||
+		(m_eAction == PA_WATER && m_pAnimation->GetMotionEnd()) ||
+		(m_eAction == PA_EAT && m_pAnimation->GetMotionEnd()))
 	{
 		if (m_tMoveDir.x > 0.f)
 		{
-			if (eType == IT_SEED)
-				m_pAnimation->SetCurrentClip("LiftIdleRight");
-
-			else
-				m_pAnimation->SetCurrentClip("IdleRight");
+				m_pAnimation->SetCurrentClip("PlayerIdleRight");
 		}
 
 		else if (m_tMoveDir.x < 0.f)
 		{
-			if (eType == IT_SEED)
-				m_pAnimation->SetCurrentClip("LiftIdleLeft");
-
-			else
-				m_pAnimation->SetCurrentClip("IdleLeft");
+				m_pAnimation->SetCurrentClip("PlayerIdleLeft");
 		}
 
 		else if (m_tMoveDir.y > 0.f)
 		{
-			if (eType == IT_SEED)
-				m_pAnimation->SetCurrentClip("LiftIdleDown");
-
-			else
-				m_pAnimation->SetCurrentClip("IdleDown");
+				m_pAnimation->SetCurrentClip("PlayerIdleDown");
 		}
 
 		else if (m_tMoveDir.y < 0.f)
 		{
-			if (eType == IT_SEED)
-				m_pAnimation->SetCurrentClip("LiftIdleUp");
-
-			else
-				m_pAnimation->SetCurrentClip("IdleUp");
+				m_pAnimation->SetCurrentClip("PlayerIdleUp");
 		}
 
 		m_eAction = PA_IDLE;
@@ -942,6 +931,35 @@ void Player::Render(HDC hDC, float fDeltaTime)
 {
 	FightObj::Render(hDC,fDeltaTime);
 
+	if (m_pPants)
+		m_pPants->Render(hDC, fDeltaTime);
+
+	if (m_pShirt)
+		m_pShirt->Render(hDC, fDeltaTime);
+
+	if (m_tMoveDir.y < 0.f)
+	{
+		if (m_pArm)
+			m_pArm->Render(hDC, fDeltaTime);
+	}
+
+	if (m_pHair)
+		m_pHair->Render(hDC, fDeltaTime);
+
+	if (m_tMoveDir.y >= 0.f)
+	{
+		if (m_pArm)
+			m_pArm->Render(hDC, fDeltaTime);
+
+		CWeapon* pWeapon = (CWeapon*)GET_SINGLE(ObjManager)->GetWeapon();
+
+		if (pWeapon)
+			pWeapon->Render(hDC, fDeltaTime);
+
+		SAFE_RELEASE(pWeapon);
+	}
+
+
 	POSITION	tCamPos = GET_SINGLE(Camera)->GetPos();
 
 	UIInventory* pInven = GET_SINGLE(ObjManager)->GetInven();
@@ -957,7 +975,7 @@ void Player::Render(HDC hDC, float fDeltaTime)
 	{
 		ITEM_TYPE eType = pItem->GetType();
 
-		if (eType == IT_SEED)
+		if (eType == IT_SEED || eType == IT_CROP || eType == IT_ETC)
 		{
 			Texture* pTexture = pItem->GetTexture();
 
@@ -1012,6 +1030,10 @@ void Player::Render(HDC hDC, float fDeltaTime)
 		TextOut(hDC, (int)tPos.x + 100, (int)tPos.y - 100, strHP, lstrlen(strHP));
 		wsprintf(strHP, L"E : %d", m_iEnergy);
 		TextOut(hDC, (int)tPos.x + 100, (int)tPos.y - 120, strHP, lstrlen(strHP));
+		wsprintf(strHP, TEXT("Layer: %d"), m_pLayer);
+		TextOut(hDC, (int)tPos.x, (int)tPos.y, strHP, lstrlen(strHP));
+		wsprintf(strHP, TEXT("Scene: %d"), m_pScene);
+		TextOut(hDC, (int)tPos.x, (int)tPos.y - 20, strHP, lstrlen(strHP));
 	}
 #endif
 }

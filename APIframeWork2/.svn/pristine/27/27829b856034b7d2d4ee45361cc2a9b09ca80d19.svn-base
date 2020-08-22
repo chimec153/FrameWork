@@ -1,0 +1,81 @@
+#include "Horse.h"
+#include "../Animation/Animation.h"
+
+Horse::Horse()
+{
+}
+
+Horse::Horse(const Horse& horse)	:
+	FightObj(horse)
+{
+}
+
+Horse::~Horse()
+{
+}
+
+bool Horse::Init()
+{
+	SetSize(64.f, 64.f);
+	SetPivot(0.5f, 0.5f);
+	SetSpeed(50.f);
+
+	Animation* pAni = CreateAnimation("HorseAni");
+
+	pAni->AddClip("horseIdleDown", AT_ATLAS, AO_LOOP, 0.4f, 4, 4, 0, 0, 1, 1,
+		1.f, "Horse", TEXT("Animals\\horse.bmp"));
+	pAni->AddClip("horseIdleRight", AT_ATLAS, AO_LOOP, 0.4f, 4, 4, 0, 1, 1, 1,
+		1.f, "Horse", TEXT("Animals\\horse.bmp"));
+	pAni->AddClip("horseIdleUp", AT_ATLAS, AO_LOOP, 0.4f, 4, 4, 0, 2, 1, 1,
+		1.f, "Horse", TEXT("Animals\\horse.bmp"));
+	pAni->AddClip("horseIdleLeft", AT_ATLAS, AO_LOOP, 0.4f, 4, 4, 0, 3, 1, 1,
+		1.f, "Horse", TEXT("Animals\\horse.bmp"));
+
+	pAni->AddClip("horseWalkDown", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 4, 1, 0, 6, 1,
+		1.f, "Horse", TEXT("Animals\\horse.bmp"));
+	pAni->AddClip("horseWalkRight", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 4, 1, 1, 6, 1,
+		1.f, "Horse", TEXT("Animals\\horse.bmp"));
+	pAni->AddClip("horseWalkUp", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 4, 1, 2, 6, 1,
+		1.f, "Horse", TEXT("Animals\\horse.bmp"));
+	pAni->AddClip("horseWalkLeft", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 4, 1, 3, 6, 1,
+		1.f, "Horse", TEXT("Animals\\horse.bmp"));
+
+	SAFE_RELEASE(pAni);
+
+	return true;
+}
+
+int Horse::Update(float fDeltaTime)
+{
+	FightObj::Update(fDeltaTime);
+	return 0;
+}
+
+int Horse::LateUpdate(float fDeltaTime)
+{
+	FightObj::LateUpdate(fDeltaTime);
+	return 0;
+}
+
+void Horse::Collision(float fDeltaTime)
+{
+	FightObj::Collision(fDeltaTime);
+}
+
+void Horse::Render(HDC hDC, float fDeltaTime)
+{
+	FightObj::Render(hDC, fDeltaTime);
+}
+
+Horse* Horse::Clone()
+{
+	return new Horse(*this);
+}
+
+void Horse::ColEnter(Collider* pSrc, Collider* pDest, float fTime)
+{
+}
+
+void Horse::ColStay(Collider* pSrc, Collider* pDest, float fTime)
+{
+}

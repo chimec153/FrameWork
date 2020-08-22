@@ -55,6 +55,8 @@ int ColliderRect::LateUpdate(float fDeltaTime)
 	m_tWorldInfo.r = tPos.x + m_tInfo.r;
 	m_tWorldInfo.b = tPos.y + m_tInfo.b;
 
+	SetSectionInfo(m_tWorldInfo);
+
 	return 0;
 }
 
@@ -121,6 +123,18 @@ void ColliderRect::Render(HDC hDC, float fDeltaTime)
 
 			SelectObject(hDC, hPrevBrush);
 			DeleteObject(hBrush);
+		}
+
+		auto iter = m_SectionList.begin();
+		auto iterEnd = m_SectionList.end();
+
+		for (;iter != iterEnd; ++iter)
+		{
+			TCHAR strSectionIndex[32] = {};
+
+			swprintf_s(strSectionIndex, TEXT("Sec: %d"), (*iter));
+
+			TextOut(hDC, (int)(m_tWorldInfo.l - tCamPos.x), (int)(m_tWorldInfo.t + 20.f * (*iter) - tCamPos.y), strSectionIndex, lstrlen(strSectionIndex));
 		}
 	}
 #endif

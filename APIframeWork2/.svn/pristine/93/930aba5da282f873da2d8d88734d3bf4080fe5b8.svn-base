@@ -1,0 +1,195 @@
+#include "Weapon.h"
+#include "../Animation/Animation.h"
+#include "../Scene/Scene.h"
+#include "ObjManager.h"
+#include "UIInventory.h"
+#include "Tool.h"
+
+CWeapon::CWeapon()
+{
+}
+
+CWeapon::CWeapon(const CWeapon& weapon)	:
+	MoveObj(weapon)
+{
+}
+
+CWeapon::~CWeapon()
+{
+}
+
+bool CWeapon::Init()
+{
+	SetSize(32.f, 64.f);
+	SetPivot(0.5f, 0.5f);
+
+	Animation* pAni = CreateAnimation("ToolAni");
+
+	pAni->LoadFromPath("Tools.sac");
+
+	AddAnimationClip("Idle", AT_ATLAS, AO_LOOP, 0.5f, 0, 0, 0, 0, 0, 0, 1.f, "Idle", TEXT("Item\\HoeIdle.bmp"));
+	SetAnimationClipColorKey("Idle", 0, 0, 0);
+
+	SetAnimationDefaultClip("Idle");
+/*
+	AddAnimationClip("DefaultHoeDown", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1, 0, 0, 2, 1, 1.f, "HoeDown", TEXT("Item\\HoeDown.bmp"));
+	SetAnimationClipColorKey("DefaultHoeDown", 0, 0, 0);
+
+	AddAnimationClip("DefaultHoeUp", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1, 0, 0, 2, 1, 1.f, "HoeUp", TEXT("Item\\HoeUp.bmp"));
+	SetAnimationClipColorKey("DefaultHoeUp", 0, 0, 0);
+
+	AddAnimationClip("DefaultHoeLeft", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1, 0, 0, 2, 1, 1.f, "HoeLeft", TEXT("Item\\HoeLeft.bmp"));
+	SetAnimationClipColorKey("DefaultHoeLeft", 0, 0, 0);
+
+	AddAnimationClip("DefaultHoeRight", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1, 0, 0, 2, 1, 1.f, "HoeRight", TEXT("Item\\HoeRight.bmp"));
+	SetAnimationClipColorKey("DefaultHoeRight", 0, 0, 0);
+
+	AddAnimationClip("swordRight", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1, 0, 0, 2, 1, 1.f, "SwordRight", TEXT("Item\\swordRight.bmp"));
+	SetAnimationClipColorKey("swordRight", 0, 0, 0);*/
+
+	SAFE_RELEASE(pAni);
+
+	return true;
+}
+
+void CWeapon::Input(float fDeltaTime)
+{
+	MoveObj::Input(fDeltaTime);
+}
+
+int CWeapon::Update(float fDeltaTime)
+{
+	MoveObj::Update(fDeltaTime);
+	return 0;
+}
+
+int CWeapon::LateUpdate(float fDeltaTime)
+{
+	MoveObj::LateUpdate(fDeltaTime);
+	return 0;
+}
+
+void CWeapon::Collision(float fDeltaTime)
+{
+	MoveObj::Collision(fDeltaTime);
+}
+
+void CWeapon::Render(HDC hDC, float fDeltaTime)
+{
+	MoveObj::Render(hDC, fDeltaTime);
+}
+
+CWeapon* CWeapon::Clone()
+{
+	return new CWeapon(*this);
+}
+
+void CWeapon::Attack()
+{
+	Obj* pObj = GET_SINGLE(ObjManager)->GetPlayer();
+
+	POSITION tDir = ((MoveObj*)pObj)->GetAngle();
+
+	SAFE_RELEASE(pObj);
+
+	UIInventory* pInven = GET_SINGLE(ObjManager)->GetInven();
+
+	Tool* pTool = (Tool*)pInven->GetItem();
+
+	TOOL_TYPE eToolType = pTool->GetToolType();
+
+	SAFE_RELEASE(pInven);
+
+	if (m_pAnimation)
+	{
+		if (tDir.x > 0.f)
+		{
+			switch (eToolType)
+			{
+			case TOOL_SWORD:
+				m_pAnimation->SetCurrentClip("HoeRight");
+				break;
+			case TOOL_HOE:
+				m_pAnimation->SetCurrentClip("HoeRight");
+				break;
+			case TOOL_EX:
+				m_pAnimation->SetCurrentClip("ExRight");
+				break;
+			case TOOL_PIKEX:
+				m_pAnimation->SetCurrentClip("PikexRight");
+				break;
+			case TOOL_WATER:
+				m_pAnimation->SetCurrentClip("WaterRight");
+				break;
+			}
+		}
+
+		else if (tDir.x < 0.f)
+		{
+			switch (eToolType)
+			{
+			case TOOL_SWORD:
+				m_pAnimation->SetCurrentClip("HoeLeft");
+				break;
+			case TOOL_HOE:
+				m_pAnimation->SetCurrentClip("HoeLeft");
+				break;
+			case TOOL_EX:
+				m_pAnimation->SetCurrentClip("ExLeft");
+				break;
+			case TOOL_PIKEX:
+				m_pAnimation->SetCurrentClip("PikexLeft");
+				break;
+			case TOOL_WATER:
+				m_pAnimation->SetCurrentClip("WaterLeft");
+				break;
+			}
+		}
+
+		else if (tDir.y > 0.f)
+		{
+			switch (eToolType)
+			{
+			case TOOL_SWORD:
+				m_pAnimation->SetCurrentClip("HoeDown");
+				break;
+			case TOOL_HOE:
+				m_pAnimation->SetCurrentClip("HoeDown");
+				break;
+			case TOOL_EX:
+				m_pAnimation->SetCurrentClip("ExDown");
+				break;
+			case TOOL_PIKEX:
+				m_pAnimation->SetCurrentClip("PikexDown");
+				break;
+			case TOOL_WATER:
+				m_pAnimation->SetCurrentClip("WaterDown");
+				break;
+			}
+		}
+
+		else if (tDir.y < 0.f)
+		{
+			switch (eToolType)
+			{
+			case TOOL_SWORD:
+				m_pAnimation->SetCurrentClip("HoeUp");
+				break;
+			case TOOL_HOE:
+				m_pAnimation->SetCurrentClip("HoeUp");
+				break;
+			case TOOL_EX:
+				m_pAnimation->SetCurrentClip("ExUp");
+				break;
+			case TOOL_PIKEX:
+				m_pAnimation->SetCurrentClip("PikexUp");
+				break;
+			case TOOL_WATER:
+				m_pAnimation->SetCurrentClip("WaterUp");
+				break;
+			}
+		}
+			
+	}
+		
+}

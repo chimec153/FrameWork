@@ -1,0 +1,96 @@
+#include "Rabbit.h"
+#include "../Animation/Animation.h"
+
+Rabbit::Rabbit()	:
+	m_fTime(0.f),
+	m_iLevel(0)
+{
+}
+
+Rabbit::Rabbit(const Rabbit& rabbit)	:
+	FightObj(rabbit)
+{
+	m_fTime = rabbit.m_fTime;
+	m_iLevel = rabbit.m_iLevel;
+}
+
+Rabbit::~Rabbit()
+{
+}
+
+bool Rabbit::Init()
+{
+	SetSize(32.f, 32.f);
+	SetPivot(0.5f, 0.5f);
+	SetSpeed(50.f);
+
+	Animation* pAni = CreateAnimation("RabbitAni");
+
+	pAni->AddClip("RabbitIdleDown", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 0, 1, 1,
+		1.f,0, "Rabbit", TEXT("Animals\\Rabbit.bmp"));
+	pAni->AddClip("RabbitIdleRight", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 1, 1, 1,
+		1.f,0, "Rabbit", TEXT("Animals\\Rabbit.bmp"));
+	pAni->AddClip("RabbitIdleUp", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 2, 1, 1,
+		1.f,0, "Rabbit", TEXT("Animals\\Rabbit.bmp"));
+	pAni->AddClip("RabbitIdleLeft", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 3, 1, 1,
+		1.f,0, "Rabbit", TEXT("Animals\\Rabbit.bmp"));
+
+	pAni->AddClip("RabbitBabyIdleDown", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 0, 1, 1,
+		1.f,0, "RabbitBaby", TEXT("Animals\\Rabbit(Baby).bmp"));
+	pAni->AddClip("RabbitBabyIdleRight", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 1, 1, 1,
+		1.f,0, "RabbitBaby", TEXT("Animals\\Rabbit(Baby).bmp"));
+	pAni->AddClip("RabbitBabyIdleUp", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 2, 1, 1,
+		1.f,0, "RabbitBaby", TEXT("Animals\\Rabbit(Baby).bmp"));
+	pAni->AddClip("RabbitBabyIdleLeft", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 3, 1, 1,
+		1.f,0, "RabbitBaby", TEXT("Animals\\Rabbit(Baby).bmp"));
+
+	pAni->AddClip("RabbitWalkDown", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 0, 3, 1, 
+		1.f,0, "Rabbit", TEXT("Animals\\Rabbit.bmp"));
+	pAni->AddClip("RabbitWalkRight", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 1, 3, 1, 
+		1.f,0, "Rabbit", TEXT("Animals\\Rabbit.bmp"));
+	pAni->AddClip("RabbitWalkUp", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 2, 3, 1, 
+		1.f,0, "Rabbit", TEXT("Animals\\Rabbit.bmp"));
+	pAni->AddClip("RabbitWalkLeft", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 3, 3, 1, 
+		1.f,0, "Rabbit", TEXT("Animals\\Rabbit.bmp"));
+
+	pAni->AddClip("RabbitBabyWalkDown", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 0, 3, 1,
+		1.f, 0,"RabbitBaby", TEXT("Animals\\Rabbit(Baby).bmp"));
+	pAni->AddClip("RabbitBabyWalkRight", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 1, 3, 1,
+		1.f,0, "RabbitBaby", TEXT("Animals\\Rabbit(Baby).bmp"));
+	pAni->AddClip("RabbitBabyWalkUp", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 2, 3, 1,
+		1.f,0, "RabbitBaby", TEXT("Animals\\Rabbit(Baby).bmp"));
+	pAni->AddClip("RabbitBabyWalkLeft", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 3, 3, 1,
+		1.f,0, "RabbitBaby", TEXT("Animals\\Rabbit(Baby).bmp"));
+
+	SAFE_RELEASE(pAni);
+
+	return true;
+}
+
+int Rabbit::Update(float fDeltaTime)
+{
+	FightObj::Update(fDeltaTime);
+
+	return 0;
+}
+
+int Rabbit::LateUpdate(float fDeltaTime)
+{
+	FightObj::LateUpdate(fDeltaTime);
+	return 0;
+}
+
+void Rabbit::Collision(float fDeltaTime)
+{
+	FightObj::Collision(fDeltaTime);
+}
+
+void Rabbit::Render(HDC hDC, float fDeltaTime)
+{
+	FightObj::Render(hDC, fDeltaTime);
+}
+
+Rabbit* Rabbit::Clone()
+{
+	return new Rabbit(*this);
+}

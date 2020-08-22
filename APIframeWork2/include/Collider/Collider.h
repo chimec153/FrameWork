@@ -21,7 +21,8 @@ protected:
 	POSITION		m_tHitPoint;
 	bool			m_bColl;
 	bool			m_bUI;
-	POSITION		m_tSafePoint;
+	RECTANGLE		m_tSectionInfo;
+	list<int>		m_SectionList;
 
 public:
 	POSITION GetHitPoint()	const
@@ -44,14 +45,22 @@ public:
 		return m_bUI;
 	}
 
-	POSITION GetSafePoint()	const
+	void SetSectionInfo(float fLeft, float fTop, float fRight, float fButtom)
 	{
-		return m_tSafePoint;
+		m_tSectionInfo.l = fLeft;
+		m_tSectionInfo.t = fTop;
+		m_tSectionInfo.r = fRight;
+		m_tSectionInfo.b = fButtom;
 	}
 
-	void SetSafePoint(const POSITION& tPos)
+	void SetSectionInfo(const RECTANGLE& tRect)
 	{
-		m_tSafePoint = tPos;
+		m_tSectionInfo = tRect;
+	}
+
+	RECTANGLE GetSectionInfo()	const
+	{
+		return m_tSectionInfo;
 	}
 
 public:
@@ -108,7 +117,8 @@ public:
 		}
 		return false;
 	}
-	void EraseCollisionList(Collider* pCollider)
+
+	list<Collider*>::iterator EraseCollisionList(Collider* pCollider)
 	{
 		list<Collider*>::iterator iter;
 		list<Collider*>::iterator iterEnd = m_CollisionList.end();
@@ -117,11 +127,25 @@ public:
 		{
 			if (*iter == pCollider)
 			{
-				m_CollisionList.erase(iter);
-				break;
+				return m_CollisionList.erase(iter);
 			}
 		}
-}
+
+		return m_CollisionList.end();
+	}
+
+	const list<Collider*>* GetPrevColliderList()	const
+	{
+		return &m_CollisionList;
+	}
+
+	const list<int>* GetSectionList()	const
+	{
+		return &m_SectionList;
+	}
+
+	bool HasSameSection(Collider* pDest);
+
 public:
 	COLLIDER_TYPE GetColliderType() const
 	{
@@ -137,6 +161,19 @@ public:
 	void SetObj(class Obj* pObj)
 	{
 		m_pObj = pObj;
+	}
+
+public:
+	void AddCollisionSection(int iIndex)
+	{
+		m_SectionList.push_back(iIndex);
+	}
+
+	bool HasCollisionSection(int iIndex);
+
+	void ClearCollisionSection()
+	{
+		m_SectionList.clear();
 	}
 
 public:

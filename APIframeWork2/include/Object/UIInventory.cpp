@@ -17,6 +17,8 @@
 #include "ObjManager.h"
 #include "Player.h"
 #include "../Core/Input.h"
+#include "UIShop.h"
+#include "UIBuildingShop.h"
 
 UIInventory::UIInventory()	:
 	m_iCount(0),
@@ -28,17 +30,11 @@ UIInventory::UIInventory()	:
 	m_pInventoryPanel(nullptr),
 	m_pBackTexture(nullptr),
 	m_bExtended(false),
-	m_bShopUIOn(false),
-	m_pShopPanel(nullptr),
-	m_pShopValancePanel(nullptr),
-	m_pShopBackPanel(nullptr),
-	m_pShopExitBtn(nullptr),
-	m_pShopUpBtn(nullptr),
-	m_pShopDownBtn(nullptr),
-	m_pShopScrollBtn(nullptr),
-	m_iPage(0),
+	m_pInfoName(nullptr),
+	m_pInfoIconHealth(nullptr),
+	m_pInfoIconEnergy(nullptr),
 	m_pGoldText(nullptr),
-	m_pShopGoldText(nullptr)
+	m_pShop(nullptr)
 {
 	m_vecItem.resize(36);
 
@@ -49,123 +45,137 @@ UIInventory::~UIInventory()
 {
 	Safe_Release_VecList(m_vecItem);
 	Safe_Release_VecList(m_vecPanel);
-	Safe_Release_VecList(m_vecShopPanel);
 	Safe_Release_VecList(m_vecInvenPanel);
-	Safe_Release_VecList(m_vecShopItemPanel);
+	Safe_Release_VecList(m_vecInfoDescription); 
 	SAFE_RELEASE(m_pCursorTex);
 	SAFE_RELEASE(m_pBackPanel);
 	SAFE_RELEASE(m_pInventoryPanel);
 	SAFE_RELEASE(m_pBackTexture);
-	SAFE_RELEASE(m_pShopPanel);
-	SAFE_RELEASE(m_pShopValancePanel);
-	SAFE_RELEASE(m_pShopBackPanel);
-	SAFE_RELEASE(m_pShopExitBtn);
-	SAFE_RELEASE(m_pShopUpBtn);
-	SAFE_RELEASE(m_pShopDownBtn);
-	SAFE_RELEASE(m_pShopScrollBtn);
+	SAFE_RELEASE(m_pInfoName);
+	SAFE_RELEASE(m_pInfoIconHealth);
+	SAFE_RELEASE(m_pInfoIconEnergy);
 	SAFE_RELEASE(m_pGoldText);
-	SAFE_RELEASE(m_pShopGoldText);
-}
-
-void UIInventory::DisableShopPanel(int iNum, float fTime)
-{
-	if (!m_bShopUIOn)
-		return;
-
-	m_pShopExitBtn->SetEnable(false);
-
-	m_pShopUpBtn->SetEnable(false);
-
-	m_pShopDownBtn->SetEnable(false);
-
-	m_pShopScrollBtn->SetEnable(false);
-
-	m_pShopGoldText->SetEnable(false);
-
-	size_t iSize = m_vecShopItemPanel.size();
-
-	for (size_t i = 0; i < iSize; ++i)
-		m_vecShopItemPanel[i]->SetEnable(false);
-
-	for (int i = 0; i < INVENTORY_MAX; ++i)
-	{
-		if (m_vecItem[i])
-			m_vecItem[i]->SetAlpha(255);
-	}
-
-	m_bShopUIOn = false;
-}
-
-void UIInventory::UpdateShopItemPos(float fTime)
-{
-	size_t iSize = m_vecShopItemPanel.size();
-
-	POSITION tBackPanelPos = m_pShopPanel->GetPos();
-
-	for (size_t i = 0; i < iSize; ++i)	//	아이템 목록들의 위치를 업데이트 한다.
-	{
-		POSITION tPanelPos = tBackPanelPos;
-
-		tPanelPos.y += (i - m_iPage) * 32.f;
-
-		m_vecShopItemPanel[i]->SetPos(tPanelPos);
-		m_vecShopItemPanel[i]->Update(fTime);
-	}
-}
-
-void UIInventory::UpdateScrollBtnPos()
-{
-	POSITION tPos = m_pShopScrollBtn->GetPos();
-
-	float fScrollPosY = m_pShopScrollBtn->GetPos().y;
-
-	float fScrollSizeY = m_pShopScrollBtn->GetSize().y;
-
-	float fUpBtnPosY = m_pShopUpBtn->GetPos().y;
-
-	float fUpBtnSizeY = m_pShopUpBtn->GetSize().y;
-
-	float fDownBtnPosY = m_pShopDownBtn->GetPos().y;
-
-	if (fScrollPosY > fDownBtnPosY - fScrollSizeY)
-		fScrollPosY = fDownBtnPosY - fScrollSizeY;
-
-	else if (fScrollPosY < fUpBtnPosY + fUpBtnSizeY)
-		fScrollPosY = fUpBtnPosY + fUpBtnSizeY;
-
-	m_pShopScrollBtn->SetPos(tPos.x, fScrollPosY);
-
-	size_t iSize = m_vecShopItemPanel.size();
-
-	fScrollPosY = (m_iPage * ((fDownBtnPosY - fScrollSizeY) - (fUpBtnPosY + fUpBtnSizeY))) / (iSize - SHOP_PAGE) + (fUpBtnPosY + fUpBtnSizeY);
-
-	m_pShopScrollBtn->SetPos(m_pShopUpBtn->GetPos().x, fScrollPosY);
+	SAFE_RELEASE(m_pShop);
 }
 
 void UIInventory::AddObjectToLayer(Layer* pLayer)
 {
-	pLayer->AddObject(this);
+	if(!pLayer->HasObject(this))
+		pLayer->AddObject(this);
 
 	size_t iSize = m_vecItem.size();
 
 	for (size_t i = 0; i < iSize; ++i)
 	{
 		if (m_vecItem[i])
-			m_vecItem[i]->AddObjectToLayer(pLayer);
+		{
+			if(!pLayer->HasObject(m_vecItem[i]))
+				m_vecItem[i]->AddObjectToLayer(pLayer);
+		}			
 	}
+
+	if (m_pShop)
+		m_pShop->AddObjectToLayer(pLayer);
 }
 
 void UIInventory::AddInfoPanelToLayer(Layer* pLayer)
 {
 	size_t iSize = m_vecPanel.size();
 
-	pLayer->AddObject(m_pBackPanel);
+	if(!pLayer->HasObject(m_pBackPanel))
+		pLayer->AddObject(m_pBackPanel);
 
 	for (size_t i = 0; i < iSize; ++i)
+	{
+		if(!pLayer->HasObject(m_vecPanel[i]))
 		pLayer->AddObject(m_vecPanel[i]);
+	}
+
+	if (m_pInfoName)
+	{
+		if (!pLayer->HasObject(m_pInfoName))
+			pLayer->AddObject(m_pInfoName);
+	}
+
+	if (m_pInfoIconEnergy)
+	{
+		if (!pLayer->HasObject(m_pInfoIconEnergy))
+			pLayer->AddObject(m_pInfoIconEnergy);
+	}
+
+	if (m_pInfoIconHealth)
+	{
+		if (!pLayer->HasObject(m_pInfoIconHealth))
+			pLayer->AddObject(m_pInfoIconHealth);
+	}
 
 	if (m_pGoldText)
-		pLayer->AddObject(m_pGoldText);
+	{
+		if (!pLayer->HasObject(m_pGoldText))
+			pLayer->AddObject(m_pGoldText);
+	}
+}
+
+void UIInventory::SetObjectLayer(Layer* pLayer)
+{
+	Scene* pScene = pLayer->GetScene();
+
+	SetLayer(pLayer);
+	SetScene(pScene);
+
+	size_t iSize = m_vecItem.size();
+
+	for (size_t i = 0; i < iSize; ++i)
+	{
+		if (m_vecItem[i])
+		{
+			m_vecItem[i]->SetLayer(pLayer);
+			m_vecItem[i]->SetScene(pScene);
+		}
+	}
+
+	if (m_pShop)
+		m_pShop->SetObjectLayer(pLayer);
+}
+
+void UIInventory::SetInfoPanelLayer(Layer* pLayer)
+{
+	Scene* pScene = pLayer->GetScene();
+
+	size_t iSize = m_vecPanel.size();
+
+	m_pBackPanel->SetLayer(pLayer);
+	m_pBackPanel->SetScene(pScene);
+
+	for (size_t i = 0; i < iSize; ++i)
+	{
+		m_vecPanel[i]->SetLayer(pLayer);
+		m_vecPanel[i]->SetScene(pScene);
+	}
+
+	if (m_pInfoName)
+	{
+		m_pInfoName->SetLayer(pLayer);
+		m_pInfoName->SetScene(pScene);
+	}
+
+	if (m_pInfoIconEnergy)
+	{
+		m_pInfoIconEnergy->SetLayer(pLayer);
+		m_pInfoIconEnergy->SetScene(pScene);
+	}
+
+	if (m_pInfoIconHealth)
+	{
+		m_pInfoIconHealth->SetLayer(pLayer);
+		m_pInfoIconHealth->SetScene(pScene);
+	}
+
+	if (m_pGoldText)
+	{
+		m_pGoldText->SetLayer(pLayer);
+		m_pGoldText->SetScene(pScene);
+	}
 }
 
 void UIInventory::AddItemToLayer(Layer* pLayer)
@@ -178,47 +188,6 @@ void UIInventory::AddItemToLayer(Layer* pLayer)
 				m_vecItem[i]->AddObjectToLayer(pLayer);
 		}
 	}
-}
-
-void UIInventory::BuyItem(int iIndex)
-{
-	Player* pPlayer = (Player*)GET_SINGLE(ObjManager)->GetPlayer();
-
-	int iGold = pPlayer->GetGold();
-
-	PITEMINFO pInfo = GET_SINGLE(ResourcesManager)->FindItemInfo(iIndex);
-
-	if (iGold < pInfo->vecPrice[0])
-	{
-		SAFE_RELEASE(pPlayer);
-		return;
-	}
-
-	else if (m_iCount >= INVENTORY_MAX)
-	{
-		SAFE_RELEASE(pPlayer);
-		return;
-	}
-
-	pPlayer->AddGold(-pInfo->vecPrice[0]);
-	
-	Layer* pLayer = m_pScene->FindLayer("Default");
-
-	Item* pItem = (Item*)CreateCloneObj(pInfo->strName, pInfo->strName,  pLayer);
-
-	AddItem(pItem);
-
-	Collider* pCol = pItem->GetCollider("ItemBody");
-
-	pCol->AddCollisionFunction(CS_ENTER, pItem, &Item::CollEnter);
-	pCol->AddCollisionFunction(CS_STAY, pItem, &Item::ColStay);
-	pCol->AddCollisionFunction(CS_LEAVE, pItem, &Item::ColEnd);
-
-	SAFE_RELEASE(pCol);
-
-	SAFE_RELEASE(pPlayer);
-
-	SAFE_RELEASE(pItem);
 }
 
 void UIInventory::SetGoldText(int iGold)
@@ -250,8 +219,8 @@ void UIInventory::SetGoldText(int iGold)
 	
 	m_pGoldText->SetText(strNumber);
 
-	if (m_pShopGoldText)
-		m_pShopGoldText->SetText(strNumber);
+	if (m_pShop)
+		m_pShop->SetGoldText(strNumber);
 }
 
 bool UIInventory::Init()
@@ -311,6 +280,15 @@ int UIInventory::Update(float fDeltaTime)
 
 	bool bEnable = m_pInventoryPanel->GetEnable();
 
+	bool bShop = false;
+
+	if (m_pShop)
+	{
+		bShop = m_pShop->IsShopPanelOn();
+
+		m_pShop->Update(fDeltaTime);
+	}
+
 	for (int i = 0; i < INVENTORY_SHORT; ++i)
 	{
 		if (m_vecItem[i])
@@ -319,7 +297,7 @@ int UIInventory::Update(float fDeltaTime)
 			{
 				POSITION tSize = m_vecItem[i]->GetSize();
 
-				if (!bEnable && !m_bShopUIOn)
+				if (!bEnable && !bShop)
 				{
 					tPos = m_tPos + tCamPos + POSITION(8.f, 8.f);
 
@@ -332,9 +310,9 @@ int UIInventory::Update(float fDeltaTime)
 				{
 					tPos = m_pInventoryPanel->GetPos() + tCamPos;
 
-					if (m_bShopUIOn)
+					if (bShop)
 					{
-						tPos = m_pShopBackPanel->GetPos() + tCamPos;
+						tPos = m_pShop->GetShopPanelPos() + tCamPos;
 
 						tPos.x -= 16.f;
 						tPos.y -= 16.f;
@@ -362,81 +340,34 @@ int UIInventory::Update(float fDeltaTime)
 			{
 				POSITION tSize = m_vecItem[i]->GetSize();
 
-				if (!m_bShopUIOn)
-				{
+				if (!bShop)
 					tPos = m_pInventoryPanel->GetPos() + tCamPos;
 
-					tPos += m_vecItem[i]->GetPivot() * tSize;
-
-					tPos.x += tSize.x * (i % INVENTORY_SHORT) + 16.f;
-
-					tPos.y += 21.f + (i / INVENTORY_SHORT) * tSize.y;
-				}
-
 				else
+					tPos = m_pShop->GetShopPanelPos() + tCamPos;
+
+				tPos += m_vecItem[i]->GetPivot() * tSize;
+
+				tPos.x += tSize.x * (i % INVENTORY_SHORT);
+
+				tPos.y += (i / INVENTORY_SHORT) * tSize.y;
+
+				if (!bShop)
 				{
-					tPos = m_pShopBackPanel->GetPos() + tCamPos;
+					tPos.x += 16.f;
 
-					tPos += m_vecItem[i]->GetPivot() * tSize;
-
-					tPos.x += tSize.x * (i % INVENTORY_SHORT);
-
-					tPos.y += (i / INVENTORY_SHORT) * tSize.y;
+					tPos.y += 21.f;
 				}
 
 				m_vecItem[i]->SetPos(tPos);
 			}
 
-			if(bEnable || m_bShopUIOn)
+			if(bEnable || bShop)
 				m_vecItem[i]->EnableItem();
 
 			else
 				m_vecItem[i]->DisableItem();
 		}			
-	}
-
-	if (m_bShopUIOn)	//	상점 판넬이 열렸을 경우이다.
-	{
-		tPos = m_pShopPanel->GetPos();
-
-		POSITION tSize = m_pShopPanel->GetSize();
-
-		tPos.x += tSize.x + 22.f;
-
-		tPos.x += (m_pShopUpBtn->GetSize().x - m_pShopScrollBtn->GetSize().x)/2.f;
-
-		float fScrollPosY = m_pShopScrollBtn->GetPos().y;
-
-		float fScrollSizeY = m_pShopScrollBtn->GetSize().y;
-
-		float fUpBtnPosY = m_pShopUpBtn->GetPos().y;
-
-		float fUpBtnSizeY = m_pShopUpBtn->GetSize().y;
-
-		float fDownBtnPosY = m_pShopDownBtn->GetPos().y;
-
-		if (fScrollPosY > fDownBtnPosY - fScrollSizeY)
-			fScrollPosY = fDownBtnPosY - fScrollSizeY;
-
-		else if (fScrollPosY < fUpBtnPosY + fUpBtnSizeY)
-			fScrollPosY= fUpBtnPosY + fUpBtnSizeY;
-
-		m_pShopScrollBtn->SetPos(tPos.x, fScrollPosY);
-
-		size_t iSize = m_vecShopItemPanel.size();
-
-		m_iPage = (int)((iSize - SHOP_PAGE) * (fScrollPosY - (fUpBtnPosY + fUpBtnSizeY)) / ((fDownBtnPosY - fScrollSizeY) - (fUpBtnPosY + fUpBtnSizeY)));
-
-		for (size_t i = 0; i < iSize; ++i)
-		{
-			if(m_iPage <= i && i < m_iPage + SHOP_PAGE)
-				m_vecShopItemPanel[i]->SetEnable(true);
-
-			else
-				m_vecShopItemPanel[i]->SetEnable(false);
-		}			
-		
-		UpdateShopItemPos(fDeltaTime);
 	}
 
 	POSITION tMousePos = GET_SINGLE(Input)->GetMouseClientPos();
@@ -455,15 +386,25 @@ int UIInventory::LateUpdate(float fDeltaTime)
 void UIInventory::Collision(float fDeltaTime)
 {
 	UI::Collision(fDeltaTime);
+
+	if (m_pShop)
+	{
+		m_pShop->Collision(fDeltaTime);
+	}
 }
 
 void UIInventory::Render(HDC hDC, float fDeltaTime)
 {
 	bool bEnable = m_pInventoryPanel->GetEnable();
 
+	bool bShop = false;
+
+	if(m_pShop)
+		bShop = m_pShop->IsShopPanelOn();
+
 	RESOLUTION tRS = GET_SINGLE(Core)->GetResolution();
 
-	if (bEnable || m_bShopUIOn)
+	if (bEnable || bShop)
 	{
 		BLENDFUNCTION tBF = {};
 
@@ -474,35 +415,8 @@ void UIInventory::Render(HDC hDC, float fDeltaTime)
 
 		GdiAlphaBlend(hDC, 0, 0, tRS.iW, tRS.iH, m_pBackTexture->GetDC(), 0, 0, tRS.iW, tRS.iH, tBF);
 
-		if(!m_bExtended)	//	상점 창이 열린 경우다.
-		{
-			m_pShopBackPanel->Render(hDC, fDeltaTime);
-			m_pShopPanel->Render(hDC, fDeltaTime);
-
-			size_t iSize = m_vecShopPanel.size();
-
-			for (size_t i = 0; i < iSize; ++i)
-				m_vecShopPanel[i]->Render(hDC, fDeltaTime);
-
-			size_t iContextSize = m_vecShopItemPanel.size();
-
-			for (size_t i = 0; i < SHOP_PAGE; ++i)
-				m_vecShopItemPanel[i + m_iPage]->Render(hDC, fDeltaTime);
-
-			m_pShopValancePanel->Render(hDC, fDeltaTime);
-
-			m_pShopExitBtn->Render(hDC, fDeltaTime);
-
-			m_pShopUpBtn->Render(hDC, fDeltaTime);
-
-			m_pShopDownBtn->Render(hDC, fDeltaTime);
-
-			m_pShopScrollBtn->Render(hDC, fDeltaTime);
-/*
-			TCHAR strPage[32] = {};
-			swprintf_s(strPage, TEXT("Page: %d"), m_iPage);
-			TextOut(hDC, (int)m_tPos.x, (int)m_tPos.y, strPage, lstrlen(strPage));*/
-		}
+		if (bShop)
+			m_pShop->Render(hDC, fDeltaTime);
 
 		else
 		{
@@ -523,7 +437,7 @@ void UIInventory::Render(HDC hDC, float fDeltaTime)
 			m_vecItem[i]->Render(hDC, fDeltaTime);
 	}
 
-	if (m_bShopUIOn)
+	if (bShop)
 	{
 		for (int i = 0; i < INVENTORY_MAX; ++i)
 		{
@@ -535,7 +449,16 @@ void UIInventory::Render(HDC hDC, float fDeltaTime)
 		}
 	}
 
-	if (bEnable || m_bShopUIOn)
+	else
+	{
+		for (int i = 0; i < INVENTORY_MAX; ++i)
+		{
+			if (m_vecItem[i])
+				m_vecItem[i]->SetAlpha(255);
+		}
+	}
+
+	if (bEnable || bShop)
 	{
 		for (int i = INVENTORY_SHORT; i < INVENTORY_MAX; ++i)
 		{
@@ -563,14 +486,14 @@ void UIInventory::CreateInfoPanel(int iCountX, int iCountY)
 
 	m_pBackPanel->SetTexture("backPanel", TEXT("UI\\FarmLeft.bmp"));
 
-	m_pBackPanel->SetSize(32.f * 3.f, 32.f * 3.f);
+	m_pBackPanel->SetSize(32.f * (iCountX-1), 32.f * (iCountY-1));
 
 	m_pBackPanel->SetEnable(false);
 
 	m_iCountX = iCountX;
 	m_iCountY = iCountY;
 
-	m_vecPanel.resize(m_iCountX * m_iCountY);
+	POSITION tPos = m_pBackPanel->GetSize();
 
 	for (int i = 0; i < m_iCountY; ++i)
 	{
@@ -578,29 +501,82 @@ void UIInventory::CreateInfoPanel(int iCountX, int iCountY)
 		{
 			UIPanel* pPanel = CreateObj<UIPanel>("Panel", pLayer);
 
-			if (i != 2 || j == 0 || j == m_iCountY - 1)
-			{
-				pPanel->SetTexture("menuTile", TEXT("Maps\\MenuTiles.bmp"));
-				pPanel->SetColorKey(255, 255, 255);
-			}
+			pPanel->SetTexture("menuTile", TEXT("Maps\\MenuTiles.bmp"));
+
+			pPanel->SetColorKey(255, 255, 255);
 
 			pPanel->SetSize(32.f, 32.f);
 
-			if(i !=2 && j> 0 && j< m_iCountX-1)
-				pPanel->SetImageOffset(32.f * (m_iCountX - 2), 32.f * i);
+			pPanel->SetPos(32.f * j + tPos.x - 16.f, 32.f * i + tPos.y - 16.f);
 
-			else
-				pPanel->SetImageOffset(32.f * j, 32.f * i);
+			if (i == 0 && j != 0 && j != m_iCountX - 1)
+				pPanel->SetImageOffset(64.f, 0.f);
+
+			else if (i == m_iCountY - 1 && j != 0 && j != m_iCountX - 1)
+				pPanel->SetImageOffset(64.f, 96.f);
+
+			else if (j == 0 && i != 0 && i != m_iCountY - 1)
+			{
+				if (i != 1)
+					pPanel->SetImageOffset(0.f, 64.f);
+
+				else
+					pPanel->SetImageOffset(0.f, 32.f);
+			}
+
+			else if (j == m_iCountX - 1 && i != 0 && i != m_iCountY - 1)
+			{
+				if (i != 1)
+					pPanel->SetImageOffset(96.f, 64.f);
+
+				else
+					pPanel->SetImageOffset(96.f, 32.f);
+			}
+
+			else if (i == m_iCountY - 1 && j == 0 )
+				pPanel->SetImageOffset(0.f, 96.f);
+
+			else if (i == 0 && j == m_iCountX - 1)
+				pPanel->SetImageOffset(96.f, 0.f);
+
+			else if (i == m_iCountY - 1 && j == m_iCountX - 1)
+				pPanel->SetImageOffset(96.f, 96.f);
+
+			else if(i == 1 && j != 0 && j!=m_iCountX-1)
+				pPanel->SetImageOffset(64.f, 32.f);
+
+			else if(i!=0 || j!=0)
+				pPanel->SetImageOffset(96.f, 192.f);
 
 			pPanel->SetEnable(false);
 
-			m_vecPanel[i * m_iCountX + j] = pPanel;
+			m_vecPanel.push_back(pPanel);
 		}
 	}
+
+	m_pInfoName = CreateObj<Text>("ItemName", pLayer);
+
+	m_pInfoName->SetEnable(false);
+
+	m_pInfoIconEnergy = CreateObj<UIPanel>("EnergyIcon", pLayer);
+
+	m_pInfoIconEnergy->SetSize(20.f, 20.f);
+	m_pInfoIconEnergy->SetTexture("Mouse");
+	m_pInfoIconEnergy->SetImageOffset(0.f, 856.f);
+	m_pInfoIconEnergy->SetEnable(false);
+
+	m_pInfoIconHealth = CreateObj<UIPanel>("EnergyIcon", pLayer);
+
+	m_pInfoIconHealth->SetSize(20.f, 20.f);
+	m_pInfoIconHealth->SetTexture("Mouse");
+	m_pInfoIconHealth->SetImageOffset(0.f, 876.f);
+	m_pInfoIconHealth->SetEnable(false);
 }
 
-void UIInventory::InfoPanelOn(const POSITION& tPos)
+void UIInventory::InfoPanelOn(const POSITION& tPos, int iFileIndex)
 {
+	PITEMINFO pInfo = GET_SINGLE(ResourcesManager)->FindItemInfo(iFileIndex);
+
 	for (int i = 0; i < m_iCountX; ++i)
 	{
 		for (int j = 0; j < m_iCountY; ++j)
@@ -608,6 +584,82 @@ void UIInventory::InfoPanelOn(const POSITION& tPos)
 			m_vecPanel[i * m_iCountX + j]->SetEnable(true);
 		}
 	}
+
+	if (pInfo)
+	{
+		char strName[256] = {};
+
+		strcpy_s(strName, pInfo->strName.c_str());
+
+		TCHAR wstrName[256] = {};
+
+		MultiByteToWideChar(CP_ACP, NULL, strName, -1, wstrName, strlen(strName));
+
+		m_pInfoName->SetText(wstrName);
+
+		size_t iSize = pInfo->vecComment.size();
+
+		Layer* pUILayer = m_pScene->FindLayer("UI");
+
+		for (size_t i = 0; i < iSize; ++i)
+		{
+			Text* pText = CreateObj<Text>("Description", pUILayer);
+
+			pText->SetText(pInfo->vecComment[i]);
+
+			m_vecInfoDescription.push_back(pText);
+		}
+
+		if (pInfo->iHPRecovery != 0)
+		{
+			Text* pHealthText = CreateObj<Text>("HealthText", pUILayer);
+
+			int iHealth = pInfo->iHPRecovery;
+
+			TCHAR strHealth[256] = {};
+
+			TCHAR strFullText[256] = {};
+
+			swprintf_s(strHealth, TEXT("+ %d"), iHealth);
+
+			lstrcat(strFullText, strHealth);
+
+			lstrcat(strFullText, TEXT(" Health"));
+
+			pHealthText->SetText(strFullText);
+
+			m_pInfoIconHealth->SetEnable(true);
+
+			m_vecInfoDescription.push_back(pHealthText);
+		}
+
+		if (pInfo->iEnergyRecovery != 0)
+		{
+			Text* pEnergyText = CreateObj<Text>("EnergyText", pUILayer);
+
+			int iEnergy = pInfo->iEnergyRecovery;
+
+			TCHAR strEnergy[256] = {};
+
+			TCHAR strFullText[256] = {};
+
+			swprintf_s(strEnergy, TEXT("+ %d"), iEnergy);
+
+			lstrcat(strFullText, strEnergy);
+
+			lstrcat(strFullText, TEXT(" Health"));
+
+			pEnergyText->SetText(strFullText);
+
+			m_pInfoIconEnergy->SetEnable(true);
+
+			m_vecInfoDescription.push_back(pEnergyText);
+		}
+	}
+	else
+		m_pInfoName->SetText(TEXT(""));
+
+	m_pInfoName->SetEnable(true);
 
 	m_pBackPanel->SetEnable(true);
 }
@@ -620,7 +672,49 @@ void UIInventory::InfoPanelUpdate(const POSITION& tPos)
 			m_vecPanel[i * m_iCountX + j]->SetPos(tPos.x + 32.f * j, tPos.y + 32.f * i);
 	}
 
-	m_pBackPanel->SetPos(tPos + POSITION(16.f, 16.f));
+	POSITION tOffset = POSITION(16.f, 16.f);
+
+	m_pBackPanel->SetPos(tPos + tOffset);
+
+	tOffset += 4.f;
+
+	if(m_pInfoName)
+		m_pInfoName->SetPos(tPos + tOffset);
+
+	tOffset.y += 20.f;
+	
+	size_t iSize = m_vecInfoDescription.size();
+
+	for (size_t i = 0; i < iSize; ++i)
+	{
+		tOffset.y += 20.f;
+
+		m_vecInfoDescription[i]->SetPos(tPos + tOffset);
+	}
+
+	if (m_pInfoIconEnergy->GetEnable())
+	{
+		tOffset.y -= 20.f;
+
+		m_pInfoIconEnergy->SetPos(tPos + tOffset);
+
+		tOffset.x += 20.f;
+
+		m_vecInfoDescription[iSize - 2]->SetPos(tPos + tOffset);
+	}
+
+	if (m_pInfoIconHealth->GetEnable())
+	{
+		tOffset.x -= 20.f;
+
+		tOffset.y += 20.f;
+
+		m_pInfoIconHealth->SetPos(tPos + tOffset);
+
+		tOffset.x += 20.f;
+
+		m_vecInfoDescription[iSize - 1]->SetPos(tPos + tOffset);
+	}
 }
 
 void UIInventory::InfoPanelOff()
@@ -631,7 +725,24 @@ void UIInventory::InfoPanelOff()
 			m_vecPanel[i * m_iCountX + j]->SetEnable(false);
 	}
 
+	size_t iSize = m_vecInfoDescription.size();
+
+	for (size_t i = 0; i < iSize; ++i)
+	{
+		m_vecInfoDescription[i]->Die();
+
+		SAFE_RELEASE(m_vecInfoDescription[i]);
+	}
+
+	m_vecInfoDescription.clear();
+
+	m_pInfoName->SetEnable(false);
+
 	m_pBackPanel->SetEnable(false);
+
+	m_pInfoIconEnergy->SetEnable(false);
+
+	m_pInfoIconHealth->SetEnable(false);
 }
 
 void UIInventory::CreateInventory()
@@ -924,357 +1035,34 @@ void UIInventory::SwapItem(Item* pItem, const POSITION& tPos)
 	}
 }
 
-void UIInventory::CreateShopPanel()
-{
-	m_bShopUIOn = true;
-
-	if (m_pShopPanel)
-	{
-		m_pShopExitBtn->SetEnable(true);
-
-		m_pShopUpBtn->SetEnable(true);
-
-		m_pShopDownBtn->SetEnable(true);
-
-		m_pShopScrollBtn->SetEnable(true);
-
-		m_pShopGoldText->SetEnable(true);
-
-		return;
-	}		
-
-	int iTileNumX = 17;
-	int iTileNumY = SHOP_PAGE + 1;
-
-	Layer* pLayer = m_pScene->FindLayer("Default");
-
-	m_pShopPanel = CreateObj<UIPanel>("ShopPanel", pLayer);	//	상점 배경을 만든다.
-
-	m_pShopPanel->SetTexture("backPanel", TEXT("UI\\FarmLeft.bmp"));
-
-	m_pShopPanel->SetSize((iTileNumX - 1) * 32.f, (iTileNumY - 1) * 32.f);
-
-	RESOLUTION tRS = GET_SINGLE(Camera)->GetClientRS();
-
-	POSITION tSize = m_pShopPanel->GetSize();
-
-	m_pShopPanel->SetPos(tRS.iW / 2.f - tSize.x / 2.f, tRS.iH / 2.f - (tSize.y + 96.f) / 2.f );
-
-	m_pShopPanel->SetEnable(false);
-
-	m_vecShopPanel.reserve(132);
-
-	POSITION tPos = m_pShopPanel->GetPos();
-
-	for (int i = 0; i < iTileNumY; ++i)		//	상점 틀을 만든다.
-	{
-		for (int j = 0; j < iTileNumX; ++j)
-		{
-			if (i == 0 || i == iTileNumY - 1 || j == 0 || j == iTileNumX - 1)
-			{
-				UIPanel* pPanel = CreateObj<UIPanel>("Panel", pLayer);
-
-				pPanel->SetTexture("menuTile", TEXT("Maps\\MenuTiles.bmp"));
-
-				pPanel->SetColorKey(255, 255, 255);
-
-				pPanel->SetSize(32.f, 32.f);
-
-				pPanel->SetPos(32.f * j + tPos.x - 16.f, 32.f * i + tPos.y - 16.f);
-
-				if (i == 0 && j != 0 && j != iTileNumX - 1)
-					pPanel->SetImageOffset(64.f, 0.f);
-
-				else if (i == iTileNumY - 1 && j != 0 && j != iTileNumX - 1)
-					pPanel->SetImageOffset(64.f, 96.f);
-
-				else if (j == 0 && i != 0 && i != iTileNumY - 1)
-					pPanel->SetImageOffset(0.f, 64.f);
-
-				else if (j == iTileNumX - 1 && i != 0 && i != iTileNumY - 1)
-					pPanel->SetImageOffset(96.f, 64.f);
-
-				else if (i == iTileNumY - 1 && j == 0)
-					pPanel->SetImageOffset(0.f, 96.f);
-
-				else if (i == 0 && j == iTileNumX - 1)
-					pPanel->SetImageOffset(96.f, 0.f);
-
-				else if (i == iTileNumY - 1 && j == iTileNumX - 1)
-					pPanel->SetImageOffset(96.f, 96.f);
-
-				pPanel->SetEnable(false);
-
-				m_vecShopPanel.push_back(pPanel);
-			}
-		}
-	}
-
-	for(int i=0;i<36;++i)		//	아이템 목록을 만든다.
-	{
-		UIContext* pPanel = Obj::CreateObj<UIContext>("ShopContext", pLayer,POSITION::Zero,POSITION(32.f * 16.f, 32.f));
-
-		pPanel->SetPos(0.f, 32.f * i);
-		pPanel->SetIndex(i);
-		pPanel->SetEnable(true);
-		pPanel->SetInven(this);
-
-		m_vecShopItemPanel.push_back(pPanel);
-	}
-
-	m_pShopValancePanel = Obj::CreateObj<UIPanel>("GoldPanel", pLayer);	//	플레이어 소지금 판넬을 만든다.
-
-	m_pShopValancePanel->SetTexture("Mouse");
-	m_pShopValancePanel->SetColorKey(255, 255, 255);
-	m_pShopValancePanel->SetSize(130.f, 34.f);
-	m_pShopValancePanel->SetImageOffset(680.f, 944.f);
-
-	tPos = m_pShopPanel->GetPos();
-
-	tPos.x -= 16.f;
-	tPos.y += m_pShopPanel->GetSize().y + 8.f;
-
-	m_pShopValancePanel->SetPos(tPos);
-	m_pShopValancePanel->SetAlpha(255);
-	m_pShopValancePanel->EnableAlpha(true);
-	m_pShopValancePanel->SetEnable(false);
-
-	Layer* pHUDLayer = m_pScene->FindLayer("HUD");
-
-	m_pShopGoldText = Obj::CreateObj<Text>("ShopGoldText", pHUDLayer);
-
-	m_pShopGoldText->SetPos(tPos.x +20.f,tPos.y + 8.f);
-
-	m_pShopGoldText->SetText(m_pGoldText->GetText());	
-
-	iTileNumX = 13;
-	iTileNumY = 4;
-
-	m_pShopBackPanel = Obj::CreateObj<UIPanel>("ShopBackPanel", pLayer);	//	상점용 인벤토리 배경 판을 만든다.
-
-	m_pShopBackPanel->SetSize((iTileNumX - 1) * 32.f, (iTileNumY - 1) * 32.f);
-
-	tPos.x += m_pShopValancePanel->GetSize().x + 12.f;
-	tPos.y += 12.f;
-
-	m_pShopBackPanel->SetTexture("backPanel");
-	m_pShopBackPanel->SetPos(tPos);
-	m_pShopBackPanel->SetEnable(false);
-
-	tPos = m_pShopBackPanel->GetPos();
-
-	for (int i = 0; i < iTileNumY; ++i)	//	상점용 인벤토리 사각 틀을 만든다.
-	{
-		for (int j = 0; j < iTileNumX; ++j)
-		{
-			if (i == 0 || i == iTileNumY - 1 || j == 0 || j == iTileNumX - 1)
-			{
-				UIPanel* pPanel = CreateObj<UIPanel>("Panel", pLayer);
-
-				pPanel->SetTexture("menuTile", TEXT("Maps\\MenuTiles.bmp"));
-
-				pPanel->SetColorKey(255, 255, 255);
-
-				pPanel->SetSize(32.f, 32.f);
-
-				pPanel->SetPos(32.f * j + tPos.x - 16.f, 32.f * i + tPos.y - 16.f);
-
-				if (i == 0 && j != 0 && j != iTileNumX - 1)
-					pPanel->SetImageOffset(64.f, 0.f);
-
-				else if (i == iTileNumY - 1 && j != 0 && j != iTileNumX - 1)
-					pPanel->SetImageOffset(64.f, 96.f);
-
-				else if (j == 0 && i != 0 && i != iTileNumY - 1)
-					pPanel->SetImageOffset(0.f, 64.f);
-
-				else if (j == iTileNumX - 1 && i != 0 && i != iTileNumY - 1)
-					pPanel->SetImageOffset(96.f, 64.f);
-
-				else if (i == iTileNumY - 1 && j == 0)
-					pPanel->SetImageOffset(0.f, 96.f);
-
-				else if (i == 0 && j == iTileNumX - 1)
-					pPanel->SetImageOffset(96.f, 0.f);
-
-				else if (i == iTileNumY - 1 && j == iTileNumX - 1)
-					pPanel->SetImageOffset(96.f, 96.f);
-
-				pPanel->SetEnable(false);
-
-				m_vecShopPanel.push_back(pPanel);
-			}
-		}
-	}
-
-	for (int j = 0; j < 3; ++j)	//	아이템들의 틀을 만든다.
-	{
-		for (int i = 0; i < 12; ++i)
-		{
-			UIPanel* pPanel = Obj::CreateObj<UIPanel>("Panel", pLayer);
-
-			pPanel->SetTexture("menuTile", TEXT("Maps\\MenuTiles.bmp"));
-
-			pPanel->SetColorKey(255, 255, 255);
-
-			pPanel->SetSize(32.f, 32.f);
-
-			pPanel->SetPos(32.f * i + tPos.x, 32.f * j + tPos.y);
-
-			pPanel->SetImageOffset(64.f, 64.f);
-
-			pPanel->SetEnable(false);
-
-			m_vecShopPanel.push_back(pPanel);
-		}
-	}
-
-	tPos = m_pShopPanel->GetPos();
-
-	tPos.x += tSize.x + 22.f;
-	tPos.y -= 26.f;
-
-	m_pShopExitBtn = Obj::CreateObj<UIButton>("ShopExitButton", pLayer);	//	상점 판넬 종료 버튼을 생성한다.
-
-	m_pShopExitBtn->SetSize(22.f, 22.f);
-	m_pShopExitBtn->SetImageOffset(676.f, 988.f);
-	m_pShopExitBtn->SetTexture("Mouse");
-	m_pShopExitBtn->SetCallback(this, &UIInventory::DisableShopPanel);
-	m_pShopExitBtn->SetAlpha(255);
-	m_pShopExitBtn->EnableAlpha(true);
-	m_pShopExitBtn->SetPos(tPos);
-	m_pShopExitBtn->SetEnable(true);
-
-	ColliderRect* pExitButtonRC = (ColliderRect*)m_pShopExitBtn->GetCollider("ButtonBody");
-
-	pExitButtonRC->SetRect(0.f, 0.f, 22.f, 22.f);
-
-	SAFE_RELEASE(pExitButtonRC);
-
-	tPos.y += 26.f;
-
-	m_pShopUpBtn = Obj::CreateObj<UIButton>("ShopUpButton", pLayer);	//	상점 판넬 이전 페이지 버튼을 생성한다.
-
-	m_pShopUpBtn->SetSize(20.f, 22.f);
-	m_pShopUpBtn->SetImageOffset(844.f, 918.f);
-	m_pShopUpBtn->SetTexture("Mouse");
-	m_pShopUpBtn->SetCallback(this, &UIInventory::ShopPageUp);
-	m_pShopUpBtn->SetAlpha(255);
-	m_pShopUpBtn->EnableAlpha(true);
-	m_pShopUpBtn->SetPos(tPos);
-	m_pShopUpBtn->SetEnable(true);
-
-	ColliderRect* pUpButtonRC = (ColliderRect*)m_pShopUpBtn->GetCollider("ButtonBody");
-
-	pUpButtonRC->SetRect(0.f, 0.f, 20.f, 22.f);
-
-	SAFE_RELEASE(pUpButtonRC);
-
-	tPos.y += tSize.y + m_pShopBackPanel->GetSize().y + 8.f;
-
-	m_pShopDownBtn = Obj::CreateObj<UIButton>("ShopDownButton", pLayer);	//	상점 판넬 다음 페이지 버튼을 생성한다.
-
-	m_pShopDownBtn->SetSize(20.f, 22.f);
-	m_pShopDownBtn->SetImageOffset(844.f, 944.f);
-	m_pShopDownBtn->SetTexture("Mouse");
-	m_pShopDownBtn->SetCallback(this, &UIInventory::ShopPageDown);
-	m_pShopDownBtn->SetAlpha(255);
-	m_pShopDownBtn->EnableAlpha(true);
-	m_pShopDownBtn->SetPos(tPos);
-	m_pShopDownBtn->SetEnable(true);
-
-	ColliderRect* pDownButtonRC = (ColliderRect*)m_pShopDownBtn->GetCollider("ButtonBody");
-
-	pDownButtonRC->SetRect(0.f, 0.f, 20.f, 22.f);
-
-	SAFE_RELEASE(pDownButtonRC);
-
-	tPos.y -= tSize.y - 22.f;
-	
-	m_pShopScrollBtn = Obj::CreateObj<UITilePanel>("ShopScrollButton", pLayer,
-		POSITION::Zero, POSITION(12.f, 20.f));	//	상점 판넬 스크롤 버튼을 생성한다.
-	
-	tPos.x += (m_pShopUpBtn->GetSize().x - m_pShopScrollBtn->GetSize().x) / 2.f;
-
-	m_pShopScrollBtn->SetImageOffset(870.f, 926.f);
-	m_pShopScrollBtn->SetTexture("Mouse");
-	m_pShopScrollBtn->SetAlpha(255);
-	m_pShopScrollBtn->EnableAlpha(true);
-	m_pShopScrollBtn->SetPos(tPos);
-	m_pShopScrollBtn->SetEnable(true);
-}
-
-void UIInventory::CreateGoldText()
-{
-	if (m_pScene)
-	{
-		Layer* pHUDLayer = m_pScene->FindLayer("HUD");
-
-		m_pGoldText = Obj::CreateObj<Text>("GoldText", pHUDLayer);
-
-		m_pGoldText->SetPos(1052.f, 130.f);
-
-		m_pGoldText->SetColor(102, 27, 0);
-	}
-}
-
-void UIInventory::ShopPageUp(int iNum, float fTime)
-{
-	size_t iSize = m_vecShopItemPanel.size();
-
-	--m_iPage;
-
-	if (0 > m_iPage)
-		++m_iPage;
-
-	else
-	{
-		UpdateScrollBtnPos();
-
-		UpdateShopItemPos(fTime);
-	}
-}
-
-void UIInventory::ShopPageDown(int iNum, float fTime)
-{
-	size_t iSize = m_vecShopItemPanel.size();
-
-	++m_iPage;
-
-	if (iSize - SHOP_PAGE < m_iPage)
-		--m_iPage;
-
-	else
-	{
-		UpdateScrollBtnPos();
-
-		UpdateShopItemPos(fTime);
-	}
-}
-
 void UIInventory::AddItem(Item* pItem)
 {
 	if (pItem)
 	{
-		for (int i = 0; i < 36; ++i)
+		ITEM_TYPE eItemType = pItem->GetType();
+
+		if (eItemType != IT_TOOL)
 		{
-			if (m_vecItem[i])
+			for (int i = 0; i < 36; ++i)
 			{
-				ITEM_TYPE eItemType = m_vecItem[i]->GetType();
-
-				if (eItemType == pItem->GetType())
+				if (m_vecItem[i])
 				{
-					if (eItemType != IT_TOOL)
+					ITEM_TYPE eItemType = m_vecItem[i]->GetType();
+
+					if (eItemType == pItem->GetType())
 					{
-						int iIndex = m_vecItem[i]->GetIndex();
-
-						if (iIndex == pItem->GetIndex())
+						if (eItemType != IT_TOOL)
 						{
-							m_vecItem[i]->AddItemCount(1);
+							int iIndex = m_vecItem[i]->GetIndex();
 
-							pItem->Die();
+							if (iIndex == pItem->GetIndex())
+							{
+								m_vecItem[i]->AddItemCount(1);
 
-							return;
+								pItem->Die();
+
+								return;
+							}
 						}
 					}
 				}
@@ -1295,8 +1083,9 @@ void UIInventory::AddItem(Item* pItem)
 
 					m_vecItem[i]->CreateItemNumber();
 
-					m_vecItem[i]->AddItemCount(1);
 				}
+
+				pItem->AddItemCount(1);
 
 				pItem->AddRef();
 
@@ -1351,4 +1140,51 @@ void UIInventory::DeleteItem(Item* pItem)
 				m_vecItem[i]->AddItemCount(-1);
 		}
 	}
+}
+
+void UIInventory::CreateGoldText()
+{
+	if (m_pScene)
+	{
+		Layer* pHUDLayer = m_pScene->FindLayer("HUD");
+
+		m_pGoldText = Obj::CreateObj<Text>("GoldText", pHUDLayer);
+
+		m_pGoldText->SetPos(1052.f, 130.f);
+
+		m_pGoldText->SetColor(102, 27, 0);
+	}
+}
+
+void UIInventory::CreateShop(const string& strName)
+{
+	if (!m_pShop)
+	{
+		Layer* pHUDLayer = m_pScene->FindLayer("HUD");
+
+		m_pShop = Obj::CreateObj<UIShop>("Shop", pHUDLayer);
+
+		m_pShop->SetEnable(false);
+
+		m_pShop->SetInven(this);
+	}
+
+	m_pShop->CreateShopPanel(strName);
+
+	m_pShop->SetGoldText(m_pGoldText->GetText());
+
+	return;
+}
+
+void UIInventory::CreateBuildShop()
+{
+		Layer* pHUDLayer = m_pScene->FindLayer("HUD");
+
+		UIBuildingShop* pBuildingShop = Obj::CreateObj<UIBuildingShop>("Shop", pHUDLayer);
+
+		pBuildingShop->SetInven(this);
+
+		pBuildingShop->CreatePanel();
+
+		SAFE_RELEASE(pBuildingShop);
 }

@@ -1,0 +1,259 @@
+#include "InGameScene.h"
+#include "../Object/Player.h"
+#include "../Object/Stage.h"
+#include "Layer.h"
+#include "../Core/Camera.h"
+#include "../Collider/ColliderPixel.h"
+#include "../Sound/SoundManager.h"
+#include "..//Core/PathManager.h"
+#include "..//Resources/ResourcesManager.h"
+#include "..//Resources/Texture.h"
+#include "..//Animation/Animation.h"
+#include "..//Collider/ColliderRect.h"
+#include "..//Collider/ColliderSphere.h"
+#include "..//Object/Player.h"
+#include "..//Object/UIBar.h"
+#include "../Object/UIPanel.h"
+#include "SceneManager.h"
+#include "SceneCave.h"
+#include "../Object/Seed.h"
+#include "SceneHome.h"
+#include "../Object/PadeEffect.h"
+#include "SceneRoad.h"
+#include "../Object/ObjManager.h"
+#include "../Object/UIInventory.h"
+#include "../Object/Tool.h"
+#include "SceneCoop.h"
+#include "SceneBarn.h"
+
+InGameScene::InGameScene()
+{
+}
+
+InGameScene::~InGameScene()
+{
+}
+
+bool InGameScene::Init()
+{
+	if (!Scene::Init())
+		return false;
+
+	GET_SINGLE(SoundManager)->Play("RoadBGM");
+
+	SetEditMode(false);
+
+	Texture* pTexture = GET_SINGLE(ResourcesManager)->LoadTexture("Tile2", TEXT("Maps\\walls_and_floors.bmp"));
+	SAFE_RELEASE(pTexture);
+
+	pTexture = GET_SINGLE(ResourcesManager)->LoadTexture("springoutdoor", TEXT("Maps\\spring_outdoorsTileSheet.bmp"));
+	SAFE_RELEASE(pTexture);
+
+	pTexture = GET_SINGLE(ResourcesManager)->LoadTexture("mine", TEXT("Maps\\TheMines.bmp"));
+	SAFE_RELEASE(pTexture);
+
+	Texture* pNoneTex = GET_SINGLE(ResourcesManager)->LoadTexture(
+		"TileNone", L"TileSheets\\Move.bmp");
+	pNoneTex->SetColorKey(0, 32, 0);
+	SAFE_RELEASE(pNoneTex);
+	Texture* pNoMoveTex = GET_SINGLE(ResourcesManager)->LoadTexture(
+		"TileNoMove", L"TileSheets\\Nomove.bmp");
+	pNoMoveTex->SetColorKey(0, 32, 0);
+
+	SAFE_RELEASE(pNoMoveTex);
+
+	LoadFile();
+
+	Layer* pStageLayer = FindLayer("Stage");
+
+	m_pStage = Obj::CreateObj<Stage>("Stage", pStageLayer);
+
+	m_pStage->LoadFromPath("200808.tmp");
+
+	m_pStage->SetStageType(STAGE_OUTDOOR);
+
+	CreateFarmEffect();
+
+	CreateProtoTypes();
+
+	ColliderRect* pPortal = m_pStage->AddCollider<ColliderRect>("CavePortal");
+
+	pPortal->SetRect(32.f * 23.f, 32.f * 15.f, 32.f * 24.f, 32.f * 16.f);
+	pPortal->AddCollisionFunction(CS_ENTER, this, &InGameScene::Cave);
+
+	SAFE_RELEASE(pPortal);
+
+	ColliderRect* pHomePortal = m_pStage->AddCollider<ColliderRect>("HomePortal");
+
+	pHomePortal->SetRect(32.f * 6.f, 32.f * 10.f, 32.f * 7.f, 32.f * 11.f);
+	pHomePortal->AddCollisionFunction(CS_ENTER, this, &InGameScene::HomePortalCol);
+
+	SAFE_RELEASE(pHomePortal);
+
+	ColliderRect* pRoadPortal = m_pStage->AddCollider<ColliderRect>("RoadPortal");
+
+	pRoadPortal->SetRect(32.f * 49.f, 32.f * 15.f, 32.f * 50.f, 32.f * 16.f);
+	pRoadPortal->AddCollisionFunction(CS_ENTER, this, &InGameScene::RoadPortalCol);
+
+	SAFE_RELEASE(pRoadPortal);
+
+	Layer* pLayer = FindLayer("Default");
+
+	for (int i = 0; i < 5; ++i)
+	{
+		Item* pSeed = (Item*)m_pStage->CreateCloneObj("Potato Seeds", "PotatoSeed", pLayer);
+
+		pSeed->SetPos(600.f + 100 * i, 600.f);
+
+		Collider* pCol = pSeed->GetCollider("ItemBody");
+
+		pCol->AddCollisionFunction(CS_ENTER, pSeed, &Item::CollEnter);
+		pCol->AddCollisionFunction(CS_STAY, pSeed, &Item::ColStay);
+		pCol->AddCollisionFunction(CS_LEAVE, pSeed, &Item::ColEnd);
+
+		SAFE_RELEASE(pCol);
+
+		SAFE_RELEASE(pSeed);
+	}
+
+	Player* pPlayer = (Player*)GET_SINGLE(ObjManager)->GetPlayer();
+
+	pPlayer->AddGold(20000);
+
+	SAFE_RELEASE(pPlayer);
+
+	return true;
+}
+
+int InGameScene::Update(float fTime)
+{
+	Scene::Update(fTime);
+
+	Player* pPlayer = (Player*)GET_SINGLE(ObjManager)->GetPlayer();
+
+	bool bCoop = pPlayer->GetCoop();
+
+	bool bBarn = pPlayer->GetBarn();
+
+	if (bCoop)
+	{
+		Layer* pLayer = FindLayer("Back");
+
+		Obj* pObj = m_pStage->CreateCloneObj("Coop", "Coop", pLayer);
+
+		pObj->SetPos(32.f * 44.5f, 32.f * 12.5f);
+
+		pPlayer->BuildCompleteCoop();
+
+		Collider* pRC = pObj->GetCollider("DoorBody");
+
+		pRC->AddCollisionFunction(CS_ENTER, this, &InGameScene::CoopPortalCol);
+
+		SAFE_RELEASE(pRC);
+
+		SAFE_RELEASE(pObj);
+	}
+
+	if (bBarn)
+	{
+		Layer* pLayer = FindLayer("Back");
+
+		Obj* pObj = m_pStage->CreateCloneObj("Barn", "Barn", pLayer);
+
+		pObj->SetPos(32.f * 38.5f, 32.f * 11.5f);
+
+		pPlayer->BuildCompleteBarn();
+
+		Collider* pRC = pObj->GetCollider("DoorBody");
+
+		pRC->AddCollisionFunction(CS_ENTER, this, &InGameScene::BarnPortalCol);
+
+		SAFE_RELEASE(pRC);
+
+		SAFE_RELEASE(pObj);
+	}
+
+	SAFE_RELEASE(pPlayer);
+
+	return 0;
+}
+
+void InGameScene::Cave(Collider* pSrc, Collider* pDest, float fTime)
+{
+	if (pDest->GetTag() == "PlayerBody")
+	{
+		GET_SINGLE(SoundManager)->Stop(ST_BGM);
+
+		GET_SINGLE(SceneManager)->CreateScene<SceneCave>("Cave", SC_NEXT);
+
+		Obj* pPlayer = GET_SINGLE(ObjManager)->GetPlayer();
+
+		pPlayer->SetPos(32.f * 5.5f, 32.f * 5.5f);
+
+		SAFE_RELEASE(pPlayer);
+	}
+}
+
+void InGameScene::HomePortalCol(Collider* pSrc, Collider* pDest, float fTime)
+{
+	if (pDest->GetTag() == "PlayerBody")
+	{
+		GET_SINGLE(SoundManager)->Stop(ST_BGM);
+
+		GET_SINGLE(SceneManager)->CreateScene<SceneHome>("Home", SC_NEXT);
+
+		Obj* pPlayer = GET_SINGLE(ObjManager)->GetPlayer();
+
+		pPlayer->SetPos(32.f * 3.5f, 32.f * 9.f);
+
+		SAFE_RELEASE(pPlayer);
+	}
+}
+
+void InGameScene::RoadPortalCol(Collider* pSrc, Collider* pDest, float fTime)
+{
+	if (pDest->GetTag() == "PlayerBody")
+	{
+		GET_SINGLE(SoundManager)->Stop(ST_BGM);
+
+		GET_SINGLE(SceneManager)->CreateScene<SceneRoad>("Road", SC_NEXT);
+
+		Obj* pPlayer = GET_SINGLE(ObjManager)->GetPlayer();
+
+		pPlayer->SetPos(80.f, 334.f);
+
+		SAFE_RELEASE(pPlayer);
+	}
+}
+
+void InGameScene::CoopPortalCol(Collider* pSrc, Collider* pDest, float fTime)
+{
+	if (pDest->GetTag() == "PlayerBody")
+	{
+		GET_SINGLE(SoundManager)->Stop(ST_BGM);
+
+		GET_SINGLE(SceneManager)->CreateScene<SceneCoop>("Coop", SC_NEXT);
+
+		Obj* pPlayer = GET_SINGLE(ObjManager)->GetPlayer();
+
+		pPlayer->SetPos(32.f * 2.5f, 32.f * 10);
+
+		SAFE_RELEASE(pPlayer);
+	}
+}
+
+void InGameScene::BarnPortalCol(Collider* pSrc, Collider* pDest, float fTime)
+{
+	if (pDest->GetTag() == "PlayerBody")
+	{
+		GET_SINGLE(SoundManager)->Stop(ST_BGM);
+
+		GET_SINGLE(SceneManager)->CreateScene<SceneBarn>("Barn", SC_NEXT);
+
+		Obj* pPlayer = GET_SINGLE(ObjManager)->GetPlayer();
+
+		pPlayer->SetPos(32.f * 8.5f, 32.f * 12.5f);
+
+		SAFE_RELEASE(pPlayer);
+	}
+}

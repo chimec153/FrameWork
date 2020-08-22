@@ -1,5 +1,6 @@
 #include "UINum.h"
 #include "..//Core/Camera.h"
+#include "../Core/Input.h"
 
 UINum::UINum()	:
 	m_iNum(0),
@@ -45,8 +46,19 @@ void UINum::AddObjectToLayer(Layer* pLayer)
 
 	for (size_t i = 0; i < iSize; ++i)
 	{
-		pLayer->AddObject(m_vecNum[i]);
+		if(!pLayer->HasObject(m_vecNum[i]))
+			pLayer->AddObject(m_vecNum[i]);
 	}
+}
+
+void UINum::DeleteObjectFromLayer(Layer* pLayer)
+{
+	pLayer->DeleteObject(this);
+
+	size_t iSize = m_vecNum.size();
+
+	for (size_t i = 0; i < iSize; ++i)
+			pLayer->DeleteObject(m_vecNum[i]);
 }
 
 void UINum::DisableNumber()
@@ -192,6 +204,25 @@ void UINum::Collision(float fDeltaTime)
 void UINum::Render(HDC hDC, float fDeltaTime)
 {
 	Obj::Render(hDC, fDeltaTime);
+
+	size_t iSize = m_vecNum.size();
+
+	for (size_t i = 0; i < iSize; ++i)
+		m_vecNum[i]->Render(hDC, fDeltaTime);
+
+#ifdef _DEBUG
+	if (KEYPRESS("Debug"))
+	{
+		POSITION tPos = m_tPos - GET_SINGLE(Camera)->GetPos();
+
+		TCHAR strHP[32] = {};
+
+		wsprintf(strHP, TEXT("Layer: %p"), m_pLayer);
+		TextOut(hDC, (int)tPos.x, (int)tPos.y, strHP, lstrlen(strHP));
+		wsprintf(strHP, TEXT("Scene: %p"), m_pScene);
+		TextOut(hDC, (int)tPos.x, (int)tPos.y - 20, strHP, lstrlen(strHP));
+	}
+#endif
 }
 
 UINum* UINum::Clone()

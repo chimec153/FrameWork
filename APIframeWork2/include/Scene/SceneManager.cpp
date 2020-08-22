@@ -69,36 +69,50 @@ SCENE_CHANGE SceneManager::ChangeScene()
 
 		m_pScene->SetSceneType(SC_CURRENT);
 
-		//Scene::ChangePrototype();
 		Layer* pLayer = m_pScene->FindLayer("Default");
 		Layer* pHUDLayer = m_pScene->FindLayer("HUD");
 		Layer* pUILayer = m_pScene->FindLayer("UI");
+		Layer* pUTHUDLayer = m_pScene->FindLayer("UTHUD");
 
 		Player* pPlayer = (Player*)GET_SINGLE(ObjManager)->GetPlayer();
 		UIInventory* pInven = GET_SINGLE(ObjManager)->GetInven();
 		UIClockHand* pClockHand = (UIClockHand*)GET_SINGLE(ObjManager)->GetClockHand();
 
-		pClockHand->SetScene(m_pScene);
-		pClockHand->SetLayer(pLayer);
+		if (pClockHand)
+		{
+			pClockHand->SetScene(m_pScene);
+			pClockHand->SetLayer(pUILayer);
+		}
 
-		pInven->AddItemToLayer(pHUDLayer);
-		pInven->AddInfoPanelToLayer(pUILayer);
-		pInven->SetScene(m_pScene);
-		pInven->SetLayer(pLayer);
+		if (pInven)
+		{
+			pInven->AddItemToLayer(pHUDLayer);
+			pInven->AddInfoPanelToLayer(pUILayer);
+			pInven->SetObjectLayer(pUTHUDLayer);
+			pInven->SetInfoPanelLayer(pUILayer);
+			pInven->SetScene(m_pScene);
+			pInven->SetLayer(pLayer);
+		}
 
-		pPlayer->SetScene(m_pScene);
-		pPlayer->SetLayer(pLayer);
-		pPlayer->SetBarLayer(pUILayer);
+		if (pPlayer)
+		{
+			pPlayer->SetScene(m_pScene);
+			pPlayer->SetLayer(pLayer);
+			pPlayer->SetBarLayer(pHUDLayer);
+		}
 
 		Stage* pStage = m_pScene->GetStage();
 
-		int iNumX = pStage->GetTileNumX();
-		int iNumY = pStage->GetTileNumY();
+		if (pStage)
+		{
+			int iNumX = pStage->GetTileNumX();
+			int iNumY = pStage->GetTileNumY();
 
-		int iSizeX = pStage->GetTileSizeX();
-		int iSizeY = pStage->GetTileSizeY();
+			int iSizeX = pStage->GetTileSizeX();
+			int iSizeY = pStage->GetTileSizeY();
 
-		GET_SINGLE(Camera)->SetWorldResolution(iNumX * iSizeX, iNumY * iSizeY);
+			GET_SINGLE(Camera)->SetWorldResolution(iNumX * iSizeX, iNumY * iSizeY);
+		}
 
 		SAFE_RELEASE(pPlayer);
 		SAFE_RELEASE(pInven);

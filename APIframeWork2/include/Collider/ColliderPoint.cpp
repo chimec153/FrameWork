@@ -41,8 +41,12 @@ int ColliderPoint::LateUpdate(float fDeltaTime)
 	Collider::LateUpdate(fDeltaTime);
 
 	POSITION	tPos = m_pObj->GetPos();
+
 	m_tPos.x = tPos.x + m_tDist.x;
 	m_tPos.y = tPos.y + m_tDist.y;
+
+	SetSectionInfo(m_tPos.x - m_tDist.x, m_tPos.y - m_tDist.y,
+		m_tPos.x + m_tDist.x, m_tPos.y + m_tDist.y);
 
 	return 0;
 }
@@ -71,6 +75,20 @@ bool ColliderPoint::Collision(Collider * pDest)
 void ColliderPoint::Render(HDC hDC, float fDeltaTime)
 {
 	Collider::Render(hDC, fDeltaTime);
+
+	POSITION tCamPos = GET_SINGLE(Camera)->GetPos();
+
+	auto iter = m_SectionList.begin();
+	auto iterEnd = m_SectionList.end();
+
+	for (; iter != iterEnd; ++iter)
+	{
+		TCHAR strSectionIndex[32] = {};
+
+		swprintf_s(strSectionIndex, TEXT("Sec: %d"), (*iter));
+
+		TextOut(hDC, (int)(m_tPos.x - tCamPos.x), (int)(m_tPos.y + 20.f * (*iter) - tCamPos.y), strSectionIndex, lstrlen(strSectionIndex));		
+	}
 }
 
 ColliderPoint * ColliderPoint::Clone()

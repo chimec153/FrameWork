@@ -1,0 +1,94 @@
+#include "Sheep.h"
+#include "../Animation/Animation.h"
+
+Sheep::Sheep()	:
+	m_fTime(0.f),
+	m_iLevel(0)
+{	
+}
+
+Sheep::Sheep(const Sheep& sheep)	:
+	FightObj(sheep)
+{
+	m_fTime = sheep.m_fTime;
+	m_iLevel = sheep.m_iLevel;
+}
+
+Sheep::~Sheep()
+{
+}
+
+bool Sheep::Init()
+{
+	SetSize(64.f, 64.f);
+	SetPivot(0.5f, 0.5f);
+	SetSpeed(50.f);
+
+	Animation* pAni = CreateAnimation("SheepAni");
+
+	pAni->AddClip("SheepIdleDown", AT_ATLAS, AO_LOOP, 0.4f, 4, 5, 0, 0, 1, 1,
+		1.f, "Sheep", TEXT("Animals\\Sheep.bmp"));
+	pAni->AddClip("SheepIdleRight", AT_ATLAS, AO_LOOP, 0.4f, 4, 5, 0, 1, 1, 1,
+		1.f, "Sheep", TEXT("Animals\\Sheep.bmp"));
+	pAni->AddClip("SheepIdleUp", AT_ATLAS, AO_LOOP, 0.4f, 4, 5, 0, 2, 1, 1,
+		1.f, "Sheep", TEXT("Animals\\Sheep.bmp"));
+	pAni->AddClip("SheepIdleLeft", AT_ATLAS, AO_LOOP, 0.4f, 4, 5, 0, 3, 1, 1,
+		1.f, "Sheep", TEXT("Animals\\Sheep.bmp"));
+
+	pAni->AddClip("Sheep_ShearedIdleDown", AT_ATLAS, AO_LOOP, 0.4f, 4, 5, 0, 0, 1, 1,
+		1.f, "Sheep_Sheared", TEXT("Animals\\Sheep(Sheared).bmp"));
+	pAni->AddClip("Sheep_ShearedIdleRight", AT_ATLAS, AO_LOOP, 0.4f, 4, 5, 0, 1, 1, 1,
+		1.f, "Sheep_Sheared", TEXT("Animals\\Sheep(Sheared).bmp"));
+	pAni->AddClip("Sheep_ShearedIdleUp", AT_ATLAS, AO_LOOP, 0.4f, 4, 5, 0, 2, 1, 1,
+		1.f, "Sheep_Sheared", TEXT("Animals\\Sheep(Sheared).bmp"));
+	pAni->AddClip("Sheep_ShearedIdleLeft", AT_ATLAS, AO_LOOP, 0.4f, 4, 5, 0, 3, 1, 1,
+		1.f, "Sheep_Sheared", TEXT("Animals\\Sheep(Sheared).bmp"));
+
+	pAni->AddClip("SheepWalkDown", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 5, 1, 0, 3, 1,
+		1.f, "Sheep", TEXT("Animals\\Sheep.bmp"));
+	pAni->AddClip("SheepWalkRight", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 5, 1, 1, 3, 1,
+		1.f, "Sheep", TEXT("Animals\\Sheep.bmp"));
+	pAni->AddClip("SheepWalkUp", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 5, 1, 2, 3, 1,
+		1.f, "Sheep", TEXT("Animals\\Sheep.bmp"));
+	pAni->AddClip("SheepWalkLeft", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 5, 1, 3, 3, 1,
+		1.f, "Sheep", TEXT("Animals\\Sheep.bmp"));
+
+	pAni->AddClip("Sheep_ShearedWalkDown", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 5, 1, 0, 3, 1,
+		1.f, "Sheep_Sheared", TEXT("Animals\\Sheep(Sheared).bmp"));
+	pAni->AddClip("Sheep_ShearedWalkRight", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 5, 1, 1, 3, 1,
+		1.f, "Sheep_Sheared", TEXT("Animals\\Sheep(Sheared).bmp"));
+	pAni->AddClip("Sheep_ShearedWalkUp", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 5, 1, 2, 3, 1,
+		1.f, "Sheep_Sheared", TEXT("Animals\\Sheep(Sheared).bmp"));
+	pAni->AddClip("Sheep_ShearedWalkLeft", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 5, 1, 3, 3, 1,
+		1.f, "Sheep_Sheared", TEXT("Animals\\Sheep(Sheared).bmp"));
+
+	SAFE_RELEASE(pAni);
+	return true;
+}
+
+int Sheep::Update(float fDeltaTime)
+{
+	FightObj::Update(fDeltaTime);
+	return 0;
+}
+
+int Sheep::LateUpdate(float fDeltaTime)
+{
+	FightObj::LateUpdate(fDeltaTime);
+	return 0;
+}
+
+void Sheep::Collision(float fDeltaTime)
+{
+	FightObj::Collision(fDeltaTime);
+}
+
+void Sheep::Render(HDC hDC, float fDeltaTime)
+{
+	FightObj::Render(hDC, fDeltaTime);
+}
+
+Sheep* Sheep::Clone()
+{
+	return new Sheep(*this);
+}

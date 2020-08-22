@@ -46,6 +46,49 @@ Collider::~Collider()
 	}
 }
 
+bool Collider::HasSameSection(Collider* pDest)
+{
+	const list<int> pSectionList = *(pDest->GetSectionList());
+
+	list<int>::const_iterator iter = pSectionList.begin();
+	list<int>::const_iterator iterEnd = pSectionList.end();
+
+	list<int>::iterator iter1 = m_SectionList.begin();
+	list<int>::iterator iter1End = m_SectionList.end();
+
+	for (; iter != iterEnd; ++iter)
+	{
+		for (iter1 = m_SectionList.begin(); iter1 != iter1End; ++iter1)
+		{
+			if ((*iter) == (*iter1))
+				return true;
+		}
+	}
+
+	return false;
+}
+bool Collider::HasCollisionSection(int iIndex)
+{
+	auto iter = m_SectionList.begin();
+	auto iterEnd = m_SectionList.end();
+
+	for (; iter != iterEnd; ++iter)
+	{
+		if ((*iter) == iIndex)
+		{
+			if (m_SectionList.size() > 1)
+			{
+				int a = 1;
+			}
+
+			return true;
+		}
+
+	}
+
+	return false;
+}
+
 void Collider::Input(float fDeltaTime)
 {
 }

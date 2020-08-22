@@ -23,6 +23,7 @@ protected:
 	POSITION					m_tStartPos;
 	bool						m_bDrag;
 	int							m_iSellPrice;
+	int							m_iFileIndex;
 
 public:
 	void SetInventory(class UIInventory* pInven)
@@ -68,6 +69,11 @@ public:
 	void SetSellPrice(int iPrice)
 	{
 		m_iSellPrice = iPrice;
+	}
+
+	void SetFileIndex(int iIndex)
+	{
+		m_iFileIndex = iIndex;
 	}
 
 public:

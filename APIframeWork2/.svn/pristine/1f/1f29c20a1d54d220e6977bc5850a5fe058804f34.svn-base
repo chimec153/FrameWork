@@ -1,0 +1,324 @@
+#include "Tree.h"
+#include "..//Resources/ResourcesManager.h"
+#include "..//Resources/Texture.h"
+#include "..//Core/Camera.h"
+#include "../Collider/ColliderRect.h"
+#include "..//Core/Input.h"
+#include "..//Scene/SceneManager.h"
+#include "..//Scene/Scene.h"
+#include "Etc.h"
+#include "../Sound/SoundManager.h"
+#include "../Scene/InGameScene.h"
+#include "Stage.h"
+#include "Tile.h"
+
+CTree::CTree() :
+	m_pTreeSprite(nullptr),
+	m_bCutted(false),
+	m_tTreePivot(),
+	m_tTreeSize(),
+	m_tTreeOffset(),
+	m_bMouseOn(false),
+	m_bLeavesRender(true),
+	m_iCutted(3),
+	m_cLeavesAlpha(255)
+{
+	m_bAlphaOn = true;
+	m_cAlpha = 255;
+	m_eBlock = OB_TREE;
+}
+
+CTree::CTree(const CTree& tree)	:
+	StaticObj(tree)
+{
+	m_pTreeSprite = tree.m_pTreeSprite;
+	m_bCutted = tree.m_bCutted;
+	m_tTreePivot = tree.m_tTreePivot;
+	m_tTreeSize = tree.m_tTreeSize;
+	m_tTreeOffset = tree.m_tTreeOffset;
+
+	if (m_pTreeSprite)
+		m_pTreeSprite->AddRef();
+	
+	AddCollisionFunc();
+}
+
+CTree::~CTree()
+{
+	SAFE_RELEASE(m_pTreeSprite)
+}
+
+void CTree::ExTree()
+{
+	GET_SINGLE(SoundManager)->Play("wood");
+
+	m_iCutted -= 1;
+
+	if (m_iCutted == 2)
+	{
+		m_bCutted = true;
+
+		Etc* pWood = (Etc*)CreateCloneObj("Wood", "Wood", m_pLayer);
+
+		pWood->SetPos(m_tPos);
+
+		Collider* pCol = pWood->GetCollider("ItemBody");
+
+		pCol->AddCollisionFunction(CS_ENTER, (Item*)pWood, &Item::CollEnter);
+		pCol->AddCollisionFunction(CS_STAY, (Item*)pWood, &Item::ColStay);
+		pCol->AddCollisionFunction(CS_LEAVE, (Item*)pWood, &Item::ColEnd);
+
+		SAFE_RELEASE(pCol);
+
+		SAFE_RELEASE(pWood);
+	}
+
+	else if (m_iCutted <= 0)
+		CutTree();
+}
+
+void CTree::CutTree()
+{
+	Etc* pWood = (Etc*)CreateCloneObj("Wood", "Wood", m_pLayer);
+
+	pWood->SetPos(m_tPos);
+
+	Collider* pCol = pWood->GetCollider("ItemBody");
+
+	pCol->AddCollisionFunction(CS_ENTER, (Item*)pWood, &Item::CollEnter);
+	pCol->AddCollisionFunction(CS_STAY, (Item*)pWood, &Item::ColStay);
+	pCol->AddCollisionFunction(CS_LEAVE, (Item*)pWood, &Item::ColEnd);
+
+	SAFE_RELEASE(pCol);
+
+	SAFE_RELEASE(pWood);
+
+	Tile* pTile = m_pScene->GetStage()->GetTile(m_tPos);
+
+	pTile->SetTileOption(TO_NONE);
+	pTile->DeleteObj();
+}
+
+bool CTree::Init()
+{
+	return true;
+}
+
+void CTree::Input(float fDeltaTime)
+{
+}
+
+int CTree::Update(float fDeltaTime)
+{
+	StaticObj::Input(fDeltaTime);
+	return 0;
+}
+
+int CTree::LateUpdate(float fDeltaTime)
+{
+	StaticObj::LateUpdate(fDeltaTime);
+
+	m_bMouseOn = false;
+	m_bLeavesRender = true;
+	m_cLeavesAlpha = 255;
+
+	return 0;
+}
+
+void CTree::Collision(float fDeltaTime)
+{
+	StaticObj::Collision(fDeltaTime);
+}
+
+void CTree::Render(HDC hDC, float fDeltaTime)
+{
+	StaticObj::Render(hDC, fDeltaTime);
+
+	POSITION	tPos = m_tPos - m_tTreeSize * m_tTreePivot;
+	tPos -= GET_SINGLE(Camera)->GetPos();
+
+	RESOLUTION	tClientRS = GET_SINGLE(Camera)->GetClientRS();
+
+	bool	bInClient = true;
+
+	if (tPos.x + m_tTreeSize.x < 0)
+		bInClient = false;
+	else if (tPos.x > tClientRS.iW)
+		bInClient = false;
+	else if (tPos.y + m_tTreeSize.y < 0)
+		bInClient = false;
+	else if (tPos.y > tClientRS.iH)
+		bInClient = false;
+
+	if (m_pTreeSprite && bInClient && !m_bCutted)
+	{
+		POSITION	tImagePos = {};
+
+		tImagePos += m_tTreeOffset;
+
+		/*if (m_bLeavesRender)
+		{
+			if (m_pTreeSprite->GetColorKeyEnable())
+			{
+				TransparentBlt(hDC, (int)tPos.x, (int)tPos.y, (int)m_tTreeSize.x,
+					(int)m_tTreeSize.y, m_pTexture->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
+					(int)m_tTreeSize.x, (int)m_tTreeSize.y, m_pTreeSprite->GetColorKey());
+			}
+			else
+			{
+				BitBlt(hDC, (int)tPos.x, (int)tPos.y, (int)m_tTreeSize.x,
+					(int)m_tTreeSize.y, m_pTreeSprite->GetDC(), (int)tImagePos.x, (int)tImagePos.y,
+					SRCCOPY);
+			}
+		}*/
+		{
+			BLENDFUNCTION	tBF = {};
+
+			tBF.BlendOp = 0;
+			tBF.BlendFlags = 0;
+			tBF.SourceConstantAlpha = m_cLeavesAlpha;
+
+			tBF.AlphaFormat = AC_SRC_ALPHA;
+
+			GdiAlphaBlend(hDC, (int)tPos.x, (int)tPos.y, (int)m_tTreeSize.x, (int)m_tTreeSize.y,
+				m_pTreeSprite->GetDC(), (int)tImagePos.x, (int)tImagePos.y, (int)m_tTreeSize.x, (int)m_tTreeSize.y, tBF);
+		}
+	}
+
+#ifdef _DEBUG
+		Rectangle(hDC, (int)m_tPos.x - 2, (int)m_tPos.y - 2, (int)m_tPos.x + 2, (int)m_tPos.y + 2);
+
+		if (m_bMouseOn)
+			Rectangle(hDC, (int)m_tPos.x - 4, (int)m_tPos.y - 4, (int)m_tPos.x + 4, (int)m_tPos.y + 4);
+
+		TCHAR strRef[32] = { };
+
+		swprintf_s(strRef, TEXT("Ref: %d"), m_iRef);
+
+		TextOut(hDC, (int)tPos.x, (int)tPos.y + 80, strRef, lstrlen(strRef));
+
+#endif
+}
+
+CTree* CTree::Clone()
+{
+	return new CTree(*this);
+}
+
+void CTree::Save(FILE* pFile)
+{
+	StaticObj::Save(pFile);
+
+	bool	bTexture = false;
+	if (m_pTreeSprite)
+	{
+		bTexture = true;
+		fwrite(&bTexture, 1, 1, pFile);
+		m_pTreeSprite->Save(pFile);
+	}
+	else
+	{
+		fwrite(&bTexture, 1, 1, pFile);
+	}
+
+	fwrite(&m_bCutted, 1, 1, pFile);
+
+	fwrite(&m_tTreePivot, sizeof(POSITION), 1, pFile);
+	fwrite(&m_tTreeSize, sizeof(POSITION), 1, pFile);
+	fwrite(&m_tTreeOffset, sizeof(POSITION), 1, pFile);
+
+	AddCollisionFunc();
+}
+
+void CTree::Load(FILE* pFile)
+{
+	StaticObj::Load(pFile);
+
+	bool	bTexture = false;
+	fread(&bTexture, 1, 1, pFile);
+
+	SAFE_RELEASE(m_pTreeSprite);
+	if (bTexture)
+	{
+		m_pTreeSprite = GET_SINGLE(ResourcesManager)->LoadTexture(pFile);
+	}
+
+	fread(&m_bCutted, 1, 1, pFile);
+
+	fread(&m_tTreePivot, sizeof(POSITION), 1, pFile);
+	fread(&m_tTreeSize, sizeof(POSITION), 1, pFile);
+	fread(&m_tTreeOffset, sizeof(POSITION), 1, pFile);
+
+	AddCollisionFunc();
+}
+
+void CTree::AddCollisionFunc()	//	충돌 콜백함수를 등록하는 함수이다.
+{
+	Collider* pRC = (ColliderRect*)GetCollider("TreeLeavesBody");
+
+	if (pRC)
+	{
+		pRC->AddCollisionFunction(CS_ENTER, this,
+			&CTree::Hit);
+		pRC->AddCollisionFunction(CS_STAY, this,
+			&CTree::HitStay);
+
+		SAFE_RELEASE(pRC);
+	}
+}
+
+void CTree::Hit(Collider* pSrc, Collider* pDest, float fDeltaTime)
+{
+	if (pDest->GetTag() == "Mouse")
+	{
+		if (KEYPRESS("MouseRButton"))
+		{
+			bool bEdit = GET_SINGLE(SceneManager)->GetScene()->IsEditMode();
+
+			if (bEdit)
+			{
+				Tile* pTile = m_pScene->GetStage()->GetTile(m_tPos);
+
+				pTile->SetTileOption(TO_NONE);
+				pTile->DeleteObj();
+
+				Die();
+			}
+		}
+	}
+
+	else if (pDest->GetTag() == "PlayerBody" && pSrc->GetTag() == "TreeLeavesBody")
+	{
+		m_bLeavesRender = false;
+		m_cLeavesAlpha = 125;
+	}
+}
+
+void CTree::HitStay(Collider* pSrc, Collider* pDest, float fDeltaTime)
+{
+	string strDest = pDest->GetTag();
+
+	if (strDest == "Mouse")
+	{
+		if (KEYPRESS("MouseRButton"))
+		{
+			bool bEdit = GET_SINGLE(SceneManager)->GetScene()->IsEditMode();
+
+			if (bEdit)
+			{
+				Tile* pTile = m_pScene->GetStage()->GetTile(m_tPos);
+
+				pTile->SetTileOption(TO_NONE);
+				pTile->DeleteObj();
+
+				Die();
+			}
+		}
+	}
+
+	else if (strDest == "PlayerBody" && pSrc->GetTag() == "TreeLeavesBody")
+	{
+		m_bLeavesRender = false;
+		m_cLeavesAlpha = 125;
+	}
+}

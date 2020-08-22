@@ -17,6 +17,7 @@ ResourcesManager::~ResourcesManager()
 	SAFE_RELEASE(m_pBackBuffer);
 	Safe_Release_Map(m_mapTexture);
 	Safe_Delete_VecList(m_vecItemInfo);
+	SAFE_DELETE_MAP(m_mapShopInfo);
 }
 
 Texture * ResourcesManager::GetBackBuffer() const
@@ -31,7 +32,13 @@ bool ResourcesManager::Init(HINSTANCE hInst,HDC hDC)
 	m_hDC = hDC;
 	m_pBackBuffer = LoadTexture("BackBuffer", L"backbuffer.bmp");
 
+	Texture* pTexture = LoadTexture("Marlon", TEXT("Characters\\NPC\\MarlonAll.bmp"));
+
+	SAFE_RELEASE(pTexture);
+
 	LoadItemInfo(TEXT("SeedData.txt"));
+	LoadShopInfo("Harvey", "HarveyShopData.txt");
+	LoadShopInfo("Marlon", "MarlonShopData.txt");
 
 	return true;
 }
@@ -207,7 +214,7 @@ bool ResourcesManager::LoadItemInfo(const TCHAR* pFileName, const string& strPat
 
 		fgets(cLine, 256, pFile);
 
-		m_iItemCount = atoi(cLine);		//	작물 아이템 개수
+		m_iItemCount = atoi(cLine);		//	아이템 개수
 
 		for (int i = 0; i < m_iItemCount; ++i)
 		{
@@ -228,104 +235,172 @@ bool ResourcesManager::LoadItemInfo(const TCHAR* pFileName, const string& strPat
 				}
 			}
 
-			pInfo->strName = cLine;		//	씨앗	 이름
+			pInfo->strName = cLine;		//	아이템 이름
 
 			fgets(cLine, 256, pFile);
 
-			iSize = strlen(cLine);
+			int iTextCount = atoi(cLine);
 
-			for (size_t i = 0; i < iSize; ++i)
+			for (int i = 0; i < iTextCount; ++i)
 			{
-				if (cLine[i] == '\t')
-				{
-					cLine[i] = 0;
-					break;
-				}
-			}
+				TCHAR* wstrContext = new TCHAR[256];
 
-			pInfo->strCropName = cLine;	//	작물 이름
+				fgets(cLine, 256, pFile);
+
+				MultiByteToWideChar(CP_ACP, NULL, cLine, -1, wstrContext, lstrlen(wstrContext));
+
+				wstrContext[strlen(cLine) - 1] = 0;
+
+				pInfo->vecComment.push_back(wstrContext);
+			}
 
 			fgets(cLine, 256, pFile);
 
 			pInfo->eItemType = (ITEM_TYPE)atoi(cLine);	//	아이템 타입
 
-			fgets(cLine, 256, pFile);
-
-			pInfo->eCropType = (CROP_TYPE)i;	//	작물 타입
-
-			fgets(cLine, 256, pFile);
-
-			char* pContext = nullptr;
-
-			char* pResult = strtok_s(cLine, ", ", &pContext);
-
-			pInfo->tTileOffset = POSITION((float)atof(pResult), (float)atof(pContext));	//	씨앗 이미지 오프셋
-
-			fgets(cLine, 256, pFile);
-
-			pContext = nullptr;
-
-			pResult = strtok_s(cLine, ", ", &pContext);
-
-			pInfo->tCropOffset = POSITION((float)atof(pResult), (float)atof(pContext));	//	작물 오프셋
-
-			fgets(cLine, 256, pFile);
-
-			pContext = nullptr;
-
-			pResult = strtok_s(cLine, ", ", &pContext);
-
-			pInfo->tHarvestOffset = POSITION((float)atof(pResult), (float)atof(pContext));	//	수확 아이템 오프셋
-
-			fgets(cLine, 256, pFile);
-
-			int iPriceCount = atoi(cLine);	//	가게 수
-
-			for (int i = 0; i < iPriceCount; ++i)
+			if (pInfo->eItemType == IT_SEED)
 			{
 				fgets(cLine, 256, pFile);
 
-				pInfo->vecPrice.push_back(atoi(cLine));	//	상품 가격
-			}
+				iSize = strlen(cLine);
 
-			fgets(cLine, 256, pFile);
+				for (size_t i = 0; i < iSize; ++i)
+				{
+					if (cLine[i] == '\t')
+					{
+						cLine[i] = 0;
+						break;
+					}
+				}
 
-			pInfo->iSeedSellPrice = atoi(cLine);	//	씨앗 판매가격
+				pInfo->strCropName = cLine;	//	작물 이름
 
-			fgets(cLine, 256, pFile);
+				fgets(cLine, 256, pFile);
 
-			pInfo->iSellPrice = atoi(cLine);	//	작물 판매가격
+				pInfo->eCropType = (CROP_TYPE)i;	//	작물 타입
 
-			fgets(cLine, 256, pFile);
+				fgets(cLine, 256, pFile);
 
-			pInfo->iMaxStage = atoi(cLine);	//	최종 단계
+				char* pContext = nullptr;
 
-			fgets(cLine, 256, pFile);
+				char* pResult = strtok_s(cLine, ", ", &pContext);
 
-			pContext = nullptr;
+				pInfo->tTileOffset = POSITION((float)atof(pResult), (float)atof(pContext));	//	씨앗 이미지 오프셋
 
-			pResult = strtok_s(cLine, ", ", &pContext);
+				fgets(cLine, 256, pFile);
 
-			pInfo->vecMaxDay.push_back(atoi(pResult));	//	필요 일수
+				pContext = nullptr;
 
-			for (int i = 0; i < pInfo->iMaxStage - 2; ++i)
-			{
-				pResult = strtok_s(nullptr, ", ", &pContext);
+				pResult = strtok_s(cLine, ", ", &pContext);
+
+				pInfo->tCropOffset = POSITION((float)atof(pResult), (float)atof(pContext));	//	작물 오프셋
+
+				fgets(cLine, 256, pFile);
+
+				pContext = nullptr;
+
+				pResult = strtok_s(cLine, ", ", &pContext);
+
+				pInfo->tHarvestOffset = POSITION((float)atof(pResult), (float)atof(pContext));	//	수확 아이템 오프셋
+
+				fgets(cLine, 256, pFile);
+
+				int iPriceCount = atoi(cLine);	//	가게 수
+
+				for (int i = 0; i < iPriceCount; ++i)
+				{
+					fgets(cLine, 256, pFile);
+
+					pInfo->vecPrice.push_back(atoi(cLine));	//	상품 가격
+				}
+
+				fgets(cLine, 256, pFile);
+
+				pInfo->iSeedSellPrice = atoi(cLine);	//	씨앗 판매가격
+
+				fgets(cLine, 256, pFile);
+
+				pInfo->iSellPrice = atoi(cLine);	//	작물 판매가격
+
+				fgets(cLine, 256, pFile);
+
+				pInfo->iMaxStage = atoi(cLine);	//	최종 단계
+
+				fgets(cLine, 256, pFile);
+
+				pContext = nullptr;
+
+				pResult = strtok_s(cLine, ", ", &pContext);
 
 				pInfo->vecMaxDay.push_back(atoi(pResult));	//	필요 일수
+
+				for (int i = 0; i < pInfo->iMaxStage - 2; ++i)
+				{
+					pResult = strtok_s(nullptr, ", ", &pContext);
+
+					pInfo->vecMaxDay.push_back(atoi(pResult));	//	필요 일수
+				}
+
+				fgets(cLine, 256, pFile);
+
+				pInfo->iEnergyRecovery = atoi(cLine);	//	에너지 회복량
+
+				fgets(cLine, 256, pFile);
+
+				pInfo->iHPRecovery = atoi(cLine);	//	체력 회복량
+
+				fgets(cLine, 256, pFile);
+
+				pInfo->iRegrowthDay = atoi(cLine);	//	재성장 일
 			}
 
-			fgets(cLine, 256, pFile);
+			else if (pInfo->eItemType == IT_TOOL)
+			{
+				fgets(cLine, 256, pFile);
 
-			pInfo->iEnergyRecovery = atoi(cLine);	//	에너지 회복량
+				pInfo->eToolType = (TOOL_TYPE)atoi(cLine);
 
-			fgets(cLine, 256, pFile);
+				fgets(cLine, 256, pFile);
 
-			pInfo->iHPRecovery = atoi(cLine);	//	체력 회복량
+				char* pContext = nullptr;
 
-			fgets(cLine, 256, pFile);
+				char* pResult = strtok_s(cLine, ", ", &pContext);
 
-			pInfo->iRegrowthDay = atoi(cLine);	//	재성장 일
+				pInfo->tTileOffset = POSITION((float)atof(pResult), (float)atof(pContext));	//	아이템 이미지 오프셋
+
+				fgets(cLine, 256, pFile);
+
+				int iPriceCount = atoi(cLine);	//	가게 수
+
+				for (int i = 0; i < iPriceCount; ++i)
+				{
+					fgets(cLine, 256, pFile);
+
+					pInfo->vecPrice.push_back(atoi(cLine));	//	상품 가격
+				}
+
+				fgets(cLine, 256, pFile);
+
+				pInfo->iSellPrice = atoi(cLine);	//	아이템 판매가격
+
+				if (pInfo->eToolType == TOOL_SWORD)
+				{
+					fgets(cLine, 256, pFile);
+
+					pInfo->iAttack = atoi(cLine);	//	공격력
+				}
+			}
+
+			else if (pInfo->eItemType == IT_ETC)
+			{
+				fgets(cLine, 256, pFile);
+
+				char* pContext = nullptr;
+
+				char* pResult = strtok_s(cLine, ", ", &pContext);
+
+				pInfo->tTileOffset = POSITION((float)atof(pResult), (float)atof(pContext));	//	아이템 이미지 오프셋
+			}
 
 			m_vecItemInfo.push_back(pInfo);
 		}
@@ -336,6 +411,115 @@ bool ResourcesManager::LoadItemInfo(const TCHAR* pFileName, const string& strPat
 	return true;
 }
 
+bool ResourcesManager::LoadShopInfo(const string& strName, const char* pFileName, const string& strPathKey)
+{
+	char strFullPath[MAX_PATH] = {};
+
+	const char* pRootPath = GET_SINGLE(PathManager)->FindPathMultiByte(strPathKey);
+
+	if (pRootPath)
+		strcat(strFullPath, pRootPath);
+
+	strcat(strFullPath, pFileName);
+
+	FILE* pFile = nullptr;
+
+	fopen_s(&pFile, strFullPath, "rt");
+
+	if (pFile)
+	{
+		PSHOPINFO pInfo = new SHOPINFO;
+
+		TCHAR cLine[256] = {};
+
+		fgetws(cLine, 256, pFile);
+
+		pInfo->iSize = _wtoi(cLine);
+
+		fgetws(cLine, 256, pFile);
+
+		pInfo->iLine = _wtoi(cLine);
+
+		for (int i = 0; i < pInfo->iSize; ++i)
+		{
+			fgetws(cLine, 256, pFile);
+
+			for (int j = 0; j < pInfo->iLine; ++j)
+			{
+				fgetws(cLine, 256, pFile);
+
+				TCHAR* strText = new TCHAR[lstrlen(cLine) + 1];
+
+				lstrcpy(strText, cLine);
+
+				strText[lstrlen(cLine) - 1] = 0;
+
+				pInfo->vecText.push_back(strText);
+			}
+		}
+
+		fgetws(cLine, 256, pFile);
+
+		fgetws(cLine, 256, pFile);
+
+		pInfo->iBuyMessageCount = _wtoi(cLine);
+
+		if (pInfo->iBuyMessageCount != 0)
+		{
+			fgetws(cLine, 256, pFile);
+
+			TCHAR* pContext = nullptr;
+
+			pInfo->tBuyImageOffset.x = (float)_wtof(wcstok_s(cLine, TEXT(", "), &pContext));
+			pInfo->tBuyImageOffset.y = (float)_wtof(pContext);
+
+			fgetws(cLine, 256, pFile);
+		}
+
+		for (int i = 0; i < pInfo->iBuyMessageCount; ++i)
+		{
+			for (int j = 0; j < pInfo->iLine; ++j)
+			{
+				fgetws(cLine, 256, pFile);
+
+				TCHAR* strBuy = new TCHAR[lstrlen(cLine) + 1];
+
+				memset(strBuy, 0, sizeof(TCHAR) * (lstrlen(cLine) + 1));
+
+				lstrcat(strBuy, cLine);
+
+				strBuy[lstrlen(cLine) - 1] = 0;
+
+				pInfo->vecText.push_back(strBuy);
+			}
+		}
+
+		fgetws(cLine, 256, pFile);
+
+		fgetws(cLine, 256, pFile);
+
+		TCHAR* pContext = nullptr;
+
+		pInfo->tImageOffset.x = (float)_wtof(wcstok_s(cLine, TEXT(", "), &pContext));
+		pInfo->tImageOffset.y = (float)_wtof(pContext);
+
+		fgetws(cLine, 256, pFile);
+
+		fgetws(cLine, 256, pFile);
+
+		pInfo->iItemPanelStartIndex = (int)_wtoi(wcstok_s(cLine, TEXT(", "), &pContext));
+		pInfo->iItemCount = _wtoi(pContext);
+
+		m_mapShopInfo.insert(make_pair(strName, pInfo));
+
+		fclose(pFile);
+
+		return true;
+	}
+
+	return false;
+}
+
 PITEMINFO ResourcesManager::FindItemInfo(int iIndex)
 {
 	size_t iSize = m_vecItemInfo.size();
@@ -344,4 +528,14 @@ PITEMINFO ResourcesManager::FindItemInfo(int iIndex)
 		return	nullptr;
 
 	return m_vecItemInfo[iIndex];
+}
+
+PSHOPINFO ResourcesManager::FindShopInfo(const string& strName)
+{
+	auto iter = m_mapShopInfo.find(strName);
+
+	if (iter == m_mapShopInfo.end())
+		return nullptr;
+
+	return iter->second;
 }

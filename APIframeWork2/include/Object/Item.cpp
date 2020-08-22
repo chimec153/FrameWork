@@ -7,6 +7,8 @@
 #include "UINum.h"
 #include "../Core/Input.h"
 #include "ObjManager.h"
+#include "UIShop.h"
+#include "../Core/Camera.h"
 
 Item::Item()	:
 	m_eType(IT_NONE),
@@ -17,7 +19,8 @@ Item::Item()	:
 	m_pNumber(nullptr),
 	m_iIndex(0),
 	m_bDrag(false),
-	m_iSellPrice(0)
+	m_iSellPrice(0),
+	m_iFileIndex(-1)
 {
 }
 
@@ -39,6 +42,7 @@ Item::Item(const Item& item)	:
 	m_iIndex = item.m_iIndex;
 	m_bDrag = false;
 	m_iSellPrice = item.m_iSellPrice;
+	m_iFileIndex = item.m_iFileIndex;
 }
 
 Item::~Item()
@@ -58,6 +62,8 @@ void Item::AddItemCount(int iCount)
 		m_pNumber->DeleteNum();
 
 		m_pNumber->CreateNum(m_iCount);
+
+		m_pNumber->SetEnable(false);
 	}
 }
 
@@ -86,6 +92,8 @@ int Item::Update(float fDeltaTime)
 		POSITION tPos = m_tPos + m_tSize * m_tPivot - tSize;
 
 		m_pNumber->SetPosAll(tPos);
+
+		DisableItem();
 	}
 
 	if (m_bInventory)
@@ -137,6 +145,23 @@ void Item::Collision(float fDeltaTime)
 void Item::Render(HDC hDC, float fDeltaTime)
 {
 	MoveObj::Render(hDC, fDeltaTime);
+
+	if (m_pNumber)
+		m_pNumber->Render(hDC, fDeltaTime);
+
+#ifdef _DEBUG
+	if (KEYPRESS("Debug"))
+	{
+		POSITION tPos = m_tPos - GET_SINGLE(Camera)->GetPos();
+
+		TCHAR strHP[32] = {};
+
+		wsprintf(strHP, TEXT("Layer: %d"), m_pLayer->GetZOrder());
+		TextOut(hDC, (int)tPos.x, (int)tPos.y, strHP, lstrlen(strHP));
+		wsprintf(strHP, TEXT("Scene: %p"), m_pScene);
+		TextOut(hDC, (int)tPos.x, (int)tPos.y - 20, strHP, lstrlen(strHP));
+	}
+#endif
 }
 
 Item* Item::Clone()
@@ -165,7 +190,7 @@ void Item::CollEnter(Collider* pSrc, Collider* pDest, float fTime)
 		{
 			m_bMouseOn = true;
 
-			m_pInventory->InfoPanelOn(pDest->GetObj()->GetPos());
+			m_pInventory->InfoPanelOn(pDest->GetObj()->GetPos(), m_iFileIndex);
 		}
 	}
 }
@@ -183,7 +208,7 @@ void Item::ColStay(Collider* pSrc, Collider* pDest, float fTime)
 			{
 				m_bMouseOn = true;
 
-				m_pInventory->InfoPanelOn(pDest->GetObj()->GetPos());
+				m_pInventory->InfoPanelOn(pDest->GetObj()->GetPos(), m_iFileIndex);
 			}
 
 			if (KEYDOWN("MouseLButton"))
@@ -249,7 +274,10 @@ void Item::AddObjectToLayer(Layer* pLayer)
 	pLayer->AddObject(this);
 
 	if (m_pNumber)
+	{
+		m_pNumber->DeleteObjectFromLayer(pLayer);
 		m_pNumber->AddObjectToLayer(pLayer);
+	}		
 }
 
 void Item::DisableItem()
@@ -272,7 +300,7 @@ void Item::SellItem()
 {
 	if (m_pInventory)
 	{
-		bool bShopOn = m_pInventory->IsShopPanelOn();
+		bool bShopOn = m_pInventory->GetShop()->IsShopPanelOn();
 
 		if (bShopOn)
 		{
@@ -283,6 +311,8 @@ void Item::SellItem()
 				Player* pPlayer = (Player*)GET_SINGLE(ObjManager)->GetPlayer();
 
 				pPlayer->AddGold(m_iSellPrice);
+
+				SAFE_RELEASE(pPlayer);
 
 				m_pInventory->DeleteItem(this);
 			}

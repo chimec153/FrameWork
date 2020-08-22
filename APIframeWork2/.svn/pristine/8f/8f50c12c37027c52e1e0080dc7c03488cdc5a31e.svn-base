@@ -1,0 +1,257 @@
+#include "AniEditDlg.h"
+#include "Core.h"
+#include "Core/PathManager.h"
+#include "Scene/AnimationEditScene.h"
+#include "Resources/ResourcesManager.h"
+#include "Resources/Texture.h"
+#include "Animation/Animation.h"
+
+CAniEditDlg* g_pDlg = nullptr;
+
+CAniEditDlg::CAniEditDlg()	:
+	m_hWnd(0),
+	m_pAnimation(nullptr),
+	m_pTexture(nullptr),
+	m_pClip(nullptr)
+{
+	g_pDlg = this;
+}
+
+CAniEditDlg::~CAniEditDlg()
+{
+	SAFE_RELEASE(m_pTexture);
+	SAFE_RELEASE(m_pAnimation);
+	SAFE_DELETE(m_pClip);
+	delete[] m_strFileName;
+	delete[] m_strName;
+	ReleaseDC(m_hWnd, m_hDC);
+}
+
+void CAniEditDlg::OnEditDlg(int iID)
+{
+	m_hWnd = CreateDialog(WINDOWINSTANCE, MAKEINTRESOURCE(iID), WINDOWHANDLE, CAniEditDlg::DlgProc);
+	ShowWindow(m_hWnd, SW_SHOW);
+
+	ShowCursor(true);
+
+	m_hComboOption = GetDlgItem(m_hWnd, IDC_COMBO_OPTION);
+
+	SAFE_RELEASE(m_pAnimation);
+	SAFE_DELETE(m_pClip);
+
+	m_pAnimation = new Animation;
+	m_pClip = new ANIMATIONCLIP;
+
+	TCHAR strOption[][30] = {
+		TEXT("Loop"),
+		TEXT("Once Return"),
+		TEXT("Once Destroy"),
+		TEXT("Time Return"),
+		TEXT("Time Destroy")
+	};
+
+	for(int i=0;i<sizeof(strOption) / sizeof(strOption[0]);++i)
+		SendMessage(m_hComboOption, CB_ADDSTRING, 0, (LPARAM)strOption[i]);
+
+	m_strName = new char[_MAX_FNAME];
+
+	memset(m_strName, 0, sizeof(_MAX_FNAME));
+
+	m_strFileName = new TCHAR[_MAX_DIR];
+
+	memset(m_strFileName, 0, sizeof(TCHAR) * _MAX_DIR);
+}
+
+void CAniEditDlg::Clear()
+{
+	DestroyWindow(m_hWnd);
+
+	g_pDlg = 0;
+
+	ShowCursor(false);
+}
+
+void CAniEditDlg::Save()
+{
+}
+
+void CAniEditDlg::Load()
+{
+}
+
+void CAniEditDlg::LoadTexture()
+{
+	OPENFILENAME tOFN = {};
+
+	TCHAR strFile[MAX_PATH] = {};
+
+	tOFN.hInstance = WINDOWINSTANCE;
+	tOFN.hwndOwner = m_hWnd;
+	tOFN.lpstrFile = strFile;
+	tOFN.lpstrFilter = TEXT("모든파일\0*.*\0비트맵파일\0*.bmp");
+	tOFN.lpstrInitialDir = GET_SINGLE(PathManager)->FindPath(TEXTURE_PATH);
+	tOFN.lStructSize = sizeof(OPENFILENAME);
+	tOFN.nMaxFile = 256;
+	
+	if (GetOpenFileName(&tOFN))
+		LoadTexture(strFile);
+}
+
+void CAniEditDlg::AddClip()
+{
+	int iSel = (int)SendMessage(m_hComboOption, CB_GETCURSEL, 0, 0);
+
+	TCHAR strTime[32] = {};
+
+	GetDlgItemText(m_hWnd, IDC_EDIT_TIME, strTime, 32);
+
+	float fTime = (float)_wtof(strTime);
+
+	int iFrame = (int)m_pClip->vecFrame.size();
+
+	TCHAR strName[64] = {};
+
+	GetDlgItemText(m_hWnd, IDC_EDIT_NAME, strName, 64);
+
+	char pName[64] = {};
+
+#ifdef _UNICODE
+	WideCharToMultiByte(CP_ACP, NULL, strName, -1, pName, lstrlen(strName), NULL, NULL);
+#else
+	strcpy_s(pName, strName);
+#endif
+
+	m_pAnimation->AddClip(pName, AT_ATLAS, (ANIMATION_OPTION)iSel, iFrame * fTime, iFrame, 1, 0, 0, iFrame, 1,
+		1.f, m_strName, m_strFileName);
+
+	size_t iSize = m_pClip->vecFrame.size();
+
+	for (size_t i = 0; i < iSize; ++i)
+		m_pAnimation->AddFrame(pName, m_pClip->vecFrame[i]);
+}
+
+void CAniEditDlg::Update(float fTime)
+{
+	PANIMATIONCLIP pClip = m_pAnimation->GetCurrentClip();
+
+	if (pClip)
+	{
+		pClip->fAnimationTime += fTime;
+
+		if (pClip->fAnimationTime >= pClip->fAnimationFrameTime)
+		{
+			pClip->fAnimationTime -= pClip->fAnimationFrameTime;
+			++pClip->iFrameX;
+
+			if (pClip->iFrameX >= pClip->iFrameMaxX)
+			{
+				switch (pClip->eOption)
+				{
+				case AO_LOOP:
+					pClip->iFrameX = 0;
+					break;
+				}
+			}
+		}
+	}
+}
+
+void CAniEditDlg::Render()
+{
+	RECT tRC = {};
+
+	HWND hPicture = GetDlgItem(m_hWnd, IDC_ANIMATION);
+
+	GetWindowRect(hPicture, &tRC);
+
+	RECT tWinRC = {};
+
+	GetWindowRect(m_hWnd, &tWinRC);
+
+	if (m_pAnimation)
+	{
+		PANIMATIONCLIP pClip = m_pAnimation->GetCurrentClip();
+
+		if (pClip)
+		{
+			Texture* pTexture = pClip->vecTexture[0];
+
+			int iWidth = (int)(pClip->vecFrame[pClip->iFrameX].tEnd.x - pClip->vecFrame[pClip->iFrameX].tStart.x);
+			int iHeight = (int)(pClip->vecFrame[pClip->iFrameX].tEnd.y - pClip->vecFrame[pClip->iFrameX].tStart.y);
+
+			TransparentBlt(m_hDC, tRC.left - tWinRC.left, tRC.top - tWinRC.top, iWidth, iHeight, pTexture->GetDC(),
+				(int)pClip->vecFrame[pClip->iFrameX].tStart.x, (int)pClip->vecFrame[pClip->iFrameX].tStart.y, iWidth, iHeight, RGB(255, 255, 255));
+		}
+	}
+}
+
+void CAniEditDlg::Save(const TCHAR* pFileName)
+{
+	FILE* pFile = nullptr;
+
+	//fopen_s(&pFile, , "wb")
+}
+
+void CAniEditDlg::LoadTexture(const TCHAR* pFileName)
+{
+	TCHAR strDrive[_MAX_DRIVE] = {};
+	TCHAR strDir[_MAX_DIR] = {};
+	TCHAR strName[_MAX_FNAME] = {};
+	TCHAR strExt[_MAX_EXT] = {};
+
+	_wsplitpath_s(pFileName, strDrive, strDir, strName, strExt);
+
+	char pName[_MAX_FNAME] = {};
+
+#ifdef _UNICODE
+	WideCharToMultiByte(CP_ACP, NULL, strName, -1, pName, lstrlen(strName), NULL , NULL);
+#else
+	strcpy_s(pName, strName);
+#endif
+
+	SAFE_RELEASE(m_pTexture);
+
+	m_pTexture = GET_SINGLE(ResourcesManager)->LoadTextureFromFullPath(pName, pFileName);
+
+	strcpy_s(m_strName,strlen(pName) + 1,pName);
+
+	lstrcpy(m_strFileName, pFileName);
+}
+
+
+INT_PTR __stdcall CAniEditDlg::DlgProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
+{
+	switch (iMessage)
+	{
+	case WM_INITDIALOG:
+		g_pDlg->m_hWnd = hWnd;
+		g_pDlg->m_hDC = GetDC(hWnd);
+		break;
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case IDOK:
+			DestroyWindow(hWnd);
+			break;
+		case ID_TEXTURE_LOAD:
+			g_pDlg->LoadTexture();
+			break;
+		case IDC_BUTTON_ANI_SAVE:
+			g_pDlg->Save();
+			break;
+		case ID_CLIP_ADD:
+			g_pDlg->AddClip();
+			break;
+		}
+		break;
+	case WM_CLOSE:
+		DestroyWindow(hWnd);
+		break;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+	}
+
+
+	return INT_PTR();
+}

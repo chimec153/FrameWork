@@ -9,6 +9,8 @@
 #include "../Core/Camera.h"
 #include "SlimeHead.h"
 #include "ObjManager.h"
+#include "UIInventory.h"
+#include "Tool.h"
 
 Slime::Slime()	:
 	m_pPaceTexture(nullptr),
@@ -60,23 +62,23 @@ bool Slime::Init()
 	Animation* pAni = CreateAnimation("slimeAni");
 
 	pAni->AddClip("slimeIdle", AT_ATLAS, AO_LOOP,
-		1.f, 4, 11, 0, 4, 4, 1, 1.f, "slime", TEXT("Characters\\Monsters\\Green Slime.bmp"));
+		1.f, 4, 11, 0, 4, 4, 1, 1.f,0, "slime", TEXT("Characters\\Monsters\\Green Slime.bmp"));
 	pAni->SetClipColorKey("slimeIdle", 255, 255, 255);
 
 	pAni->AddClip("slimeWalkLeft", AT_ATLAS, AO_ONCE_RETURN,
-		1.f, 4, 11, 0, 0, 4, 1, 1.f, "slime", TEXT("Characters\\Monsters\\Green Slime.bmp"));
+		1.f, 4, 11, 0, 0, 4, 1, 1.f,0, "slime", TEXT("Characters\\Monsters\\Green Slime.bmp"));
 	pAni->SetClipColorKey("slimeWalkLeft", 255, 255, 255);
 
 	pAni->AddClip("slimeWalkRight", AT_ATLAS, AO_ONCE_RETURN,
-		1.f, 4, 11, 0, 1, 4, 1, 1.f, "slime", TEXT("Characters\\Monsters\\Green Slime.bmp"));
+		1.f, 4, 11, 0, 1, 4, 1, 1.f,0, "slime", TEXT("Characters\\Monsters\\Green Slime.bmp"));
 	pAni->SetClipColorKey("slimeWalkRight", 255, 255, 255);
 
 	pAni->AddClip("slimeWalkUp", AT_ATLAS, AO_ONCE_RETURN,
-		1.f, 4, 11, 0, 2, 4, 1, 1.f, "slime", TEXT("Characters\\Monsters\\Green Slime.bmp"));
+		1.f, 4, 11, 0, 2, 4, 1, 1.f,0, "slime", TEXT("Characters\\Monsters\\Green Slime.bmp"));
 	pAni->SetClipColorKey("slimeWalkUp", 255, 255, 255);
 
 	pAni->AddClip("slimeWalkDown", AT_ATLAS, AO_ONCE_RETURN,
-		1.f, 4, 11, 0, 3, 4, 1, 1.f, "slime", TEXT("Characters\\Monsters\\Green Slime.bmp"));
+		1.f, 4, 11, 0, 3, 4, 1, 1.f,0, "slime", TEXT("Characters\\Monsters\\Green Slime.bmp"));
 	pAni->SetClipColorKey("slimeWalkDown", 255, 255, 255);
 
 	SAFE_RELEASE(pAni);
@@ -141,10 +143,10 @@ int Slime::Update(float fDeltaTime)
 		{
 			m_pAnimation->SetCurrentClip("slimeWalkUp");
 		}
-
-		if (m_pHead)
-			m_pHead->SetPos(GetPos());
 	}
+
+	if (m_pHead)
+		m_pHead->SetPos(GetPos());
 
 	return 0;
 }
@@ -195,11 +197,15 @@ void Slime::Collision(Collider* pSrc, Collider* pDest, float fTime)
 			Obj* pObj = pDest->GetObj();
 			POSITION tPos = pObj->GetPos();
 
-			FightObj* pFightObj = (FightObj*)GET_SINGLE(ObjManager)->GetPlayer();
+			UIInventory* pInven = GET_SINGLE(ObjManager)->GetInven();
 
-			Hitted(pFightObj->GetAttack(), tPos);
+			Item* pItem = pInven->GetItem();
 
-			SAFE_RELEASE(pFightObj);
+			SAFE_RELEASE(pInven);
+
+			int iAttack = ((Tool*)pItem)->GetAttack();
+
+			Hitted(((FightObj*)pObj)->GetAttack() + iAttack, tPos);
 
 			if (m_iHP <= 0.f)
 			{

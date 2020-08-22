@@ -25,19 +25,12 @@ private:
 	vector<class UIPanel*>		m_vecInvenPanel;
 	class Texture*				m_pBackTexture;
 	bool						m_bExtended;
-	bool						m_bShopUIOn;
-	class UIPanel*				m_pShopPanel;
-	vector<class UIPanel*>		m_vecShopPanel;
-	vector<class UIContext*>	m_vecShopItemPanel;
-	class UIPanel*				m_pShopValancePanel;
-	class UIPanel*				m_pShopBackPanel;
-	class UIButton*				m_pShopExitBtn;
-	class UIButton*				m_pShopUpBtn;
-	class UIButton*				m_pShopDownBtn;
-	class UITilePanel*			m_pShopScrollBtn;
-	int							m_iPage;
-	class Text*					m_pShopGoldText;
+	class Text*					m_pInfoName;
+	vector<class Text*>			m_vecInfoDescription;
+	class UIPanel*				m_pInfoIconHealth;
+	class UIPanel*				m_pInfoIconEnergy;
 	class Text*					m_pGoldText;
+	class UIShop*				m_pShop;
 
 public:
 	class Item* GetItem(int iIndex)	const
@@ -69,12 +62,15 @@ public:
 		return m_bExtended;
 	}
 
-	bool IsShopPanelOn()	const
+	class UIShop* GetShop()	const
 	{
-		return m_bShopUIOn;
+		return m_pShop;
 	}
 
-	void SetGoldText(int iGold);
+	int GetItemCount()	const
+	{
+		return m_iCount;
+	}
 
 public:
 	virtual bool Init();
@@ -87,23 +83,21 @@ public:
 
 public:
 	void CreateInfoPanel(int iCountX, int iCountY);
-	void InfoPanelOn(const POSITION& tPos);
+	void InfoPanelOn(const POSITION& tPos, int iFileIndex);
 	void InfoPanelUpdate(const POSITION& tPos);
 	void InfoPanelOff();
 	void CreateInventory();
 	void SwapItem(class Item* pItem, const POSITION& tPos);
-	void CreateShopPanel();
+	void SetGoldText(int iGold);
 	void CreateGoldText();
+	void CreateShop(const string& strName);
+	void CreateBuildShop();
 
 public:
-	void ShopPageUp(int iNum, float fTime);
-	void ShopPageDown(int iNum, float fTime);
-	void DisableShopPanel(int iNum, float fTime);
-	void UpdateShopItemPos(float fTime);
-	void UpdateScrollBtnPos();
 	void AddObjectToLayer(class Layer* pLayer);
+	void SetObjectLayer(class Layer* pLayer);
 	void AddInfoPanelToLayer(class Layer* pLayer);
+	void SetInfoPanelLayer(class Layer* pLayer);
 	void AddItemToLayer(class Layer* pLayer);
-	void BuyItem(int iIndex);
 };
 

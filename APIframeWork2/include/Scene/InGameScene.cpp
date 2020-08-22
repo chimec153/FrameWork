@@ -23,6 +23,9 @@
 #include "../Object/ObjManager.h"
 #include "../Object/UIInventory.h"
 #include "../Object/Tool.h"
+#include "SceneCoop.h"
+#include "SceneBarn.h"
+#include "../Object/Horse.h"
 
 InGameScene::InGameScene()
 {
@@ -60,6 +63,8 @@ bool InGameScene::Init()
 
 	SAFE_RELEASE(pNoMoveTex);
 
+	LoadFile();
+
 	Layer* pStageLayer = FindLayer("Stage");
 
 	m_pStage = Obj::CreateObj<Stage>("Stage", pStageLayer);
@@ -88,7 +93,7 @@ bool InGameScene::Init()
 
 	ColliderRect* pRoadPortal = m_pStage->AddCollider<ColliderRect>("RoadPortal");
 
-	pRoadPortal->SetRect(32.f * 49.f, 32.f * 10.f, 32.f * 50.f, 32.f * 11.f);
+	pRoadPortal->SetRect(32.f * 49.f, 32.f * 15.f, 32.f * 50.f, 32.f * 16.f);
 	pRoadPortal->AddCollisionFunction(CS_ENTER, this, &InGameScene::RoadPortalCol);
 
 	SAFE_RELEASE(pRoadPortal);
@@ -114,11 +119,92 @@ bool InGameScene::Init()
 
 	Player* pPlayer = (Player*)GET_SINGLE(ObjManager)->GetPlayer();
 
-	pPlayer->AddGold(2000);
+	pPlayer->AddGold(20000);
 
 	SAFE_RELEASE(pPlayer);
 
 	return true;
+}
+
+int InGameScene::Update(float fTime)
+{
+	Scene::Update(fTime);
+
+	Player* pPlayer = (Player*)GET_SINGLE(ObjManager)->GetPlayer();
+
+	if (pPlayer->GetBuilding(BT_COOP))
+	{
+		Layer* pLayer = FindLayer("Default");
+
+		Obj* pObj = m_pStage->CreateCloneObj("Coop", "Coop", pLayer);
+
+		pObj->SetPos(32.f * 44.5f, 32.f * 12.5f);
+
+		pPlayer->BuildComplete(BT_COOP);
+
+		Collider* pRC = pObj->GetCollider("DoorBody");
+
+		pRC->AddCollisionFunction(CS_ENTER, this, &InGameScene::CoopPortalCol);
+
+		SAFE_RELEASE(pRC);
+
+		SAFE_RELEASE(pObj);
+	}
+
+	if (pPlayer->GetBuilding(BT_BARN))
+	{
+		Layer* pLayer = FindLayer("Default");
+
+		Obj* pObj = m_pStage->CreateCloneObj("Barn", "Barn", pLayer);
+
+		pObj->SetPos(32.f * 38.5f, 32.f * 11.5f);
+
+		pPlayer->BuildComplete(BT_BARN);
+
+		Collider* pRC = pObj->GetCollider("DoorBody");
+
+		pRC->AddCollisionFunction(CS_ENTER, this, &InGameScene::BarnPortalCol);
+
+		SAFE_RELEASE(pRC);
+
+		SAFE_RELEASE(pObj);
+	}
+
+	if (pPlayer->GetBuilding(BT_STABLE))
+	{
+		Layer* pLayer = FindLayer("Default");
+
+		Obj* pObj = m_pStage->CreateCloneObj("Stable", "Stable", pLayer);
+
+		pObj->SetPos(32.f * 28.5f, 32.f * 11.5f);
+
+		pPlayer->BuildComplete(BT_STABLE);
+
+		SAFE_RELEASE(pObj);
+
+		Horse* pHorse = Obj::CreateObj<Horse>("Horse", pLayer);
+
+		pHorse->SetPos(32.f * 28.5f, 32.f * 13.f);		
+
+		SAFE_RELEASE(pHorse);
+	}
+
+	if (pPlayer->GetBuilding(BT_SILO))
+	{
+		Layer* pLayer = FindLayer("Default");
+
+		Obj* pObj = m_pStage->CreateCloneObj("Silo", "Silo", pLayer);
+
+		pObj->SetPos(32.f * 23.5f, 32.f * 11.5f);
+
+		pPlayer->BuildComplete(BT_SILO);
+
+		SAFE_RELEASE(pObj);
+	}
+
+	SAFE_RELEASE(pPlayer);
+
+	return 0;
 }
 
 void InGameScene::Cave(Collider* pSrc, Collider* pDest, float fTime)
@@ -164,6 +250,38 @@ void InGameScene::RoadPortalCol(Collider* pSrc, Collider* pDest, float fTime)
 		Obj* pPlayer = GET_SINGLE(ObjManager)->GetPlayer();
 
 		pPlayer->SetPos(80.f, 334.f);
+
+		SAFE_RELEASE(pPlayer);
+	}
+}
+
+void InGameScene::CoopPortalCol(Collider* pSrc, Collider* pDest, float fTime)
+{
+	if (pDest->GetTag() == "PlayerBody")
+	{
+		GET_SINGLE(SoundManager)->Stop(ST_BGM);
+
+		GET_SINGLE(SceneManager)->CreateScene<SceneCoop>("Coop", SC_NEXT);
+
+		Obj* pPlayer = GET_SINGLE(ObjManager)->GetPlayer();
+
+		pPlayer->SetPos(32.f * 2.5f, 32.f * 10);
+
+		SAFE_RELEASE(pPlayer);
+	}
+}
+
+void InGameScene::BarnPortalCol(Collider* pSrc, Collider* pDest, float fTime)
+{
+	if (pDest->GetTag() == "PlayerBody")
+	{
+		GET_SINGLE(SoundManager)->Stop(ST_BGM);
+
+		GET_SINGLE(SceneManager)->CreateScene<SceneBarn>("Barn", SC_NEXT);
+
+		Obj* pPlayer = GET_SINGLE(ObjManager)->GetPlayer();
+
+		pPlayer->SetPos(32.f * 8.5f, 32.f * 12.5f);
 
 		SAFE_RELEASE(pPlayer);
 	}

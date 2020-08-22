@@ -15,6 +15,11 @@
 #include "../Object/ObjManager.h"
 #include "../Object/Tool.h"
 #include "../Object/UIBar.h"
+#include "../Object/Arm.h"
+#include "../Animation/Animation.h"
+#include "../Object/Pants.h"
+#include "../Object/Shirt.h"
+#include "../Object/Hair.h"
 
 StartScene::StartScene()
 {
@@ -145,6 +150,32 @@ void StartScene::StartButtonCallback(float fTime)
 
 	Layer* pHUDLayer = FindLayer("HUD");
 
+	Layer* pLayer = FindLayer("Default");
+
+	Arm* pArm = Obj::CreateObj<Arm>("Arm", pLayer);
+
+	pPlayer->SetArm(pArm);
+
+	SAFE_RELEASE(pArm);
+
+	Pants* pPants = Obj::CreateObj<Pants>("Pants", pLayer);
+
+	pPlayer->SetPants(pPants);
+
+	SAFE_RELEASE(pPants);
+
+	Hair* pHair = Obj::CreateObj<Hair>("Hair", pLayer);
+
+	pPlayer->SetHair(pHair);
+
+	SAFE_RELEASE(pHair);
+
+	Shirt* pShirt = Obj::CreateObj<Shirt>("Shirt", pLayer);
+
+	pPlayer->SetShirt(pShirt);
+
+	SAFE_RELEASE(pShirt);
+
 	UIBar* pEnergyBar = Obj::CreateObj<UIBar>("EnergyBar", pHUDLayer,
 		POSITION(1006.f, 626.f), POSITION(12.f, 82.f));
 
@@ -175,15 +206,13 @@ void StartScene::StartButtonCallback(float fTime)
 
 	GET_SINGLE(ObjManager)->SetInven(pInven);
 
-	pInven->CreateInfoPanel(4, 4);
+	pInven->CreateInfoPanel(8, 8);
 
 	CreateClockHand();
 
 	SAFE_RELEASE(pPlayer);
 
 	GET_SINGLE(SceneManager)->CreateScene<InGameScene>("Main", SC_NEXT);
-
-	Layer* pLayer = FindLayer("Default");
 
 	Item* pSword = Obj::CreateObj<Tool>("sword", pLayer);
 
@@ -275,7 +304,6 @@ void StartScene::StartButtonCallback(float fTime)
 	SAFE_RELEASE(pPikEx);
 	SAFE_RELEASE(pEx);
 	SAFE_RELEASE(pInven);
-
 }
 
 void StartScene::EndButtonCallback(float fTime)

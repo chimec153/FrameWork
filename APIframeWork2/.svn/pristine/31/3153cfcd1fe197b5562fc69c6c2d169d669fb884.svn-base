@@ -1,0 +1,63 @@
+#pragma once
+
+#include "game.h"
+
+class CAniEditDlg
+{
+	friend class CAnimationEditScene;
+private:
+	CAniEditDlg();
+	~CAniEditDlg();
+
+private:
+	HWND					m_hWnd;
+	class Animation*		m_pAnimation;
+	vector<COLORREF>		m_vecPixel;
+	class Texture*			m_pTexture;
+	PANIMATIONCLIP			m_pClip;
+	HWND					m_hComboOption;
+	TCHAR*					m_strFileName;
+	char*					m_strName;
+	HDC						m_hDC;
+
+public:
+	class Texture* GetTexture()	const
+	{
+		return m_pTexture;
+	}
+
+	PANIMATIONCLIP GetClip()	const
+	{
+		return m_pClip;
+	}
+
+public:
+	void OnEditDlg(int iID);
+	void Clear();
+	void Save();
+	void Load();
+	void LoadTexture();
+	void AddFrame(POSITION tStart, POSITION tEnd)
+	{
+		if (m_pClip)
+		{
+			FrameInfo tInfo = {};
+
+			tInfo.tStart = tStart;
+			tInfo.tEnd = tEnd;
+
+			m_pClip->vecFrame.push_back(tInfo);
+		}
+	}
+	void AddClip();
+	void Update(float fTime);
+	void Render();
+
+public:
+	void Save(const TCHAR* pFileName);
+	void LoadTexture(const TCHAR* pFileName);
+
+private:
+	static INT_PTR WINAPI DlgProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
+};
+

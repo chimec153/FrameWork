@@ -1,0 +1,1120 @@
+#include "Player.h"
+#include "../Core/Camera.h"
+#include "../Core/Input.h"
+#include "../Resources/Texture.h"
+#include "Bullet.h"
+#include "../Collider/ColliderRect.h"
+#include "../Core/Camera.h"
+#include "../Animation/Animation.h"
+#include "../Scene/Scene.h"
+#include "..//Core/PathManager.h"
+#include "..//Scene/SceneManager.h"
+#include "..//Object/Stage.h"
+#include "..//Scene/InGameScene.h"
+#include "..//Object/Tile.h"
+#include "UIBar.h"
+#include "Weapon.h"
+#include "UINum.h"
+#include "..//Collider/ColliderSphere.h"
+#include "Item.h"
+#include "../Object/UIInventory.h"
+#include "Tool.h"
+#include "../Core/Timer.h"
+#include "Seed.h"
+#include "Crop.h"
+#include "Tool.h"
+#include "UIClockHand.h"
+#include "Tree.h"
+#include "Etc.h"
+#include "Rock.h"
+#include "RockCrab.h"
+#include "ObjManager.h"
+#include "../Scene/SceneHome.h"
+#include "../Resources/ResourcesManager.h"
+#include "UIShop.h"
+
+Player::Player()	:
+	m_bAttack(false),
+	m_bColl(false),
+	m_pEnergyBar(nullptr),
+	m_pHPBar(nullptr),
+	m_bWalk(false),
+	m_eAction(PA_IDLE),
+	m_iGold(0),
+	m_bCoop(false),
+	m_bBarn(false)
+{
+	m_bTileEffect = true;
+}
+
+Player::Player(const Player & player)	:
+	FightObj(player)
+{
+	m_bAttack = false;
+	m_bColl = false;
+
+	if (player.m_pEnergyBar)
+		m_pEnergyBar = player.m_pEnergyBar->Clone();
+
+	if (player.m_pHPBar)
+		m_pHPBar = player.m_pHPBar->Clone();
+
+	m_bWalk = false;
+	m_eAction = player.m_eAction;
+	m_iGold = player.m_iGold;
+	m_bCoop = player.m_bCoop;
+	m_bBarn = player.m_bBarn;
+}
+
+Player::~Player()
+{
+}
+
+
+void Player::AddGold(int iGold)
+{
+	m_iGold += iGold;
+
+	UIInventory* pInventory = GET_SINGLE(ObjManager)->GetInven();
+
+	if(pInventory)
+		pInventory->SetGoldText(m_iGold);
+
+	SAFE_RELEASE(pInventory);
+}
+
+bool Player::AddEnergy(int iEnergy)
+{
+	if (FightObj::AddEnergy(iEnergy))
+	{
+		UIClockHand* pClockHand = (UIClockHand*)GET_SINGLE(ObjManager)->GetClockHand();
+
+		pClockHand->SetTime(360.f);
+		pClockHand->AddDay();
+
+		SetEnergy(50);
+		SetHP(50);
+
+		GET_SINGLE(SceneManager)->CreateScene<SceneHome>("Home", SC_NEXT);
+
+		SetPos(288.f, 288.f);
+
+		return true;
+	}
+
+	iEnergy = GetEnergy();
+
+	m_pEnergyBar->SetValue((float)iEnergy);
+
+	return false;
+}
+
+bool Player::AddHP(int iHP)
+{
+	if (FightObj::AddHP(iHP))
+	{
+		UIClockHand* pClockHand = (UIClockHand*)GET_SINGLE(ObjManager)->GetClockHand();
+
+		pClockHand->SetTime(360.f);
+		pClockHand->AddDay();
+
+		SetEnergy(50);
+		SetHP(50);
+
+		GET_SINGLE(SceneManager)->CreateScene<SceneHome>("Home",SC_NEXT);
+
+		SetPos(288.f, 288.f);
+
+		return true;
+	}
+
+	iHP = GetHP();
+
+	m_pHPBar->SetValue((float)iHP);
+
+	return false;
+}
+
+void Player::SetEnergy(int iEnergy)
+{
+	FightObj::SetEnergy(iEnergy);
+
+	m_pEnergyBar->SetValue((float)iEnergy);
+}
+
+void Player::SetHP(int iHP)
+{
+	FightObj::SetHP(iHP);
+
+	m_pHPBar->SetValue((float)iHP);
+}
+
+bool Player::Init()
+{
+	Obj::SetCollide(true);
+	SetPos(256.f, 512.f);
+	SetSize(32.f, 64.f);
+	SetSpeed(200.f);
+	SetPivot(0.5f, 1.f);
+	SetTag("Player");
+
+	m_iHP = 100;
+	m_iEnergy = 100;
+
+	SetAttack(10);
+
+	SetForce(200.f);
+
+	ColliderRect* pRC = AddCollider<ColliderRect>("attack");
+
+	pRC->SetRect(-96.f, 32.f, 96.f, 128.f);
+	pRC->SetEnable(false);
+
+	SAFE_RELEASE(pRC);
+
+	ColliderSphere* pSphere = AddCollider<ColliderSphere>("PlayerBody");
+
+	pSphere->SetSphere(POSITION(0.f, -16.f), 16.f);
+
+	pSphere->AddCollisionFunction(CS_ENTER, this,
+		&Player::Hit);
+	pSphere->AddCollisionFunction(CS_STAY, this,
+		&Player::HitStay);
+	pSphere->AddCollisionFunction(CS_LEAVE, this,
+		&Player::HitLeave);
+
+	SAFE_RELEASE(pSphere);
+
+	Animation* pAni = CreateAnimation("PlayerAnimation");
+
+	AddAnimationClip("IdleRight", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
+		0, 0, 1, 1, 0.f, "PlayerIdleRight", L"WalkRight.bmp");
+	SetAnimationClipColorKey("IdleRight", 0, 0, 0);
+
+	AddAnimationClip("IdleLeft", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
+		0, 0, 1, 1, 0.f, "PlayerIdleLeft", L"walkLeft.bmp");
+	SetAnimationClipColorKey("IdleLeft", 0, 0, 0);
+
+	AddAnimationClip("IdleUp", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
+		0, 0, 1, 1, 0.f, "PlayerIdleUp", L"WalkUp.bmp");
+	SetAnimationClipColorKey("IdleUp", 0, 0, 0);
+
+	AddAnimationClip("IdleDown", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
+		0, 0, 1, 1, 0.f, "PlayerIdleDown", L"aniii.bmp");
+	SetAnimationClipColorKey("IdleDown", 0, 0, 0);
+
+	AddAnimationClip("RunRight", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		1, 0, 2, 1, 0.f, "PlayerRunRight", L"WalkRight.bmp");
+	SetAnimationClipColorKey("RunRight", 0, 0, 0);
+
+	AddAnimationClip("RunLeft", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		1, 0, 2, 1, 0.f, "PlayerRunLeft", L"walkLeft.bmp");
+	SetAnimationClipColorKey("RunLeft", 0, 0, 0);
+
+	AddAnimationClip("RunUp", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		1, 0, 2, 1, 0.f, "PlayerRunUp", L"WalkUp.bmp");
+	SetAnimationClipColorKey("RunUp", 0, 0, 0);
+
+	AddAnimationClip("RunDown", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		1, 0, 2, 1, 0.f, "PlayerRunDown", L"aniii.bmp");
+	SetAnimationClipColorKey("RunDown", 0, 0, 0);
+
+	AddAnimationClip("AttackRight", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		0, 0, 6, 1, 0.f, "PlayerAttackRight", L"AttackRight.bmp");
+	SetAnimationClipColorKey("AttackRight", 0, 0, 0);
+
+	AddAnimationClip("AttackLeft", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		0, 0, 6, 1, 0.f, "PlayerAttackLeft", L"AttackLeft.bmp");
+	SetAnimationClipColorKey("AttackLeft", 0, 0, 0);
+
+	AddAnimationClip("AttackUp", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		0, 0, 6, 1, 0.f, "PlayerAttackUp", L"AttackUp.bmp");
+	SetAnimationClipColorKey("AttackUp", 0, 0, 0);
+
+	AddAnimationClip("AttackDown", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		0, 0, 6, 1, 0.f, "PlayerAttackDown", L"attackDown.bmp");
+	SetAnimationClipColorKey("AttackDown", 0, 0, 0);
+
+	AddAnimationClip("FarmRight", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		0, 0, 6, 1, 0.f, "PlayerFarmRight", L"farmRight.bmp");
+	SetAnimationClipColorKey("FarmRight", 0, 0, 0);
+
+	AddAnimationClip("FarmLeft", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		0, 0, 6, 1, 0.f, "PlayerFarmLeft", L"FarmLeft.bmp");
+	SetAnimationClipColorKey("FarmLeft", 0, 0, 0);
+
+	AddAnimationClip("FarmUp", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		0, 0, 6, 1, 0.f, "PlayerFarmUp", L"farmUp.bmp");
+	SetAnimationClipColorKey("FarmUp", 0, 0, 0);
+
+	AddAnimationClip("FarmDown", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		0, 0, 6, 1, 0.f, "PlayerFarmDown", L"farmDown.bmp");
+	SetAnimationClipColorKey("FarmDown", 0, 0, 0);
+
+	AddAnimationClip("LiftIdleRight", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
+		0, 0, 1, 1, 0.f, "PlayerLiftIdleRight", L"LiftRight.bmp");
+	SetAnimationClipColorKey("LiftIdleRight", 0, 0, 0);
+
+	AddAnimationClip("LiftIdleLeft", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
+		0, 0, 1, 1, 0.f, "PlayerLiftIdleLeft", L"LiftLeft.bmp");
+	SetAnimationClipColorKey("LiftIdleLeft", 0, 0, 0);
+
+	AddAnimationClip("LiftIdleUp", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
+		0, 0, 1, 1, 0.f, "PlayerLiftIdleUp", L"LiftUp.bmp");
+	SetAnimationClipColorKey("LiftIdleUp", 0, 0, 0);
+
+	AddAnimationClip("LiftIdleDown", AT_ATLAS, AO_LOOP, 0.5f, 6, 1,
+		0, 0, 1, 1, 0.f, "PlayerLiftIdleDown", L"LiftDown.bmp");
+	SetAnimationClipColorKey("LiftIdleDown", 0, 0, 0);
+
+	AddAnimationClip("LiftRight", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		1, 0, 2, 1, 0.f, "PlayerLiftRight", L"LiftRight.bmp");
+	SetAnimationClipColorKey("LiftRight", 0, 0, 0);
+
+	AddAnimationClip("LiftLeft", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		1, 0, 2, 1, 0.f, "PlayerLiftLeft", L"LiftLeft.bmp");
+	SetAnimationClipColorKey("LiftLeft", 0, 0, 0);
+
+	AddAnimationClip("LiftUp", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		1, 0, 2, 1, 0.f, "PlayerLiftUp", L"LiftUp.bmp");
+	SetAnimationClipColorKey("LiftUp", 0, 0, 0);
+
+	AddAnimationClip("LiftDown", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		1, 0, 2, 1, 0.f, "PlayerLiftDown", L"LiftDown.bmp");
+	SetAnimationClipColorKey("LiftDown", 0, 0, 0);
+
+	AddAnimationClip("Eat", AT_ATLAS, AO_ONCE_RETURN, 0.5f, 6, 1,
+		0, 0, 5, 1, 0.f, "PlayerEat", L"Eat.bmp");
+	SetAnimationClipColorKey("Eat", 0, 0, 0);
+
+	SAFE_RELEASE(pAni);	
+
+	return true;
+}
+
+void Player::Input(float fDeltaTime)
+{
+	FightObj::Input(fDeltaTime);
+
+	UIInventory* pInventory = GET_SINGLE(ObjManager)->GetInven();
+
+	if (pInventory)
+	{
+		UIShop* pShop = pInventory->GetShop();
+
+		if (pInventory->GetExtended())
+		{
+			SAFE_RELEASE(pInventory);
+			return;
+		}
+
+		if (pShop)
+		{
+			if (pShop->IsShopPanelOn())
+			{
+				SAFE_RELEASE(pInventory);
+				return;
+			}
+		}
+	}
+
+	bool bPress = false;
+
+	Item* pItem = nullptr;
+
+	if (pInventory)
+		pItem = pInventory->GetItem();
+
+	SAFE_RELEASE(pInventory);
+
+	ITEM_TYPE eType = IT_NONE;
+
+	if(pItem)
+		eType = pItem->GetType();
+
+	if (KEYPRESS("MoveLeft"))
+	{
+		bPress = true;
+
+		if (eType == IT_SEED)
+		{
+			m_pAnimation->ChangeClip("LiftLeft");
+			m_pAnimation->SetDefaultClip("LiftIdleLeft");
+		}
+
+		else
+		{
+			m_pAnimation->ChangeClip("RunLeft");
+			m_pAnimation->SetDefaultClip("IdleLeft");
+		}
+
+		m_tMoveDir = POSITION(-1.f, 0.f);
+		MoveAngle(fDeltaTime);
+
+		m_eAction = PA_WALK;
+
+		CWeapon* pWeapon = (CWeapon*)GET_SINGLE(ObjManager)->GetWeapon();
+
+		if (pWeapon)
+			pWeapon->SetPos(m_tPos.x, m_tPos.y - 0.5f * m_tSize.y);// +m_tMoveDir * 16.f);
+
+		SAFE_RELEASE(pWeapon);
+
+	}
+
+	else if (KEYPRESS("MoveRight"))
+	{
+		bPress = true;
+
+		if (eType == IT_SEED)
+		{
+			m_pAnimation->ChangeClip("LiftRight");
+			m_pAnimation->SetDefaultClip("LiftIdleRight");
+		}
+
+		else
+		{
+			m_pAnimation->ChangeClip("RunRight");
+			m_pAnimation->SetDefaultClip("IdleRight");
+		}
+
+		m_tMoveDir = POSITION(1.f, 0.f);
+		MoveAngle(fDeltaTime);
+
+		m_eAction = PA_WALK;
+
+		CWeapon* pWeapon = (CWeapon*)GET_SINGLE(ObjManager)->GetWeapon();
+
+		if (pWeapon)
+			pWeapon->SetPos(m_tPos.x, m_tPos.y - 0.5f * m_tSize.y);// +m_tMoveDir * 16.f);
+
+		SAFE_RELEASE(pWeapon);
+
+	}
+
+	else if (KEYPRESS("MoveFront"))
+	{
+		bPress = true;
+
+		if (eType == IT_SEED)
+		{
+			m_pAnimation->ChangeClip("LiftUp");
+			m_pAnimation->SetDefaultClip("LiftIdleUp");
+		}
+
+		else
+		{
+			m_pAnimation->ChangeClip("RunUp");
+			m_pAnimation->SetDefaultClip("IdleUp");
+		}
+
+		m_tMoveDir = POSITION(0.f, -1.f);
+		MoveAngle(fDeltaTime);
+
+		m_eAction = PA_WALK;
+
+		CWeapon* pWeapon = (CWeapon*)GET_SINGLE(ObjManager)->GetWeapon();
+
+		if (pWeapon)
+			pWeapon->SetPos(m_tPos.x, m_tPos.y - 0.5f * m_tSize.y);// +m_tMoveDir * 16.f);
+
+		SAFE_RELEASE(pWeapon);
+
+	}
+
+	else if (KEYPRESS("MoveBack"))
+	{
+		bPress = true;
+
+		if (eType == IT_SEED)
+		{
+			m_pAnimation->ChangeClip("LiftDown");
+			m_pAnimation->SetDefaultClip("LiftIdleDown");
+		}
+
+		else
+		{
+			m_pAnimation->ChangeClip("RunDown");
+			m_pAnimation->SetDefaultClip("IdleDown");
+		}
+
+		m_tMoveDir = POSITION(0.f, 1.f);
+		MoveAngle(fDeltaTime);
+
+		m_eAction = PA_WALK;
+
+		CWeapon* pWeapon = (CWeapon*)GET_SINGLE(ObjManager)->GetWeapon();
+
+		if (pWeapon)
+			pWeapon->SetPos(m_tPos.x, m_tPos.y - 0.5f * m_tSize.y);// +m_tMoveDir * 16.f);
+
+		SAFE_RELEASE(pWeapon);
+
+	}
+
+	if ((KEYDOWN("Fire") || KEYDOWN("MouseLButton")) && m_eAction == PA_IDLE)
+	{
+		Stage* pStage = m_pScene->GetStage();
+
+		OBJ_BLOCK eBlock = pStage->GetBlock();
+
+		if (eBlock == OB_CROP)
+		{
+			Tile* pTile = pStage->GetSelectedTile();
+
+			Crop* pCrop = (Crop*)pTile->GetObj();
+
+			bool bHarvested = pCrop->IsHarvested();
+
+			CROP_TYPE eCropType = pCrop->GetCropType();
+
+			bool bHarvest = pCrop->CanHarvest();
+
+			if (!bHarvested && bHarvest)
+			{
+				pCrop->Harvest();
+
+				UIClockHand* pClockHand = (UIClockHand*)GET_SINGLE(ObjManager)->GetClockHand();
+
+				if (pCrop->GetRegrowthDay() == 0)
+				{
+					pClockHand->DeleteCrop(pCrop);
+
+					pStage->SetBlock(OB_NONE, nullptr);
+				}
+			}
+		}
+
+		if (eType == IT_TOOL && m_iEnergy >= 5.f)
+		{
+			TOOL_TYPE eToolType = ((Tool*)pItem)->GetToolType();
+
+			if (eToolType == TOOL_SWORD)
+			{
+				CWeapon* pWeapon = (CWeapon*)GET_SINGLE(ObjManager)->GetWeapon();
+
+				if (pWeapon)
+				{
+					pWeapon->Attack();
+				}
+
+				SAFE_RELEASE(pWeapon);
+
+				Collider* pCol = GetCollider("attack");
+
+				pCol->SetEnable(true);
+
+				if (m_tMoveDir.x == -1.f)
+				{
+					((ColliderRect*)pCol)->SetRect(-96.f, -32.f, -32.f, 32.f);
+					m_pAnimation->ChangeClip("AttackLeft");
+				}
+
+				if (m_tMoveDir.y == -1.f)
+				{
+					((ColliderRect*)pCol)->SetRect(-48.f, -64.f, 48.f, -16.f);
+					m_pAnimation->ChangeClip("AttackUp");
+				}
+
+				if (m_tMoveDir.x == 1.f)
+				{
+					((ColliderRect*)pCol)->SetRect(32.f, -32.f, 96.f, 32.f);
+					m_pAnimation->ChangeClip("AttackRight");
+				}
+
+				if (m_tMoveDir.y == 1.f)
+				{
+					((ColliderRect*)pCol)->SetRect(-48.f, 16.f, 48.f, 64.f);
+					m_pAnimation->ChangeClip("AttackDown");
+				}
+
+				SAFE_RELEASE(pCol);
+			}
+
+			else if (eToolType == TOOL_HOE)
+			{
+				CWeapon* pWeapon = (CWeapon*)GET_SINGLE(ObjManager)->GetWeapon();
+
+				if (pWeapon)
+					pWeapon->Attack();
+
+				SAFE_RELEASE(pWeapon);
+
+				Tile* pTile = ((InGameScene*)m_pScene)->GetStage()->GetSelectedTile();
+
+				if (pTile)
+				{
+					TILE_OPTION eOption = pTile->GetTileOption();
+
+					if (eOption == TO_DIRT)
+					{
+						pTile->SetTileOption(TO_HOEDIRT);
+					}
+				}
+
+				if (m_tMoveDir.x == -1.f)
+				{
+					m_pAnimation->ChangeClip("FarmLeft");
+				}
+
+				if (m_tMoveDir.y == -1.f)
+				{
+					m_pAnimation->ChangeClip("FarmUp");
+				}
+
+				if (m_tMoveDir.x == 1.f)
+				{
+					m_pAnimation->ChangeClip("FarmRight");
+				}
+
+				if (m_tMoveDir.y == 1.f)
+				{
+					m_pAnimation->ChangeClip("FarmDown");
+				}
+			}
+
+			else if (eToolType == TOOL_EX)
+			{
+				CWeapon* pWeapon = (CWeapon*)GET_SINGLE(ObjManager)->GetWeapon();
+
+				if (pWeapon)
+				{
+					pWeapon->Attack();
+				}
+				SAFE_RELEASE(pWeapon);
+
+				Tile* pTile = ((InGameScene*)m_pScene)->GetStage()->GetSelectedTile();
+
+				if (pTile)
+				{
+					Obj* pObj = pTile->GetObj();
+
+					if (pObj)
+					{
+						OBJ_BLOCK eBlock = pObj->GetBlock();
+
+						if (eBlock == OB_TREE)
+						{
+							((CTree*)pObj)->ExTree();
+						}
+					}
+
+				}
+
+				if (m_tMoveDir.x == -1.f)
+				{
+					m_pAnimation->ChangeClip("FarmLeft");
+				}
+
+				if (m_tMoveDir.y == -1.f)
+				{
+					m_pAnimation->ChangeClip("FarmUp");
+				}
+
+				if (m_tMoveDir.x == 1.f)
+				{
+					m_pAnimation->ChangeClip("FarmRight");
+				}
+
+				if (m_tMoveDir.y == 1.f)
+				{
+					m_pAnimation->ChangeClip("FarmDown");
+				}
+			}
+
+			else if (eToolType == TOOL_PIKEX)
+			{
+				CWeapon* pWeapon = (CWeapon*)GET_SINGLE(ObjManager)->GetWeapon();
+
+				if (pWeapon)
+					pWeapon->Attack();
+
+				SAFE_RELEASE(pWeapon);
+
+				Tile* pTile = ((InGameScene*)m_pScene)->GetStage()->GetSelectedTile();
+
+				if (pTile)
+				{
+					Obj* pObj = pTile->GetObj();
+
+					if (pObj)
+					{
+						OBJ_BLOCK eBlock = pObj->GetBlock();
+
+						if (eBlock == OB_ROCK)
+						{
+							((Rock*)pObj)->Pick();
+						}
+					}
+				}
+
+				if (m_tMoveDir.x == -1.f)
+				{
+					m_pAnimation->ChangeClip("FarmLeft");
+				}
+
+				if (m_tMoveDir.y == -1.f)
+				{
+					m_pAnimation->ChangeClip("FarmUp");
+				}
+
+				if (m_tMoveDir.x == 1.f)
+				{
+					m_pAnimation->ChangeClip("FarmRight");
+				}
+
+				if (m_tMoveDir.y == 1.f)
+				{
+					m_pAnimation->ChangeClip("FarmDown");
+				}
+			}
+
+			else if (eToolType == TOOL_WATER)
+			{
+				CWeapon* pWeapon = (CWeapon*)GET_SINGLE(ObjManager)->GetWeapon();
+
+				if (pWeapon)
+					pWeapon->Attack();
+
+				SAFE_RELEASE(pWeapon);
+
+				Tile* pTile = ((InGameScene*)m_pScene)->GetStage()->GetSelectedTile();
+
+				if (pTile)
+				{
+					TILE_OPTION eOption = pTile->GetTileOption();
+
+					if (eOption == TO_HOEDIRT)
+					{
+						if (((Tool*)pItem)->GetWater())
+						{
+							pTile->SetTileOption(TO_WATERDIRT);
+							((Tool*)pItem)->SetWater(false);
+						}
+					}
+
+					else if (eOption == TO_WATER)
+						((Tool*)pItem)->SetWater(true);
+				}
+
+				if (m_tMoveDir.x == -1.f)
+				{
+					m_pAnimation->ChangeClip("FarmLeft");
+				}
+
+				if (m_tMoveDir.y == -1.f)
+				{
+					m_pAnimation->ChangeClip("FarmUp");
+				}
+
+				if (m_tMoveDir.x == 1.f)
+				{
+					m_pAnimation->ChangeClip("FarmRight");
+				}
+
+				if (m_tMoveDir.y == 1.f)
+				{
+					m_pAnimation->ChangeClip("FarmDown");
+				}
+			}
+
+			AddEnergy(-5);
+
+			m_eAction = PA_ATTACK;
+		}
+
+		else if (eType == IT_SEED)
+		{
+			CROP_TYPE eCropType = ((Seed*)pItem)->GetCropType();
+			Stage* pStage = ((InGameScene*)m_pScene)->GetStage();
+
+			Tile* pTile = pStage->GetSelectedTile();
+
+			if (pTile)
+			{
+				if (!pTile->GetObj())
+				{
+					TILE_OPTION eOption = pTile->GetTileOption();
+
+					if (eOption == TO_HOEDIRT || eOption == TO_WATERDIRT)
+					{
+						PITEMINFO pInfo = GET_SINGLE(ResourcesManager)->FindItemInfo(eCropType);
+
+						Obj* pCrop = CreateCloneObj(pInfo->strCropName, pInfo->strCropName, m_pLayer);
+
+						POSITION tPos = pCrop->GetSize() * pCrop->GetPivot();
+
+						tPos.y = 0.f;
+
+						pCrop->SetPos(pTile->GetPos() + tPos);
+
+						((UIClockHand*)GET_SINGLE(ObjManager)->GetClockHand())->AddCrop(pCrop);
+
+						Collider* pCol = pCrop->GetCollider("CropBody");
+
+						pCol->AddCollisionFunction(CS_STAY, (Crop*)pCrop, &Crop::MousePress);
+
+						SAFE_RELEASE(pCol);
+
+						pStage->SetBlock(OB_CROP, pCrop);
+
+						SAFE_RELEASE(pCrop);
+
+						UIInventory* pInventory = GET_SINGLE(ObjManager)->GetInven();
+
+						if (pInventory)
+							pInventory->DeleteItem();	//	인벤토리에서 아이템 삭제
+
+						SAFE_RELEASE(pInventory);
+					}
+				}
+			}
+		}
+
+		else if (eType == IT_CROP)
+		{
+			bool bHarvest = ((Crop*)pItem)->IsHarvested();
+			CROP_TYPE eCropType = ((Crop*)pItem)->GetCropType();
+
+			int iEnergy = ((Crop*)pItem)->GetEnergy();
+			int iHP = ((Crop*)pItem)->GetHP();
+
+			if (bHarvest &&( iEnergy != 0 || iHP != 0))
+			{
+				m_pAnimation->SetCurrentClip("Eat");
+				m_eAction = PA_EAT;
+
+				AddEnergy(iEnergy);
+				AddHP(iHP);
+
+				UIInventory* pInventory =GET_SINGLE(ObjManager)->GetInven();
+
+				if(pInventory)
+				pInventory->DeleteItem();
+
+				SAFE_RELEASE(pInventory);
+			}
+		}
+	}
+
+	pInventory = GET_SINGLE(ObjManager)->GetInven();
+
+	if (pInventory)
+	{
+		if (KEYDOWN("TileSub"))		//	1번 키
+			pInventory->SetCursor(0);
+
+		if (KEYDOWN("TileAdd"))		//	2번 키
+			pInventory->SetCursor(1);
+
+		if (KEYDOWN("TileSetChange"))		//	3번 키
+			pInventory->SetCursor(2);
+
+		if (KEYDOWN("4"))
+			pInventory->SetCursor(3);
+
+		if (KEYDOWN("5"))
+			pInventory->SetCursor(4);
+
+		if (KEYDOWN("6"))
+			pInventory->SetCursor(5);
+
+		if (KEYDOWN("7"))
+			pInventory->SetCursor(6);
+
+		if (KEYDOWN("8"))
+			pInventory->SetCursor(7);
+
+		if (KEYDOWN("9"))
+			pInventory->SetCursor(8);
+
+		if (KEYDOWN("10"))
+			pInventory->SetCursor(9);
+
+		if (KEYDOWN("11"))
+			pInventory->SetCursor(10);
+
+		if (KEYDOWN("12"))
+			pInventory->SetCursor(11);
+
+		SAFE_RELEASE(pInventory);
+	}
+
+#ifdef _DEBUG
+	if (KEYPRESS("TimeFaster"))
+	{
+		float fScale = GET_SINGLE(Timer)->GetTimeScale();
+
+		GET_SINGLE(Timer)->SetTimeScale(fScale + 0.1f);
+	}
+
+	else if (KEYPRESS("TimeSlower"))
+	{
+		float fScale = GET_SINGLE(Timer)->GetTimeScale();
+
+		if (fScale > 0.1f)
+			GET_SINGLE(Timer)->SetTimeScale(fScale - 0.1f);
+	}
+
+	else if (KEYPRESS("TimeOrigin"))
+	{
+		GET_SINGLE(Timer)->SetTimeScale(1.f);
+	}
+#endif
+}
+
+int Player::Update(float fDeltaTime)
+{
+	FightObj::Update(fDeltaTime);
+
+	if (m_bAttack && m_pAnimation->GetMotionEnd())
+		m_bAttack = false;
+
+
+	if (m_pAnimation->GetMotionEnd())
+	{
+		Collider* pCol = GetCollider("attack");
+		pCol->SetEnable(false);
+		SAFE_RELEASE(pCol);
+	}
+
+	UIInventory* pInven = GET_SINGLE(ObjManager)->GetInven();
+
+	Item* pItem = nullptr;
+
+	if(pInven)
+	pItem = pInven->GetItem();
+
+	SAFE_RELEASE(pInven);
+
+	ITEM_TYPE eType = IT_NONE;
+
+	if (pItem)
+		eType = pItem->GetType();
+
+	if (m_eAction == PA_IDLE || (m_eAction == PA_ATTACK && m_pAnimation->GetMotionEnd())
+		|| (m_eAction == PA_EAT && m_pAnimation->GetMotionEnd()))
+	{
+		if (m_tMoveDir.x > 0.f)
+		{
+			if (eType == IT_SEED || eType == IT_CROP || eType == IT_ETC)
+				m_pAnimation->SetCurrentClip("LiftIdleRight");
+
+			else
+				m_pAnimation->SetCurrentClip("IdleRight");
+		}
+
+		else if (m_tMoveDir.x < 0.f)
+		{
+			if (eType == IT_SEED || eType == IT_CROP || eType == IT_ETC)
+				m_pAnimation->SetCurrentClip("LiftIdleLeft");
+
+			else
+				m_pAnimation->SetCurrentClip("IdleLeft");
+		}
+
+		else if (m_tMoveDir.y > 0.f)
+		{
+			if (eType == IT_SEED || eType == IT_CROP || eType == IT_ETC)
+				m_pAnimation->SetCurrentClip("LiftIdleDown");
+
+			else
+				m_pAnimation->SetCurrentClip("IdleDown");
+		}
+
+		else if (m_tMoveDir.y < 0.f)
+		{
+			if (eType == IT_SEED || eType == IT_CROP || eType == IT_ETC)
+				m_pAnimation->SetCurrentClip("LiftIdleUp");
+
+			else
+				m_pAnimation->SetCurrentClip("IdleUp");
+		}
+
+		m_eAction = PA_IDLE;
+	}
+
+	if (m_eAction == PA_WALK)
+		m_eAction = PA_IDLE;
+
+	return 0;
+}
+
+int Player::LateUpdate(float fDeltaTime)
+{
+	FightObj::LateUpdate(fDeltaTime);
+
+	m_bWalk = false;
+
+	return 0;
+}
+
+void Player::Collision(float fDeltaTime)
+{
+	FightObj::Collision(fDeltaTime);
+}
+
+void Player::Render(HDC hDC, float fDeltaTime)
+{
+	FightObj::Render(hDC,fDeltaTime);
+
+	POSITION	tCamPos = GET_SINGLE(Camera)->GetPos();
+
+	UIInventory* pInven = GET_SINGLE(ObjManager)->GetInven();
+
+	Item* pItem = nullptr;
+
+	if(pInven)
+		pItem = pInven->GetItem();
+
+	SAFE_RELEASE(pInven);
+
+	if (pItem)
+	{
+		ITEM_TYPE eType = pItem->GetType();
+
+		if (eType == IT_SEED || eType == IT_CROP || eType == IT_ETC)
+		{
+			Texture* pTexture = pItem->GetTexture();
+
+			if (pTexture)
+			{
+				POSITION tSize = pItem->GetSize();
+				POSITION tOffSet = pItem->GetImageOffset();
+				POSITION tPos = m_tPos - m_tSize * m_tPivot - tCamPos;
+
+				tPos.y -= tSize.y *0.5f;
+
+				TransparentBlt(hDC, (int)tPos.x, (int)tPos.y, (int)tSize.x, (int)tSize.y, pTexture->GetDC(),
+					(int)tOffSet.x, (int)tOffSet.y, (int)tSize.x, (int)tSize.y, pTexture->GetColorKey());
+
+				SAFE_RELEASE(pTexture);
+			}
+		}
+	}
+
+	Stage* pStage = ((InGameScene*)GET_SINGLE(SceneManager)->GetScene())->GetStage();
+
+	int iIndex = pStage->GetTileIndex(m_tPos);
+
+	if (iIndex == -1)
+		return;
+
+	Tile* pTile = pStage->GetTile(iIndex);
+
+	TILE_OPTION eOption = TO_NONE;
+
+	if(pTile)
+		eOption = pTile->GetTileOption();
+
+	POSITION	tPos = m_tPos - m_tSize * m_tPivot;
+	tPos -= tCamPos;
+
+#ifdef _DEBUG
+	if (KEYPRESS("Debug"))
+	{
+		wchar_t strHP[32] = {};
+		wsprintf(strHP, L"PosX : %d", (int)(m_tPos.x));
+		TextOut(hDC, (int)tPos.x + 100, (int)tPos.y - 40, strHP, lstrlen(strHP));
+		wsprintf(strHP, L"PosY : %d", (int)(m_tPos.y));
+		TextOut(hDC, (int)tPos.x + 100, (int)tPos.y - 60, strHP, lstrlen(strHP));
+		if (eOption == TO_NONE)
+			TextOut(hDC, (int)tPos.x, (int)tPos.y - 20, TEXT("move"), lstrlen(TEXT("move")));
+		if (eOption == TO_NOMOVE)
+			TextOut(hDC, (int)tPos.x, (int)tPos.y - 20, TEXT("Nomove"), lstrlen(TEXT("Nomove")));
+		wsprintf(strHP, L"Coll : %d", (int)m_bColl);
+		TextOut(hDC, (int)tPos.x + 180, (int)tPos.y - 80, strHP, lstrlen(strHP));
+		wsprintf(strHP, L"HP : %d", m_iHP);
+		TextOut(hDC, (int)tPos.x + 100, (int)tPos.y - 100, strHP, lstrlen(strHP));
+		wsprintf(strHP, L"E : %d", m_iEnergy);
+		TextOut(hDC, (int)tPos.x + 100, (int)tPos.y - 120, strHP, lstrlen(strHP));
+	}
+#endif
+}
+
+Player * Player::Clone()
+{
+	return new Player(*this);
+}
+
+
+void Player::Hit(Collider * pSrc, Collider * pDest, float fDeltaTime)
+{
+	string strDest = pDest->GetTag();
+
+	if (strDest == "TreeBody" || strDest == "BuildingBody")
+	{
+		m_bColl = true;
+	}
+
+	else if (strDest == "MinionBody" || strDest == "SlimeBody" ||
+		strDest == "BugBody" )
+	{
+		Obj* pObj = pDest->GetObj();
+
+		POSITION tPos = pObj->GetPos();
+
+		Hitted(((FightObj*)pObj)->GetAttack(), tPos);
+	}
+
+	if (strDest == "RockCrabBody")
+	{
+		Obj* pObj = pDest->GetObj();
+
+		bool bAwake = ((RockCrab*)pObj)->GetAwake();
+
+		if (bAwake)
+		{
+			POSITION tPos = pObj->GetPos();
+
+			Hitted(((FightObj*)pObj)->GetAttack(), tPos);
+		}
+	}
+}
+
+void Player::HitStay(Collider * pSrc, Collider * pDest, float fDeltaTime)
+{
+	string strDest = pDest->GetTag();
+	if (strDest == "StageColl")
+	{
+		ClearGravity();
+		JumpEnd();
+		m_tPos.y = pSrc->GetHitPoint().y - m_tPivot.y * m_tSize.y;
+	}
+
+	else if (strDest == "TreeBody" || strDest == "BuildingBody")
+	{
+		m_bColl = true;
+	}
+}
+
+void Player::HitLeave(Collider* pSrc, Collider* pDest, float fDeltaTime)
+{
+	string strDest = pDest->GetTag();
+	if (strDest == "TreeBody" || strDest == "BuildingBody")
+	{
+		m_bColl = false;
+	}
+}
+
+void Player::Fire()
+{
+}
+
+void Player::SetBarLayer(Layer* pLayer)
+{
+	m_pHPBar->SetScene(pLayer->GetScene());
+	m_pHPBar->SetLayer(pLayer);
+
+	m_pEnergyBar->SetScene(pLayer->GetScene());
+	m_pEnergyBar->SetLayer(pLayer);
+}
+
+void Player::AddObjectToLayer(Layer* pLayer)
+{
+	if (m_pHPBar)
+		pLayer->AddObject(m_pHPBar);
+
+	if (m_pEnergyBar)
+		pLayer->AddObject(m_pEnergyBar);
+}

@@ -1,0 +1,27 @@
+#pragma once
+#include "FightObj.h"
+class Horse :
+	public FightObj
+{
+private:
+	friend class Obj;
+	friend class Scene;
+
+private:
+	Horse();
+	Horse(const Horse& horse);
+	virtual ~Horse();
+
+public:
+	virtual bool Init();
+	virtual int Update(float fDeltaTime);
+	virtual int LateUpdate(float fDeltaTime);
+	virtual void Collision(float fDeltaTime);
+	virtual void Render(HDC hDC, float fDeltaTime);
+	virtual Horse* Clone();
+
+public:
+	void ColEnter(class Collider* pSrc, class Collider* pDest, float fTime);
+	void ColStay(class Collider* pSrc, class Collider* pDest, float fTime);
+};
+

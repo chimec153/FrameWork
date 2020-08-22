@@ -1,0 +1,97 @@
+#include "Chicken.h"
+#include "../Animation/Animation.h"
+
+Chicken::Chicken()	:
+	m_iDay(0),
+	m_bBaby(true)
+{
+}
+
+Chicken::Chicken(const Chicken& chicken)	:
+	FightObj(chicken)
+{
+	m_iDay = chicken.m_iDay;
+	m_bBaby = chicken.m_bBaby;
+}
+
+Chicken::~Chicken()
+{
+}
+
+bool Chicken::Init()
+{
+	SetSize(32.f, 32.f);
+	SetPivot(0.5f, 0.5f);
+	SetSpeed(50.f);
+
+	Animation* pAni = CreateAnimation("ChickenAni");
+
+	pAni->LoadFromPath("Cow.sac");
+/*
+	pAni->AddClip("ChickenIdleDown", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 0, 1, 1,
+		1.f, "Chicken(white)", TEXT("Animals\\Chicken(White).bmp"));
+	pAni->AddClip("ChickenIdleRight", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 1, 1, 1,
+		1.f, "Chicken(white)", TEXT("Animals\\Chicken(White).bmp"));
+	pAni->AddClip("ChickenIdleUp", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 2, 1, 1,
+		1.f, "Chicken(white)", TEXT("Animals\\Chicken(White).bmp"));
+	pAni->AddClip("ChickenIdleLeft", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 3, 1, 1,
+		1.f, "Chicken(white)", TEXT("Animals\\Chicken(White).bmp"));
+
+	pAni->AddClip("ChickIdleDown", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 0, 1, 1,
+		1.f, "Chick(white)", TEXT("Animals\\Chick(white).bmp"));
+	pAni->AddClip("ChickenBabyIdleRight", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 1, 1, 1,
+		1.f, "Chick(white)", TEXT("Animals\\Chick(white).bmp"));
+	pAni->AddClip("ChickenBabyIdleUp", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 2, 1, 1,
+		1.f, "Chick(white)", TEXT("Animals\\Chick(white).bmp"));
+	pAni->AddClip("ChickenBabyIdleLeft", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 3, 1, 1,
+		1.f, "Chick(white)", TEXT("Animals\\Chick(white).bmp"));
+
+	pAni->AddClip("ChickenWalkDown", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 0, 3, 1,
+		1.f, "Chicken(white)", TEXT("Animals\\Chicken(White).bmp"));
+	pAni->AddClip("ChickenWalkRight", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 1, 3, 1,
+		1.f, "Chicken(white)", TEXT("Animals\\Chicken(White).bmp"));
+	pAni->AddClip("ChickenWalkUp", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 2, 3, 1,
+		1.f, "Chicken(white)", TEXT("Animals\\Chicken(White).bmp"));
+	pAni->AddClip("ChickenWalkLeft", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 3, 3, 1,
+		1.f, "Chicken(white)", TEXT("Animals\\Chicken(White).bmp"));
+
+	pAni->AddClip("ChickenBabyWalkDown", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 0, 3, 1,
+		1.f, "Chick(white)", TEXT("Animals\\Chick(white).bmp"));
+	pAni->AddClip("ChickenBabyWalkRight", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 1, 3, 1,
+		1.f, "Chick(white)", TEXT("Animals\\Chick(white).bmp"));
+	pAni->AddClip("ChickenBabyWalkUp", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 2, 3, 1,
+		1.f, "Chick(white)", TEXT("Animals\\Chick(white).bmp"));
+	pAni->AddClip("ChickenBabyWalkLeft", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 3, 3, 1,
+		1.f, "Chick(white)", TEXT("Animals\\Chick(white).bmp"));*/
+
+	SAFE_RELEASE(pAni);
+
+	return true;
+}
+
+int Chicken::Update(float fDeltaTime)
+{
+	FightObj::Update(fDeltaTime);
+	return 0;
+}
+
+int Chicken::LateUpdate(float fDeltaTime)
+{
+	FightObj::LateUpdate(fDeltaTime);
+	return 0;
+}
+
+void Chicken::Collision(float fDeltaTime)
+{
+	FightObj::Collision(fDeltaTime);
+}
+
+void Chicken::Render(HDC hDC, float fDeltaTime)
+{
+	FightObj::Render(hDC, fDeltaTime);
+}
+
+Chicken* Chicken::Clone()
+{
+	return new Chicken(*this);
+}

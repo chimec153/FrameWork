@@ -2,6 +2,7 @@
 #include "../Core.h"
 #include "../Collider/ColliderPoint.h"
 #include "../Core/Camera.h"
+#include "../Core/Input.h"
 
 Mouse::Mouse()
 {
@@ -75,6 +76,14 @@ void Mouse::Render(HDC hDC, float fDeltaTime)
 {
 	UI::Render(hDC, fDeltaTime);
 
+	if (KEYDOWN("Debug"))
+	{
+		TCHAR strScene[32] = {};
+
+		swprintf_s(strScene, TEXT("Scene: %lld"), (long long)m_pScene);
+
+		TextOut(hDC, (int)m_tPos.x, (int)m_tPos.y, strScene, lstrlen(strScene));
+	}
 }
 
 Mouse * Mouse::Clone()

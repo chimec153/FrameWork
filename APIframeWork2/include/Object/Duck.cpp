@@ -1,0 +1,73 @@
+#include "Duck.h"
+#include "../Animation/Animation.h"
+
+Duck::Duck()
+{
+}
+
+Duck::Duck(const Duck& duck)	:
+	FightObj(duck)
+{
+}
+
+Duck::~Duck()
+{
+}
+
+bool Duck::Init()
+{
+	SetSize(32.f, 32.f);
+	SetPivot(0.5f, 0.5f);
+	SetSpeed(50.f);
+
+	Animation* pAni = CreateAnimation("DuckAni");
+
+	pAni->AddClip("DuckIdleDown", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 0, 1, 1,
+		1.f,0, "Duck", TEXT("Animals\\Duck.bmp"));
+	pAni->AddClip("DuckIdleRight", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 1, 1, 1,
+		1.f,0, "Duck", TEXT("Animals\\Duck.bmp"));
+	pAni->AddClip("DuckIdleUp", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 2, 1, 1,
+		1.f,0, "Duck", TEXT("Animals\\Duck.bmp"));
+	pAni->AddClip("DuckIdleLeft", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 3, 1, 1,
+		1.f,0, "Duck", TEXT("Animals\\Duck.bmp"));
+
+	pAni->AddClip("DuckWalkDown", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 0, 3, 1,
+		1.f,0, "Duck", TEXT("Animals\\Duck.bmp"));
+	pAni->AddClip("DuckWalkRight", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 1, 3, 1,
+		1.f,0, "Duck", TEXT("Animals\\Duck.bmp"));
+	pAni->AddClip("DuckWalkUp", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 2, 3, 1,
+		1.f,0, "Duck", TEXT("Animals\\Duck.bmp"));
+	pAni->AddClip("DuckWalkLeft", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 3, 3, 1,
+		1.f,0, "Duck", TEXT("Animals\\Duck.bmp"));
+
+	SAFE_RELEASE(pAni);
+
+	return true;
+}
+
+int Duck::Update(float fDeltaTime)
+{
+	FightObj::Update(fDeltaTime);
+	return 0;
+}
+
+int Duck::LateUpdate(float fDeltaTime)
+{
+	FightObj::LateUpdate(fDeltaTime);
+	return 0;
+}
+
+void Duck::Collision(float fDeltaTime)
+{
+	FightObj::Collision(fDeltaTime);
+}
+
+void Duck::Render(HDC hDC, float fDeltaTime)
+{
+	FightObj::Render(hDC, fDeltaTime);
+}
+
+Duck* Duck::Clone()
+{
+	return new Duck(*this);
+}

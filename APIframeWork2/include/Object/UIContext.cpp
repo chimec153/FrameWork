@@ -6,6 +6,7 @@
 #include "../Scene/Scene.h"
 #include "UIPanel.h"
 #include "../Core/Input.h"
+#include "UIShop.h"
 
 UIContext::UIContext() :
 	m_pItem(nullptr),
@@ -53,6 +54,7 @@ void UIContext::SetIndex(int iIndex)
 	PITEMINFO pInfo = GET_SINGLE(ResourcesManager)->FindItemInfo(iIndex);
 
 	m_pIcon = Obj::CreateObj<UIPanel>("MoneyIcon", pLayer);
+
 	m_pIcon->SetTexture("Mouse");
 	m_pIcon->SetImageOffset(386.f, 746.f);
 	m_pIcon->SetEnable(false);
@@ -60,7 +62,13 @@ void UIContext::SetIndex(int iIndex)
 	m_pIcon->SetSize(18.f, 18.f);
 
 	m_pItem = Obj::CreateObj<UIPanel>("ItemPanel", pLayer);
-	m_pItem->SetTexture("items");
+
+	if (iIndex < 36)
+		m_pItem->SetTexture("items");
+
+	else
+		m_pItem->SetTexture("weapon", TEXT("Item\\weapons.bmp"));
+
 	m_pItem->SetImageOffset(pInfo->tTileOffset.x * 32.f, pInfo->tTileOffset.y * 32.f);
 	m_pItem->SetEnable(false);
 	m_pItem->SetSize(32.f, 32.f);
@@ -87,20 +95,25 @@ void UIContext::SetIndex(int iIndex)
 
 	int iDiv = 1;
 
+	size_t iPriceSize = pInfo->vecPrice.size();
+
 	for (int i = 0; i < iSize; ++i)
 	{
-		if (pInfo->vecPrice[0] >= iDiv)
-			pNumber[iSize - i - 1] = (pInfo->vecPrice[0] % (iDiv * 10)) / iDiv + '0';
-
-		else
+		if (iPriceSize > 0)
 		{
-			memmove(pNumber, pNumber + iSize - i, i);
-			memset(pNumber + i, 0, iSize - i);
+			if (pInfo->vecPrice[0] >= iDiv)
+				pNumber[iSize - i - 1] = (pInfo->vecPrice[0] % (iDiv * 10)) / iDiv + '0';
 
-			break;
+			else
+			{
+				memmove(pNumber, pNumber + iSize - i, i);
+				memset(pNumber + i, 0, iSize - i);
+
+				break;
+			}
+
+			iDiv *= 10;
 		}
-
-		iDiv *= 10;
 	}
 
 	MultiByteToWideChar(CP_ACP, NULL, pNumber, -1, strNumber, (int)strlen(pNumber));
@@ -189,6 +202,15 @@ void UIContext::Render(HDC hDC, float fDeltaTime)
 
 	if (m_pPrice)
 		m_pPrice->Render(hDC, fDeltaTime);
+
+	if (KEYDOWN("Debug"))
+	{
+		TCHAR strScene[32] = {};
+
+		swprintf_s(strScene, TEXT("Scene: %lld"), (long long)m_pScene);
+
+		TextOut(hDC, (int)m_tPos.x, (int)m_tPos.y, strScene, lstrlen(strScene));
+	}
 }
 
 UIContext* UIContext::Clone()
@@ -203,7 +225,7 @@ void UIContext::ColEnter(Collider* pSrc, Collider* pDest, float fTime)
 		POSITION tPos = pDest->GetObj()->GetPos();
 
 		if (m_pInven)
-			m_pInven->InfoPanelOn(tPos);
+			m_pInven->InfoPanelOn(tPos, m_iIndex);
 
 
 	}
@@ -220,7 +242,7 @@ void UIContext::ColStay(Collider* pSrc, Collider* pDest, float fTime)
 
 		if (KEYDOWN("MouseLButton"))
 		{
-			m_pInven->BuyItem(m_iIndex);
+			m_pInven->GetShop()->BuyItem(m_iIndex);
 		}
 	}
 }

@@ -96,10 +96,6 @@ void CBuilding::Render(HDC hDC, float fDeltaTime)
 		}
 	}
 
-	if (KEYPRESS("Debug"))
-	{
-		Rectangle(hDC, (int)(m_tPos.x - 2.f), (int)(m_tPos.y - 2.f), (int)(m_tPos.x + 2.f), (int)(m_tPos.y + 2.f));
-	}
 }
 
 CBuilding* CBuilding::Clone()

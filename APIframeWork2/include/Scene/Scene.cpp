@@ -37,6 +37,7 @@
 #include "../Object/Text.h"
 #include "../Object/Stage.h"
 #include "../Object/ObjManager.h"
+#include "../Scene/SceneCollision.h"
 
 //unordered_map<string, Obj*> Scene::m_mapPrototype[SC_END];
 
@@ -47,10 +48,15 @@ Scene::Scene()	:
 {
 	Layer* pLayer = CreateLayer("UI", INT_MAX);
 	pLayer = CreateLayer("HUD", INT_MAX - 1);
+	pLayer = CreateLayer("UTHUD", INT_MAX - 2);
 	pLayer = CreateLayer("Default", 2);
 	pLayer = CreateLayer("Back", 1);
 	pLayer = CreateLayer("Stage");
 	m_eSceneType = SC_CURRENT;
+
+	m_pCollision = new SceneCollision;
+
+	m_pCollision->CreateCollisionSection(10, 10, POSITION(500.f, 500.f));
 }
 
 Scene::~Scene()
@@ -60,6 +66,7 @@ Scene::~Scene()
 	SAFE_RELEASE(m_pPadeEffect);
 	Safe_Delete_VecList(m_vecstrProto);
 	SAFE_RELEASE(m_pStage);
+	SAFE_DELETE(m_pCollision);
 }
 
 void Scene::ErasePrototype(const string & strTag)
@@ -116,12 +123,13 @@ bool Scene::Init()
 
 	Layer* pLayer = FindLayer("Default");
 	Layer* pHUDLayer = FindLayer("HUD");
+	Layer* pUILayer = FindLayer("UI");
 
 	GET_SINGLE(ObjManager)->AddObject(pLayer);
 
 	UIClockHand* pClockHand = (UIClockHand*)GET_SINGLE(ObjManager)->GetClockHand();
 
-	pClockHand->AddNightPanelToLayer(pHUDLayer);
+	pClockHand->AddNightPanelToLayer(pUILayer);
 
 	Player* pPlayer = (Player*)GET_SINGLE(ObjManager)->GetPlayer();
 
@@ -131,9 +139,7 @@ bool Scene::Init()
 
 	GET_SINGLE(ObjManager)->AddInven(pHUDLayer);
 
-	Layer* pUILayer = FindLayer("UI");
-
-	pPlayer->AddObjectToLayer(pUILayer);
+	pPlayer->AddObjectToLayer(pHUDLayer);
 
 	m_pPadeEffect = Obj::CreateObj<PadeEffect>("Pade", pUILayer);
 
@@ -238,6 +244,8 @@ void Scene::Collision(float fDeltaTime)
 		else
 			++iter;
 	}
+
+	m_pCollision->Collision(fDeltaTime);
 }
 
 void Scene::Render(HDC hDC, float fDeltaTime)
@@ -281,9 +289,9 @@ void Scene::ChangePrototype()
 
 void Scene::CreateUI(class Obj* pObj)
 {
-	Layer* pHUDLayer = FindLayer("HUD");
+	Layer* pUTHUDLayer = FindLayer("UTHUD");
 
-	UIPanel* pClockPanel = Obj::CreateObj<UIPanel>("ClockPanel", pHUDLayer);
+	UIPanel* pClockPanel = Obj::CreateObj<UIPanel>("ClockPanel", pUTHUDLayer);
 
 	pClockPanel->SetTexture("Mouse");
 	pClockPanel->SetImageOffset(664.f, 864.f);
@@ -295,7 +303,7 @@ void Scene::CreateUI(class Obj* pObj)
 
 	SAFE_RELEASE(pClockPanel);
 
-	UIPanel* pBarPanel = Obj::CreateObj<UIPanel>("BarPanel", pHUDLayer);
+	UIPanel* pBarPanel = Obj::CreateObj<UIPanel>("BarPanel", pUTHUDLayer);
 
 	pBarPanel->SetTexture("Mouse");
 	pBarPanel->SetImageOffset(512.f, 816.f);
@@ -507,23 +515,23 @@ void Scene::CreateFarmEffect()
 
 	Animation* pAni = pEffect->CreateAnimation("HoeAni");
 
-	pEffect->AddAnimationClip("HoeDirt", AT_ATLAS, AO_ONCE_DESTROY, 0.6f, 10, 52, 0, 12, 8, 1, 1.f,
+	pEffect->AddAnimationClip("HoeDirt", AT_ATLAS, AO_ONCE_DESTROY, 0.6f, 10, 52, 0, 12, 8, 1, 1.f,0,
 		"FarmAni", TEXT("TileSheets\\animations.bmp"));
 	pEffect->SetAnimationClipColorKey("HoeDirt", 255, 255, 255);
 
-	pEffect->AddAnimationClip("WaterSplashing", AT_ATLAS, AO_ONCE_DESTROY, 0.6f, 10, 52, 0, 13, 10, 1, 1.f,
+	pEffect->AddAnimationClip("WaterSplashing", AT_ATLAS, AO_ONCE_DESTROY, 0.6f, 10, 52, 0, 13, 10, 1, 1.f,0,
 		"FarmAni", TEXT("TileSheets\\animations.bmp"));
 	pEffect->SetAnimationClipColorKey("WaterSplashing", 255, 255, 255);
 
-	pEffect->AddAnimationClip("HarvestEffect", AT_ATLAS, AO_ONCE_DESTROY, 0.6f, 10, 52, 0, 17, 7, 1, 1.f,
+	pEffect->AddAnimationClip("HarvestEffect", AT_ATLAS, AO_ONCE_DESTROY, 0.6f, 10, 52, 0, 17, 7, 1, 1.f,0,
 		"FarmAni", TEXT("TileSheets\\animations.bmp"));
 	pEffect->SetAnimationClipColorKey("HarvestEffect", 255, 255, 255);
 
-	pEffect->AddAnimationClip("RockEffect", AT_ATLAS, AO_ONCE_DESTROY, 0.6f, 10, 52, 0, 5, 8, 1, 1.f,
+	pEffect->AddAnimationClip("RockEffect", AT_ATLAS, AO_ONCE_DESTROY, 0.6f, 10, 52, 0, 5, 8, 1, 1.f,0,
 		"FarmAni", TEXT("TileSheets\\animations.bmp"));
 	pEffect->SetAnimationClipColorKey("RockEffect", 255, 255, 255);
 
-	pEffect->AddAnimationClip("Rain", AT_ATLAS, AO_ONCE_DESTROY, 0.5f, 4, 1, 0, 0, 4, 1, 1.f,
+	pEffect->AddAnimationClip("Rain", AT_ATLAS, AO_ONCE_DESTROY, 0.5f, 4, 1, 0, 0, 4, 1, 1.f,0,
 		"rain", TEXT("TileSheets\\rain.bmp"));
 	pEffect->SetAnimationClipColorKey("Rain", 255, 255, 255);
 
@@ -622,115 +630,91 @@ void Scene::CreateProtoTypes()
 	{
 		PITEMINFO pInfo = GET_SINGLE(ResourcesManager)->FindItemInfo(i);
 
-		Seed* pSeed = CreateProtoType<Seed>(pInfo->strName.c_str());
+		ITEM_TYPE eItemType = pInfo->eItemType;
 
-		pSeed->SetImageOffset(pSeed->GetSize() * pInfo->tTileOffset);
+		if (eItemType == IT_SEED)
+		{
+			Seed* pSeed = CreateProtoType<Seed>(pInfo->strName.c_str());
 
-		pSeed->SetCropType(pInfo->eCropType);
+			pSeed->SetImageOffset(pSeed->GetSize() * pInfo->tTileOffset);
 
-		pSeed->SetItemType(IT_SEED);
+			pSeed->SetCropType(pInfo->eCropType);
 
-		pSeed->SetIndex((int)(24 * pInfo->tTileOffset.y + pInfo->tTileOffset.x));
+			pSeed->SetItemType(eItemType);
 
-		pSeed->SetSellPrice(pInfo->iSeedSellPrice);
+			pSeed->SetIndex((int)(24 * pInfo->tTileOffset.y + pInfo->tTileOffset.x));
 
-		SAFE_RELEASE(pSeed);
+			pSeed->SetSellPrice(pInfo->iSeedSellPrice);
 
-		Crop* pCrop = CreateProtoType<Crop>(pInfo->strCropName.c_str());
+			pSeed->SetFileIndex(i);
 
-		pCrop->SetItemType(IT_CROP);
+			SAFE_RELEASE(pSeed);
 
-		pCrop->SetImageOffset(pCrop->GetSize() * pInfo->tCropOffset);
+			Crop* pCrop = CreateProtoType<Crop>(pInfo->strCropName.c_str());
 
-		pCrop->SetCropType(pInfo->eCropType);
+			pCrop->SetItemType(IT_CROP);
 
-		pCrop->SetMaxStage(pInfo->iMaxStage);
+			pCrop->SetImageOffset(pCrop->GetSize() * pInfo->tCropOffset);
 
-		pCrop->SetHP(pInfo->iHPRecovery);
+			pCrop->SetCropType(pInfo->eCropType);
 
-		pCrop->SetEnergy(pInfo->iEnergyRecovery);
+			pCrop->SetMaxStage(pInfo->iMaxStage);
 
-		pCrop->SetRegrowthDay(pInfo->iRegrowthDay);
+			pCrop->SetHP(pInfo->iHPRecovery);
 
-		for (int i = 0; i < pInfo->iMaxStage - 1; ++i)
-			pCrop->AddMaxDay(pInfo->vecMaxDay[i]);
+			pCrop->SetEnergy(pInfo->iEnergyRecovery);
 
-		pCrop->SetIndex((int)(24 * pInfo->tHarvestOffset.y + pInfo->tHarvestOffset.x));
+			pCrop->SetRegrowthDay(pInfo->iRegrowthDay);
 
-		pCrop->SetSellPrice(pInfo->iSellPrice);
+			for (int i = 0; i < pInfo->iMaxStage - 1; ++i)
+				pCrop->AddMaxDay(pInfo->vecMaxDay[i]);
 
-		SAFE_RELEASE(pCrop);
+			pCrop->SetIndex((int)(24 * pInfo->tHarvestOffset.y + pInfo->tHarvestOffset.x));
+
+			pCrop->SetSellPrice(pInfo->iSellPrice);
+
+			pCrop->SetFileIndex(i);
+
+			SAFE_RELEASE(pCrop);
+		}
+
+		else if (eItemType == IT_TOOL)
+		{
+			Tool* pTool = CreateProtoType<Tool>(pInfo->strName.c_str());
+
+			pTool->SetToolType(pInfo->eToolType);
+
+			if (pInfo->eToolType == TOOL_SWORD)
+			{
+				pTool->SetAttack(pInfo->iAttack);
+
+				pTool->SetTexture("weapon", TEXT("Item\\weapons.bmp"));
+			}
+
+			pTool->SetImageOffset(pTool->GetSize()* pInfo->tTileOffset);
+
+			pTool->SetItemType(eItemType);
+
+			pTool->SetSellPrice(pInfo->iSellPrice);
+
+			pTool->SetFileIndex(i);
+
+			SAFE_RELEASE(pTool);
+		}
+
+		else if (eItemType == IT_ETC)
+		{
+			Etc* pEtc = CreateProtoType<Etc>(pInfo->strName.c_str());
+
+			pEtc->SetImageOffset(pEtc->GetSize() * pInfo->tTileOffset);
+
+			pEtc->SetIndex((int)(24 * pInfo->tTileOffset.y + pInfo->tTileOffset.x));
+
+			pEtc->SetFileIndex(i);
+
+			SAFE_RELEASE(pEtc);
+		}
 	}
-
-	Etc* pWood = CreateProtoType<Etc>("Wood");
-
-	pWood->SetImageOffset(pWood->GetSize() * POSITION(4.f, 16.f));
-	pWood->SetIndex(388);
-
-	SAFE_RELEASE(pWood);
-
-	Etc* pShingle = CreateProtoType<Etc>("Shingle");
-
-	pShingle->SetImageOffset(pShingle->GetSize() * POSITION(6.f, 16.f));
-	pShingle->SetIndex(390);
-
-	SAFE_RELEASE(pShingle);
-
-	Etc* pEmerald = CreateProtoType<Etc>("Emerald");
-
-	pEmerald->SetImageOffset(pEmerald->GetSize() * POSITION(12.f, 2.f));
-	pEmerald->SetIndex(60);
-
-	SAFE_RELEASE(pEmerald);
-
-	Etc* pAquamarine = CreateProtoType<Etc>("Aquamarine");
-
-	pAquamarine->SetImageOffset(pAquamarine->GetSize() * POSITION(14.f, 2.f));
-	pAquamarine->SetIndex(62);
-
-	SAFE_RELEASE(pAquamarine);
-
-	Etc* pRuby = CreateProtoType<Etc>("Ruby");
-
-	pRuby->SetImageOffset(pRuby->GetSize() * POSITION(16.f, 2.f));
-	pRuby->SetIndex(64);
-
-	SAFE_RELEASE(pRuby);
-
-	Etc* pAmethyst = CreateProtoType<Etc>("Amethyst");
-
-	pAmethyst->SetImageOffset(pAmethyst->GetSize() * POSITION(18.f, 2.f));
-	pAmethyst->SetIndex(66);
-
-	SAFE_RELEASE(pAmethyst);
-
-	Etc* pTopaz = CreateProtoType<Etc>("Topaz");
-
-	pTopaz->SetImageOffset(pTopaz->GetSize() * POSITION(20.f, 2.f));
-	pTopaz->SetIndex(68);
-
-	SAFE_RELEASE(pTopaz);
-
-	Etc* pJade = CreateProtoType<Etc>("Jade");
-
-	pJade->SetImageOffset(pJade->GetSize()* POSITION(22.f, 2.f));
-	pJade->SetIndex(70);
-
-	SAFE_RELEASE(pJade);
-
-	Etc* pDiamond = CreateProtoType<Etc>("Diamond");
-
-	pDiamond->SetImageOffset(pDiamond->GetSize()* POSITION(0.f, 3.f));
-	pDiamond->SetIndex(72);
-
-	SAFE_RELEASE(pDiamond);
-
-	Etc* pPrismaticShard = CreateProtoType<Etc>("PrismaticShard");
-
-	pPrismaticShard->SetImageOffset(pPrismaticShard->GetSize()* POSITION(2.f, 3.f));
-	pPrismaticShard->SetIndex(74);
-
-	SAFE_RELEASE(pPrismaticShard);
 }
 
 Obj* Scene::CreatePlayer()

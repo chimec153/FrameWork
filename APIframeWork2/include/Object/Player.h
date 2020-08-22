@@ -21,6 +21,12 @@ private:
 	bool						m_bWalk;
 	PLAYER_ACTION				m_eAction;
 	int							m_iGold;
+	unsigned int				m_iBuildings;
+	class Arm*					m_pArm;
+	class Pants*				m_pPants;
+	class Hair*					m_pHair;
+	class Shirt*				m_pShirt;
+	class Weapon*				m_pWeapon;
 
 public:
 	void SetHPBar(class UIBar* pBar)
@@ -45,6 +51,31 @@ public:
 
 	virtual void SetEnergy(int iEnergy);
 	virtual void SetHP(int iHP);
+
+	void Build(BUILDING_TYPE eType)
+	{
+		m_iBuildings |= eType;
+	}
+
+	void BuildComplete(BUILDING_TYPE eType)
+	{
+		m_iBuildings ^= eType;
+	}
+
+	bool GetBuilding(BUILDING_TYPE eType)
+	{
+		return m_iBuildings & eType;
+	}
+
+	void SetArm(class Arm* pArm);
+	void SetPants(class Pants* pPants);
+	void SetHair(class Hair* pHair);
+	void SetShirt(class Shirt* pShirt);
+
+	PLAYER_ACTION GetPlayerAction()	const
+	{
+		return m_eAction;
+	}
 
 public:
 	virtual bool Init();
