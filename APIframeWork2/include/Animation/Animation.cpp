@@ -195,17 +195,24 @@ void Animation::ChangeClip(const string & strClip)
 		m_pCurClip->fAnimationTime = 0.f;
 		m_pCurClip->fOptionTime = 0.f;
 	}
+
 	m_pCurClip = FindClip(strClip);
 
-	if (m_pCurClip->eType == AT_ATLAS)
+	if (m_pCurClip)
 	{
-		if(m_pObj)
-			m_pObj->SetTexture(m_pCurClip->vecTexture[0]);
+		if (m_pCurClip->eType == AT_ATLAS)
+		{
+			if (m_pObj)
+				m_pObj->SetTexture(m_pCurClip->vecTexture[0]);
+		}
+
+		else if (m_pCurClip->eType == AT_FRAME)
+			m_pObj->SetTexture(m_pCurClip->vecTexture[m_pCurClip->iFrameX]);
 	}
-
-	else if (m_pCurClip->eType == AT_FRAME)
-		m_pObj->SetTexture(m_pCurClip->vecTexture[m_pCurClip->iFrameX]);
-
+	else
+	{
+		int i = 10;
+	}
 }
 
 void Animation::ReturnClip()
@@ -248,9 +255,42 @@ void Animation::AddRenderPos(const string& strName, POSITION tRenderPos)
 	pClip->vecRenderPos.push_back(tRenderPos);
 }
 
-PANIMATIONCLIP Animation::FindClip(const string & strName)
+void Animation::AddFramePos(int ix, int iy)
 {
-	unordered_map<string, PANIMATIONCLIP>::iterator	iter = m_mapClip.find(strName);
+	auto iterClip = m_mapClip.begin();
+	auto iterClipEnd = m_mapClip.end();
+
+	for (; iterClip != iterClipEnd; ++iterClip)
+	{
+		int iSizeX = (int)((*iterClip).second->vecFrame[0].tEnd.x - (*iterClip).second->vecFrame[0].tStart.x);
+		int iSizeY = (int)((*iterClip).second->vecFrame[0].tEnd.y - (*iterClip).second->vecFrame[0].tStart.y);
+
+		size_t iSize = (*iterClip).second->vecFrame.size();
+
+		for (size_t i = 0; i < iSize; ++i)
+		{
+			(*iterClip).second->vecFrame[i].tStart.x += iSizeX * ix;
+			(*iterClip).second->vecFrame[i].tStart.y += iSizeY * iy;
+
+			(*iterClip).second->vecFrame[i].tEnd.x += iSizeX * ix;
+			(*iterClip).second->vecFrame[i].tEnd.y += iSizeY * iy;
+		}
+	}
+}
+
+FrameInfo Animation::GetFrame(const string& strName) const
+{
+	PANIMATIONCLIP pClip = FindClip(strName);
+
+	if (!pClip)
+		return FrameInfo();
+
+	return pClip->vecFrame[0];
+}
+
+PANIMATIONCLIP Animation::FindClip(const string & strName)	const
+{
+	unordered_map<string, PANIMATIONCLIP>::const_iterator	iter = m_mapClip.find(strName);
 
 	if (iter == m_mapClip.end())
 		return NULL;

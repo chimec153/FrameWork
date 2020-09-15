@@ -1,7 +1,7 @@
 #pragma once
-#include "FightObj.h"
+#include "Animal.h"
 class Sheep :
-	public FightObj
+	public Animal
 {
 private:
 	friend class Obj;
@@ -13,14 +13,10 @@ private:
 	virtual ~Sheep();
 
 private:
-	float		m_fTime;
 	int			m_iLevel;
 
 public:
-	void AddTime(float fTime)
-	{
-		m_fTime = fTime;
-	}
+
 
 public:
 	virtual bool Init();
@@ -29,5 +25,13 @@ public:
 	virtual void Collision(float fDeltaTime);
 	virtual void Render(HDC hDC, float fDeltaTime);
 	virtual Sheep* Clone();
+
+public:
+	virtual void ActionChange(ANIMAL_ACTION eAction);
+	virtual bool AddDay(int iDay);
+
+public:
+	void ColEnter(class Collider* pSrc, class Collider* pDest, float fTime);
+	void ColStay(class Collider* pSrc, class Collider* pDest, float fTime);
 };
 

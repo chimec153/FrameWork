@@ -6,6 +6,8 @@
 #include "../Sound/SoundManager.h"
 #include "../Object/NPC.h"
 #include "../Object/ObjManager.h"
+#include "../Core/Camera.h"
+#include "../Object/UIPanel.h"
 
 SceneShop::SceneShop()
 {
@@ -44,8 +46,24 @@ bool SceneShop::Init()
 	NPC* pNPC = Obj::CreateObj<NPC>("Harvey", pLayer);
 
 	pNPC->SetPos(32.f * 7.5f, 32.f * 4.5f);
+	pNPC->SetSpeed(0.f);
+	pNPC->SetAnimationCurrentClip("HarveyIdleDown");
 
 	SAFE_RELEASE(pNPC);
+
+	RESOLUTION tRS = GET_SINGLE(Camera)->GetClientRS();
+
+	Layer* pBackStageLayer = FindLayer("BackStage");
+
+	UIPanel* pBackStage = Obj::CreateObj<UIPanel>("backstage", pBackStageLayer);
+
+	pBackStage->SetTexture("back", TEXT("AnimationUI\\BackGround.bmp"));
+
+	pBackStage->SetSize((float)tRS.iW, (float)tRS.iH);
+
+	pBackStage->SetPos(0.f, 0.f);
+
+	SAFE_RELEASE(pBackStage);
 
 	return true;
 }

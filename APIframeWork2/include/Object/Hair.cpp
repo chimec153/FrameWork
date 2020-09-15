@@ -8,6 +8,8 @@
 Hair::Hair()	:
 	m_pPlayer(nullptr)
 {
+	//m_cAlpha = 255;
+	//m_bAlphaOn = true;
 }
 
 Hair::Hair(const Hair& hair)	:
@@ -38,7 +40,7 @@ int Hair::Update(float fTime)
 {
 	MoveObj::Update(fTime);
 
-	POSITION tAngle = m_pPlayer->GetAngle();
+	POSITION tAngle = GetAngle();
 
 	PLAYER_ACTION eAction = m_pPlayer->GetPlayerAction();
 
@@ -58,103 +60,130 @@ int Hair::Update(float fTime)
 
 	if (eAction == PA_WALK)
 	{
-			if (tAngle.x > 0.f)
-			{
-				SetAnimationDefaultClip("HairIdleRight");
-				SetAnimationCurrentClip("HairWalkRight");
-			}
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
+		{
+			SetAnimationDefaultClip("HairIdleRight");
+			SetAnimationCurrentClip("HairWalkRight");
+		}
 
-			else if (tAngle.x < 0.f)
-			{
-				SetAnimationDefaultClip("HairIdleLeft");
-				SetAnimationCurrentClip("HairWalkLeft");
-			}
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
+		{
+			SetAnimationDefaultClip("HairIdleLeft");
+			SetAnimationCurrentClip("HairWalkLeft");
+		}
 
-			else if (tAngle.y > 0.f)
-			{
-				SetAnimationDefaultClip("HairIdleDown");
-				SetAnimationCurrentClip("HairWalkDown");
-			}
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
+		{
+			SetAnimationDefaultClip("HairIdleUp");
+			SetAnimationCurrentClip("HairWalkUp");
+		}
 
-			else if (tAngle.y < 0.f)
-			{
-				SetAnimationDefaultClip("HairIdleUp");
-				SetAnimationCurrentClip("HairWalkUp");
-			}
+		else
+		{
+			SetAnimationDefaultClip("HairIdleDown");
+			SetAnimationCurrentClip("HairWalkDown");
+		}
 	}
 
 	else if (eAction == PA_IDLE)
 	{
-			if (tAngle.x > 0.f)
+			if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
 				SetAnimationCurrentClip("HairIdleRight");
 
-			else if (tAngle.x < 0.f)
+			else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
 				SetAnimationCurrentClip("HairIdleLeft");
 
-			else if (tAngle.y > 0.f)
-				SetAnimationCurrentClip("HairIdleDown");
-
-			else if (tAngle.y < 0.f)
+			else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
 				SetAnimationCurrentClip("HairIdleUp");
+
+			else
+				SetAnimationCurrentClip("HairIdleDown");
 	}
 
 	else if (eAction == PA_ATTACK || eAction == PA_FARM)
 	{
-		if (tAngle.x > 0.f)
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
 		{
 			SetAnimationDefaultClip("HairIdleRight");
 			SetAnimationCurrentClip("HairAttackRight");
 		}
 
-		else if (tAngle.x < 0.f)
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("HairIdleLeft");
 			SetAnimationCurrentClip("HairAttackLeft");
 		}
 
-		else if (tAngle.y > 0.f)
-		{
-			SetAnimationDefaultClip("HairIdleDown");
-			SetAnimationCurrentClip("HairAttackDown");
-		}
-
-		else if (tAngle.y < 0.f)
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("HairIdleUp");
 			SetAnimationCurrentClip("HairAttackUp");
+		}
+
+		else
+		{
+			SetAnimationDefaultClip("HairIdleDown");
+			SetAnimationCurrentClip("HairAttackDown");
 		}
 	}
 
 	else if (eAction == PA_WATER)
 	{
-		if (tAngle.x > 0.f)
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
 		{
 			SetAnimationDefaultClip("HairIdleRight");
 			SetAnimationCurrentClip("HairWaterRight");
 		}
 
-		else if (tAngle.x < 0.f)
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("HairIdleLeft");
 			SetAnimationCurrentClip("HairWaterLeft");
 		}
 
-		else if (tAngle.y > 0.f)
-		{
-			SetAnimationDefaultClip("HairIdleDown");
-			SetAnimationCurrentClip("HairWaterDown");
-		}
-
-		else if (tAngle.y < 0.f)
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("HairIdleUp");
 			SetAnimationCurrentClip("HairWaterUp");
+		}
+
+		else
+		{
+			SetAnimationDefaultClip("HairIdleDown");
+			SetAnimationCurrentClip("HairWaterDown");
 		}
 	}
 
 	else if (eAction == PA_EAT)
 	{
 		SetAnimationCurrentClip("HairEat");
+	}
+
+	else if (eAction == PA_RIDE)
+	{
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
+		{
+			SetAnimationDefaultClip("HairRideRight");
+			SetAnimationCurrentClip("HairRideRight");
+		}
+
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
+		{
+			SetAnimationDefaultClip("HairRideLeft");
+			SetAnimationCurrentClip("HairRideLeft");
+		}
+
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
+		{
+			SetAnimationDefaultClip("HairRideUp");
+			SetAnimationCurrentClip("HairRideUp");
+		}
+
+		else
+		{
+			SetAnimationDefaultClip("HairRideDown");
+			SetAnimationCurrentClip("HairRideDown");
+		}
 	}
 
 	return 0;

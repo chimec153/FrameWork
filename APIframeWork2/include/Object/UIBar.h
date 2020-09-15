@@ -18,6 +18,7 @@ private:
 	float		m_fValue;
 	POSITION	m_tOriginSize;
 	POSITION	m_tOriginPos;
+	bool		m_bHorizon;
 
 public:
 	void SetValue(float fValue)
@@ -30,11 +31,19 @@ public:
 		if (m_fValue < m_fMin)
 			m_fValue = m_fMin;
 
-		m_tSize.y = m_tOriginSize.y * (m_fValue - m_fMin) / (m_fMax - m_fMin);
+		if(!m_bHorizon)
+			m_tSize.y = m_tOriginSize.y * (m_fValue - m_fMin) / (m_fMax - m_fMin);
+
+		else
+			m_tSize.x = m_tOriginSize.x * (m_fValue - m_fMin) / (m_fMax - m_fMin);
 
 		POSITION tPos = m_tOriginPos;
-		
-		tPos.y += m_tOriginSize.y - m_tSize.y;
+
+		if (!m_bHorizon)
+			tPos.y += m_tOriginSize.y - m_tSize.y;
+
+		else
+			tPos.x += m_tOriginSize.x - m_tSize.x;
 
 		SetPos(tPos);
 	}
@@ -42,6 +51,11 @@ public:
 	void SetMax(float fMax)
 	{
 		m_fMax = fMax;
+	}
+
+	void SetHorizon(bool bHorizon)
+	{
+		m_bHorizon = bHorizon;
 	}
 
 public:

@@ -1,12 +1,17 @@
 #include "Duck.h"
 #include "../Animation/Animation.h"
+#include "Egg.h"
+#include "ObjManager.h"
+#include "UIClockHand.h"
 
 Duck::Duck()
 {
+	m_eAnimalType = ANIMAL_DUCK;
+	m_bTileEffect = true;
 }
 
 Duck::Duck(const Duck& duck)	:
-	FightObj(duck)
+	Animal(duck)
 {
 }
 
@@ -17,57 +22,139 @@ Duck::~Duck()
 bool Duck::Init()
 {
 	SetSize(32.f, 32.f);
-	SetPivot(0.5f, 0.5f);
+	SetPivot(0.5f, 1.f);
 	SetSpeed(50.f);
 
 	Animation* pAni = CreateAnimation("DuckAni");
 
-	pAni->AddClip("DuckIdleDown", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 0, 1, 1,
-		1.f,0, "Duck", TEXT("Animals\\Duck.bmp"));
-	pAni->AddClip("DuckIdleRight", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 1, 1, 1,
-		1.f,0, "Duck", TEXT("Animals\\Duck.bmp"));
-	pAni->AddClip("DuckIdleUp", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 2, 1, 1,
-		1.f,0, "Duck", TEXT("Animals\\Duck.bmp"));
-	pAni->AddClip("DuckIdleLeft", AT_ATLAS, AO_LOOP, 0.4f, 4, 7, 0, 3, 1, 1,
-		1.f,0, "Duck", TEXT("Animals\\Duck.bmp"));
-
-	pAni->AddClip("DuckWalkDown", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 0, 3, 1,
-		1.f,0, "Duck", TEXT("Animals\\Duck.bmp"));
-	pAni->AddClip("DuckWalkRight", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 1, 3, 1,
-		1.f,0, "Duck", TEXT("Animals\\Duck.bmp"));
-	pAni->AddClip("DuckWalkUp", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 2, 3, 1,
-		1.f,0, "Duck", TEXT("Animals\\Duck.bmp"));
-	pAni->AddClip("DuckWalkLeft", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 7, 1, 3, 3, 1,
-		1.f,0, "Duck", TEXT("Animals\\Duck.bmp"));
+	pAni->LoadFromPath("duck.sac");
 
 	SAFE_RELEASE(pAni);
+
+	if (!Animal::Init())
+		return false;
 
 	return true;
 }
 
 int Duck::Update(float fDeltaTime)
 {
-	FightObj::Update(fDeltaTime);
+	Animal::Update(fDeltaTime);
 	return 0;
 }
 
 int Duck::LateUpdate(float fDeltaTime)
 {
-	FightObj::LateUpdate(fDeltaTime);
+	Animal::LateUpdate(fDeltaTime);
 	return 0;
 }
 
 void Duck::Collision(float fDeltaTime)
 {
-	FightObj::Collision(fDeltaTime);
+	Animal::Collision(fDeltaTime);
 }
 
 void Duck::Render(HDC hDC, float fDeltaTime)
 {
-	FightObj::Render(hDC, fDeltaTime);
+	Animal::Render(hDC, fDeltaTime);
 }
 
 Duck* Duck::Clone()
 {
 	return new Duck(*this);
+}
+
+void Duck::ActionChange(ANIMAL_ACTION eAction)
+{
+	m_eAction = eAction;
+
+	if (m_eAction == AA_IDLE)
+	{
+		if (m_tMoveDir.x > 0.f || m_tMoveDir.y < 0.f)
+		{
+			SetAnimationCurrentClip("DuckIdleRight");
+			SetAnimationDefaultClip("DuckIdleRight");
+		}
+
+		else
+		{
+			SetAnimationCurrentClip("DuckIdleLeft");
+			SetAnimationDefaultClip("DuckIdleLeft");
+		}
+	}
+
+	else if (m_eAction == AA_WALK)
+	{
+		if (m_tMoveDir.x > 0.f || m_tMoveDir.y < 0.f)
+		{
+			SetAnimationCurrentClip("DuckWalkRight");
+			SetAnimationDefaultClip("DuckIdleRight");
+		}
+
+		else
+		{
+			SetAnimationCurrentClip("DuckWalkLeft");
+			SetAnimationDefaultClip("DuckIdleLeft");
+		}
+	}
+
+	else if (m_eAction == AA_EAT)
+	{
+		SetAnimationCurrentClip("DuckEat");
+	}
+
+	else if (m_eAction == AA_SIT)
+	{
+		if (m_tMoveDir.x > 0.f || m_tMoveDir.y < 0.f)
+		{
+			SetAnimationCurrentClip("DuckSleepRight");
+			SetAnimationDefaultClip("DuckIdleRight");
+		}
+
+		else
+		{
+			SetAnimationCurrentClip("DuckSleepLeft");
+			SetAnimationDefaultClip("DuckIdleLeft");
+		}
+	}
+}
+
+bool Duck::AddDay(int iDay)
+{
+	Animal::AddDay(iDay);
+
+	if (IsFeed())
+	{
+		SetFeed(false);
+
+		++m_iFeedCount;
+
+		if (m_iFeedCount >= 1)
+		{
+			Egg* pDuckEgg = (Egg*)CreateCloneObj("Duck Egg", "Duck Egg", m_pLayer);
+
+			pDuckEgg->SetPos(m_tPos);
+
+			UIClockHand* pClockHand = (UIClockHand*)GET_SINGLE(ObjManager)->GetClockHand();
+
+			pClockHand->AddCrop(pDuckEgg);
+
+			SAFE_RELEASE(pDuckEgg);
+
+			--m_iFeedCount;
+		}
+	}
+
+	if (m_iDay % 4 == 0)
+	{
+		Obj* pFeather = CreateCloneObj("Duck's feather", "Feather", m_pLayer);
+
+		pFeather->SetPos(m_tPos);
+
+		SAFE_RELEASE(pFeather);
+	}
+
+	ActionChange(AA_IDLE);
+
+	return false;
 }

@@ -204,6 +204,14 @@ void Obj::SetAnimationClipColorKey(const string & strClip, unsigned char r, unsi
 		m_pAnimation->SetClipColorKey(strClip, r, g, b);
 }
 
+FrameInfo Obj::GetFrame(const string& strName) const
+{
+	if (m_pAnimation)
+		return m_pAnimation->GetFrame(strName);
+
+	return FrameInfo();
+}
+
 Texture* Obj::GetTexture() const
 {
 	if (m_pTexture)

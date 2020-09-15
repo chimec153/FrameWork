@@ -1,4 +1,6 @@
 #include "UIPanel.h"
+#include "../Core/Input.h"
+#include "../Core.h"
 
 UIPanel::UIPanel()
 {
@@ -43,6 +45,15 @@ void UIPanel::Collision(float fDeltaTime)
 void UIPanel::Render(HDC hDC, float fDeltaTime)
 {
 	UI::Render(hDC, fDeltaTime);
+
+#ifdef _DEBUG
+	if (KEYPRESS("Debug"))
+	{
+		RECT tRC = { (int)m_tPos.x, (int)m_tPos.y, (int)(m_tPos.x + m_tSize.x),(int)(m_tPos.y + m_tSize.y) };
+
+		FrameRect(hDC, &tRC, REDBRUSH);
+	}
+#endif
 }
 
 UIPanel* UIPanel::Clone()

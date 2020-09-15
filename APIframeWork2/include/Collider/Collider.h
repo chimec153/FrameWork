@@ -102,6 +102,11 @@ public:
 public:
 	void AddCollider(Collider* pCollider)
 	{
+		if (this == pCollider)
+		{
+			int i = 0;
+		}
+
 		m_CollisionList.push_back(pCollider);
 	}
 

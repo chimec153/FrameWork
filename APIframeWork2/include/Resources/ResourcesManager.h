@@ -1,52 +1,6 @@
 #pragma once
 #include "../game.h"
 
-typedef struct _tagItemInfo
-{
-	string			strName;
-	string			strCropName;
-	ITEM_TYPE		eItemType;
-	CROP_TYPE		eCropType;
-	TOOL_TYPE		eToolType;
-	POSITION		tTileOffset;
-	POSITION		tCropOffset;
-	POSITION		tHarvestOffset;
-	vector<int>		vecPrice;
-	int				iSeedSellPrice;
-	int				iSellPrice;
-	int				iMaxStage;
-	vector<int>		vecMaxDay;
-	int				iEnergyRecovery;
-	int				iHPRecovery;
-	int				iRegrowthDay;
-	int				iAttack;
-	vector<TCHAR*>	vecComment;
-
-	_tagItemInfo() :
-		eItemType(IT_NONE),
-		eCropType(CROP_PARSNIP),
-		eToolType(TOOL_SWORD),
-		iSeedSellPrice(0),
-		iSellPrice(0),
-		iMaxStage(0),
-		iEnergyRecovery(0),
-		iHPRecovery(0),
-		iRegrowthDay(0),
-		iAttack(0)
-	{
-
-	}
-
-	~_tagItemInfo()
-	{
-		size_t iSize = vecComment.size();
-
-		for (size_t i = 0; i < iSize; ++i)
-			delete[] vecComment[i];
-	}
-
-}ITEMINFO, *PITEMINFO;
-
 typedef struct _tagShopInfo
 {
 	vector<TCHAR*>		vecText;
@@ -75,11 +29,19 @@ typedef struct _tagShopInfo
 	}
 }SHOPINFO, *PSHOPINFO;
 
+typedef struct _tagMonsterInfo
+{
+	vector<int>		vecAttack;
+	vector<int>		vecHP;
+}MonsterInfo, *PMonsterInfo;
+
 class ResourcesManager
 {
 private:
 	unordered_map<string, class Texture*>	m_mapTexture;
 	vector<PITEMINFO>						m_vecItemInfo;
+	vector<PITEMINFO>						m_vecAnimalInfo;
+	vector<PMonsterInfo>					m_vecMonsterInfo;
 	unordered_map<string, PSHOPINFO>		m_mapShopInfo;
 	int										m_iItemCount;
 	HINSTANCE								m_hInst;
@@ -113,6 +75,14 @@ public:
 public:
 	bool LoadItemInfo(const TCHAR* pFileName, const string& strPathKey = DATA_PATH);
 	PITEMINFO FindItemInfo(int iIndex);
+
+public:
+	bool LoadAnimalInfo(const TCHAR* pFileName, const string& strPathKey = DATA_PATH);
+	PITEMINFO FindAnimalInfo(int iIndex);
+
+public:
+	bool LoadMonsterInfo(const char* pFileName, const string& strPathKey = DATA_PATH);
+	PMonsterInfo FindMonsterInfo(int iIndex);
 
 public:
 	bool LoadShopInfo(const string& strName, const char* pFileName, const string& strPathKey = DATA_PATH);

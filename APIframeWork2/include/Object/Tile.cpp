@@ -14,6 +14,8 @@
 #include "Etc.h"
 #include "Crop.h"
 #include "Rock.h"
+#include "Grass.h"	
+#include "../Animation/Animation.h"
 
 Tile::Tile()	:
 	m_eOption(TO_NONE),
@@ -85,6 +87,7 @@ void Tile::SetTileOption(TILE_OPTION eOption)
 	m_eOption = eOption;
 	Obj* pEffect = nullptr;
 	Layer* pLayer = nullptr;
+	Animation* pAni = nullptr;
 
 	switch (eOption)
 	{
@@ -96,6 +99,8 @@ void Tile::SetTileOption(TILE_OPTION eOption)
 		pLayer = m_pScene->FindLayer("Default");
 
 		pEffect = CreateCloneObj("HoeEffect", "HoeEffect", pLayer);
+
+		pEffect->SetAnimationCurrentClip("HoeDirt");
 
 		pEffect->SetPos(m_tPos);
 
@@ -127,6 +132,15 @@ void Tile::SetTileOption(TILE_OPTION eOption)
 		SAFE_RELEASE(m_pOptionTex);
 		m_pOptionTex = GET_SINGLE(ResourcesManager)->FindTexture("TileNoMove");
 		break;
+	case TO_TREEANI:
+		pAni = CreateAnimation("TileAni");
+
+		pAni->LoadFromPath("Tile.sac");
+
+		SAFE_RELEASE(pAni);
+
+		SetImageOffset(0.f, 0.f);
+		break;
 	}
 }
 
@@ -140,6 +154,14 @@ void Tile::SelectTile()
 	SAFE_RELEASE(m_pSelectTex);
 	
 	m_pSelectTex = GET_SINGLE(ResourcesManager)->FindTexture("Mouse");
+}
+
+Texture* Tile::GetUpperTexture()	const
+{
+	if (m_pUpperTex)
+		m_pUpperTex->AddRef();
+
+	return m_pUpperTex;
 }
 
 bool Tile::Init()
@@ -162,7 +184,7 @@ void Tile::Input(float fDeltaTime)
 
 int Tile::Update(float fDeltaTime)
 {
-	//StaticObj::Update(fDeltaTime);
+	StaticObj::Update(fDeltaTime);
 
 	return 0;
 }
@@ -376,7 +398,7 @@ void Tile::Load(FILE * pFile)
 		switch (eBlock)
 		{
 		case OB_NONE:
-			pObj = Obj::CreateObj<CTree>("", pLayer);
+			pObj = Obj::CreateObj<Grass>("", pLayer);
 			break;
 		case OB_TREE:
 			pObj = Obj::CreateObj<CTree>("", pLayer);
@@ -389,6 +411,9 @@ void Tile::Load(FILE * pFile)
 			break;
 		case OB_ROCK:
 			pObj = Obj::CreateObj<Rock>("", pLayer);
+			break;
+		case OB_GRASS:
+			pObj = Obj::CreateObj<Grass>("", pLayer);
 			break;
 		}		
 

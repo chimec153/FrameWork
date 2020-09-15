@@ -100,6 +100,7 @@ public:
 	void SetAnimationDefaultClip(const string& strName);
 	void SetAnimationClipColorKey(const string& strClip,
 		unsigned char r, unsigned char g, unsigned char b);
+	FrameInfo GetFrame(const string& strName)	const;
 
 	class Texture* GetTexture()	const;
 

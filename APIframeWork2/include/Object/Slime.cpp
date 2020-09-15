@@ -83,16 +83,13 @@ bool Slime::Init()
 
 	SAFE_RELEASE(pAni);
 
-	ColliderRect* pRC = AddCollider<ColliderRect>("SlimeBody");
-
-	pRC->SetRect(-16.f, -24.f, 16.f, 24.f);
-
-	SAFE_RELEASE(pRC);
-
 	m_pPaceTexture = GET_SINGLE(ResourcesManager)->FindTexture("slime");
 	m_pPaceTexture->SetColorKey(255, 255, 255);
 
 	SetPaceImageOffset(POSITION(64.f,245.f));
+
+	if (!FightObj::Init())
+		return false;
 
 	return true;
 }
@@ -113,6 +110,17 @@ int Slime::Update(float fDeltaTime)
 
 	if (fDist <= m_fDist && !m_bHitted)
 	{
+		if (m_tMoveDir == 0.f)
+		{
+			Effect* pEmote = (Effect*)CreateCloneObj("HoeEffect", "emote", m_pLayer);
+
+			pEmote->SetPos(m_tPos.x - m_tSize.x * m_tPivot.x, m_tPos.y - m_tSize.y * m_tPivot.y - pEmote->GetSize().y);
+
+			pEmote->SetAnimationCurrentClip("SurpriseEmote");
+
+			SAFE_RELEASE(pEmote);
+		}
+
 		tDist.Normalize();
 
 		SetAngle(tDist);
@@ -186,48 +194,28 @@ Slime* Slime::Clone()
 	return new Slime(*this);
 }
 
-void Slime::Collision(Collider* pSrc, Collider* pDest, float fTime)
+void Slime::DieMotion()
 {
-	string strDest = pDest->GetTag();
+	Die();
 
-	if (!m_bHitted)
+	m_pHead->Die();
+
+	for (int j = 0; j < 2; ++j)
 	{
-		if (strDest == "attack")
+		for (int i = 0; i < 2; ++i)
 		{
-			Obj* pObj = pDest->GetObj();
-			POSITION tPos = pObj->GetPos();
+			Effect* pEffect = (Effect*)CreateCloneObj("slimeEffect", "SlimeEffect", m_pLayer);
 
-			UIInventory* pInven = GET_SINGLE(ObjManager)->GetInven();
+			POSITION tDir(i - 0.5f, j - 0.5f);
+			pEffect->SetAngle(tDir);
+			pEffect->SetPos(m_tPos);
+			pEffect->SetImageOffset(i * 16.f, 16.f * j + 240.f);
 
-			Item* pItem = pInven->GetItem();
-
-			SAFE_RELEASE(pInven);
-
-			int iAttack = ((Tool*)pItem)->GetAttack();
-
-			Hitted(((FightObj*)pObj)->GetAttack() + iAttack, tPos);
-
-			if (m_iHP <= 0.f)
-			{
-				Die();
-
-				m_pHead->Die();
-
-				for (int j = 0; j < 2; ++j)
-				{
-					for (int i = 0; i < 2; ++i)
-					{
-						Effect* pEffect = (Effect*)CreateCloneObj("slimeEffect", "SlimeEffect", m_pLayer);
-
-						POSITION tDir(i - 0.5f, j - 0.5f);
-						pEffect->SetAngle(tDir);
-						pEffect->SetPos(m_tPos);
-						pEffect->SetImageOffset(i * 16.f, 16.f * j + 240.f);
-
-						SAFE_RELEASE(pEffect);
-					}
-				}
-			}
+			SAFE_RELEASE(pEffect);
 		}
 	}
+}
+
+void Slime::Collision(Collider* pSrc, Collider* pDest, float fTime)
+{
 }

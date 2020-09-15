@@ -6,14 +6,19 @@
 #include "Player.h"
 
 Horse::Horse()	:
-	m_pPlayer(nullptr)
+	m_pPlayer(nullptr),
+	m_eOption(HORSE_IDLE)
 {
+	m_eAnimalType = ANIMAL_HORSE;
+	m_cAlpha = 255;
+	m_bAlphaOn = true;
 }
 
 Horse::Horse(const Horse& horse)	:
-	FightObj(horse)
+	Animal(horse)
 {
 	m_pPlayer = horse.m_pPlayer;
+	m_eOption = horse.m_eOption;
 }
 
 Horse::~Horse()
@@ -118,7 +123,7 @@ int Horse::Update(float fDeltaTime)
 	{
 		POSITION tPos = m_tPos;
 
-		tPos.y += 0.1f * m_tSize.y;
+		tPos.y += 0.3f * m_tSize.y;
 
 		m_pPlayer->SetPos(tPos);
 	}
@@ -170,11 +175,15 @@ void Horse::ColStay(Collider* pSrc, Collider* pDest, float fTime)
 				Obj* pObj = pDest->GetObj();
 
 				SetPlayer((Player*)pObj);
+
+				((Player*)pObj)->SetPlayerAction(PA_RIDE);
 			}
 
 			else
 			{
 				m_pPlayer->SetPos(m_tPos + m_tSize * m_tPivot);
+
+				m_pPlayer->SetPlayerAction(PA_IDLE);
 
 				SAFE_RELEASE(m_pPlayer);
 			}

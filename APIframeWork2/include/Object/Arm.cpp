@@ -38,7 +38,7 @@ int Arm::Update(float fTime)
 {
 	MoveObj::Update(fTime);
 
-	POSITION tAngle = m_pPlayer->GetAngle();
+	POSITION tAngle = GetAngle();
 
 	PLAYER_ACTION eAction = m_pPlayer->GetPlayerAction();
 
@@ -60,55 +60,55 @@ int Arm::Update(float fTime)
 	{
 		if (eType == IT_SEED || eType == IT_CROP || eType == IT_ETC)
 		{
-			if (tAngle.x > 0.f)
+			if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
 			{
 				SetAnimationDefaultClip("ArmLiftIdleRight");
 				SetAnimationCurrentClip("ArmLiftWalkRight");
 			}
 
-			else if (tAngle.x < 0.f)
+			else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
 			{
 				SetAnimationDefaultClip("ArmLiftIdleLeft");
 				SetAnimationCurrentClip("ArmLiftWalkLeft");
 			}
 
-			else if (tAngle.y > 0.f)
-			{
-				SetAnimationDefaultClip("ArmLiftIdleDown");
-				SetAnimationCurrentClip("ArmLiftWalkDown");
-			}
-
-			else if (tAngle.y < 0.f)
+			else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
 			{
 				SetAnimationDefaultClip("ArmLiftIdleUp");
 				SetAnimationCurrentClip("ArmLiftWalkUp");
+			}
+
+			else
+			{
+				SetAnimationDefaultClip("ArmLiftIdleDown");
+				SetAnimationCurrentClip("ArmLiftWalkDown");
 			}
 		}
 
 		else
 		{
-			if (tAngle.x > 0.f)
+			if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
 			{
 				SetAnimationDefaultClip("ArmIdleRight");
 				SetAnimationCurrentClip("ArmWalkRight");
 			}
 
-			else if (tAngle.x < 0.f)
+			else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
 			{
 				SetAnimationDefaultClip("ArmIdleLeft");
 				SetAnimationCurrentClip("ArmWalkLeft");
 			}
 
-			else if (tAngle.y > 0.f)
-			{
-				SetAnimationDefaultClip("ArmIdleDown");
-				SetAnimationCurrentClip("ArmWalkDown");
-			}
-
-			else if (tAngle.y < 0.f)
+			else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
 			{
 				SetAnimationDefaultClip("ArmIdleUp");
 				SetAnimationCurrentClip("ArmWalkUp");
+			}
+
+			else 
+			{
+				SetAnimationDefaultClip("ArmIdleDown");
+				SetAnimationCurrentClip("ArmWalkDown");
 			}
 		}
 	}
@@ -117,119 +117,146 @@ int Arm::Update(float fTime)
 	{
 		if (eType == IT_SEED || eType == IT_CROP || eType == IT_ETC)
 		{
-			if (tAngle.x > 0.f)
+			if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
 				SetAnimationCurrentClip("ArmLiftIdleRight");
 
-			else if (tAngle.x < 0.f)
+			else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
 				SetAnimationCurrentClip("ArmLiftIdleLeft");
 
-			else if (tAngle.y > 0.f)
-				SetAnimationCurrentClip("ArmLiftIdleDown");
-
-			else if (tAngle.y < 0.f)
+			else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
 				SetAnimationCurrentClip("ArmLiftIdleUp");
+
+			else
+				SetAnimationCurrentClip("ArmLiftIdleDown");
 		}
 
 		else
 		{
-			if (tAngle.x > 0.f)
+			if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
 				SetAnimationCurrentClip("ArmIdleRight");
 
-			else if (tAngle.x < 0.f)
+			else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
 				SetAnimationCurrentClip("ArmIdleLeft");
 
-			else if (tAngle.y > 0.f)
-				SetAnimationCurrentClip("ArmIdleDown");
-
-			else if (tAngle.y < 0.f)
+			else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
 				SetAnimationCurrentClip("ArmIdleUp");
+
+			else
+				SetAnimationCurrentClip("ArmIdleDown");
 		}
 	}
 
 	else if (eAction == PA_ATTACK)
 	{
-		if (tAngle.x > 0.f)
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
 		{
 			SetAnimationDefaultClip("ArmIdleRight");
 			SetAnimationCurrentClip("ArmAttackRight");
 		}
 
-		else if (tAngle.x < 0.f)
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("ArmIdleLeft");
 			SetAnimationCurrentClip("ArmAttackLeft");
 		}
 
-		else if (tAngle.y > 0.f)
-		{
-			SetAnimationDefaultClip("ArmIdleDown");
-			SetAnimationCurrentClip("ArmAttackDown");
-		}
-
-		else if (tAngle.y < 0.f)
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("ArmIdleUp");
 			SetAnimationCurrentClip("ArmAttackUp");
+		}
+
+		else
+		{
+			SetAnimationDefaultClip("ArmIdleDown");
+			SetAnimationCurrentClip("ArmAttackDown");
 		}
 	}
 
 	else if (eAction == PA_FARM)
 	{
-		if (tAngle.x > 0.f)
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
 		{
 			SetAnimationDefaultClip("ArmIdleRight");
 			SetAnimationCurrentClip("ArmFarmRight");
 		}
 
-		else if (tAngle.x < 0.f)
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("ArmIdleLeft");
 			SetAnimationCurrentClip("ArmFarmLeft");
 		}
 
-		else if (tAngle.y > 0.f)
-		{
-			SetAnimationDefaultClip("ArmIdleDown");
-			SetAnimationCurrentClip("ArmFarmDown");
-		}
-
-		else if (tAngle.y < 0.f)
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("ArmIdleUp");
 			SetAnimationCurrentClip("ArmFarmUp");
+		}
+
+		else
+		{
+			SetAnimationDefaultClip("ArmIdleDown");
+			SetAnimationCurrentClip("ArmFarmDown");
 		}
 	}
 
 	else if (eAction == PA_WATER)
 	{
-	if (tAngle.x > 0.f)
-	{
-		SetAnimationDefaultClip("ArmIdleRight");
-		SetAnimationCurrentClip("ArmWaterRight");
-	}
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
+		{
+			SetAnimationDefaultClip("ArmIdleRight");
+			SetAnimationCurrentClip("ArmWaterRight");
+		}
 
-	else if (tAngle.x < 0.f)
-	{
-		SetAnimationDefaultClip("ArmIdleLeft");
-		SetAnimationCurrentClip("ArmWaterLeft");
-	}
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
+		{
+			SetAnimationDefaultClip("ArmIdleLeft");
+			SetAnimationCurrentClip("ArmWaterLeft");
+		}
 
-	else if (tAngle.y > 0.f)
-	{
-		SetAnimationDefaultClip("ArmIdleDown");
-		SetAnimationCurrentClip("ArmWaterDown");
-	}
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
+		{
+			SetAnimationDefaultClip("ArmIdleUp");
+			SetAnimationCurrentClip("ArmWaterUp");
+		}
 
-	else if (tAngle.y < 0.f)
-	{
-		SetAnimationDefaultClip("ArmIdleUp");
-		SetAnimationCurrentClip("ArmWaterUp");
-	}
+		else
+		{
+			SetAnimationDefaultClip("ArmIdleDown");
+			SetAnimationCurrentClip("ArmWaterDown");
+		}
 	}
 
 	else if (eAction == PA_EAT)
 	{
 		SetAnimationCurrentClip("ArmEat");
+	}
+
+	else if (eAction == PA_RIDE)
+	{
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
+		{
+			SetAnimationDefaultClip("ArmRideRight");
+			SetAnimationCurrentClip("ArmRideRight");
+		}
+
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
+		{
+			SetAnimationDefaultClip("ArmRideLeft");
+			SetAnimationCurrentClip("ArmRideLeft");
+		}
+
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
+		{
+			SetAnimationDefaultClip("ArmRideUp");
+			SetAnimationCurrentClip("ArmRideUp");
+		}
+
+		else
+		{
+			SetAnimationDefaultClip("ArmRideDown");
+			SetAnimationCurrentClip("ArmRideDown");
+		}
 	}
 
 	return 0;

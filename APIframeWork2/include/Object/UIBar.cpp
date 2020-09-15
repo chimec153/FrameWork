@@ -3,7 +3,8 @@
 UIBar::UIBar()	:
 	m_fMax(1.f),
 	m_fMin(0.f),
-	m_fValue(1.f)
+	m_fValue(1.f),
+	m_bHorizon(false)
 {
 }
 

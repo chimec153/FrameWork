@@ -38,20 +38,25 @@
 #include "../Object/Stage.h"
 #include "../Object/ObjManager.h"
 #include "../Scene/SceneCollision.h"
+#include "../Object/Grass.h"
+#include "../Object/Egg.h"
+#include "../Object/Furniture.h"
 
 //unordered_map<string, Obj*> Scene::m_mapPrototype[SC_END];
 
 Scene::Scene()	:
 	m_bEditMode(false),
 	m_pPadeEffect(nullptr),
-	m_pStage(nullptr)
+	m_pStage(nullptr),
+	m_bStart(false)
 {
 	Layer* pLayer = CreateLayer("UI", INT_MAX);
 	pLayer = CreateLayer("HUD", INT_MAX - 1);
 	pLayer = CreateLayer("UTHUD", INT_MAX - 2);
-	pLayer = CreateLayer("Default", 2);
-	pLayer = CreateLayer("Back", 1);
-	pLayer = CreateLayer("Stage");
+	pLayer = CreateLayer("Default", 3);
+	pLayer = CreateLayer("Back", 2);
+	pLayer = CreateLayer("Stage",1);
+	pLayer = CreateLayer("BackStage");
 	m_eSceneType = SC_CURRENT;
 
 	m_pCollision = new SceneCollision;
@@ -84,6 +89,12 @@ void Scene::ErasePrototype(const string & strTag)
 void Scene::ErasePrototype()
 {
 	Safe_Release_Map(m_mapPrototype);
+}
+
+void Scene::ResetPadeInEffect()
+{
+	if (m_pPadeEffect)
+		((PadeEffect*)m_pPadeEffect)->Reset();
 }
 
 Layer * Scene::CreateLayer(const string & strTag, int iZOrder)
@@ -146,6 +157,11 @@ bool Scene::Init()
 	SAFE_RELEASE(pPlayer);
 
 	return true;
+}
+
+void Scene::Start()
+{
+	m_bStart = true;
 }
 
 void Scene::Input(float fDeltaTime)
@@ -260,7 +276,6 @@ void Scene::Render(HDC hDC, float fDeltaTime)
 			continue;
 		}
 		(*iter)->Render(hDC, fDeltaTime);
-
 		if (!(*iter)->GetLife())
 		{
 			SAFE_DELETE((*iter));
@@ -314,109 +329,14 @@ void Scene::CreateUI(class Obj* pObj)
 	SAFE_RELEASE(pBarPanel);
 }
 
-void Scene::CreateSlimeClone()
-{
-	Layer* pLayer = FindLayer("Default");
-
-	Slime* pSlime = (Slime*)m_pStage->CreateCloneObj("Slime","slime", pLayer);
-
-	pSlime->SetPos(400.f, 400.f);
-
-	SlimeHead* pHead = (SlimeHead*)m_pStage->CreateCloneObj("SlimeHead", "Head", pLayer);
-
-	pSlime->SetHead(pHead);
-
-	SAFE_RELEASE(pHead);
-
-	Collider* pCol = pSlime->GetCollider("SlimeBody");
-
-	pCol->AddCollisionFunction(CS_ENTER, pSlime, &Slime::Collision);
-
-	SAFE_RELEASE(pCol);
-	SAFE_RELEASE(pSlime);
-}
-
-void Scene::CreateBugClone()
-{
-	Layer* pLayer = FindLayer("Default");
-
-	Bug* pBug = (Bug*)m_pStage->CreateCloneObj("Bug", "Bug", pLayer);
-
-	pBug->SetPos(100.f, 400.f);
-
-	Collider* pCol = pBug->GetCollider("BugBody");
-
-	pCol->AddCollisionFunction(CS_ENTER, pBug, &Bug::Collision);
-
-	SAFE_RELEASE(pCol);
-	SAFE_RELEASE(pBug);
-}
-
-void Scene::CreateBatClone()
-{
-	Layer* pLayer = FindLayer("Default");
-
-	Obj* pMinion = m_pStage->CreateCloneObj("Minion", "Minion", pLayer);
-
-	pMinion->SetPos(532.f, 500.f);
-
-	Collider* pCol = pMinion->GetCollider("MinionBody");
-
-	pCol->AddCollisionFunction(CS_ENTER, (Minion*)pMinion,
-		&Minion::CollisionBullet);
-	pCol->AddCollisionFunction(CS_STAY, (Minion*)pMinion,
-		&Minion::CollisionBullet);
-
-	SAFE_RELEASE(pCol);
-	SAFE_RELEASE(pMinion);
-}
-
-void Scene::CreateFlyClone()
-{
-	Layer* pLayer = FindLayer("Default");
-
-	Obj* pFly = m_pStage->CreateCloneObj("Fly", "Fly", pLayer);
-
-	pFly->SetPos(52.f, 500.f);
-
-	Collider* pCol = pFly->GetCollider("FlyBody");
-
-	pCol->AddCollisionFunction(CS_ENTER, (Fly*)pFly,
-		&Fly::Collision);
-	pCol->AddCollisionFunction(CS_STAY, (Fly*)pFly,
-		&Fly::Collision);
-
-	SAFE_RELEASE(pCol);
-	SAFE_RELEASE(pFly);
-}
-
-void Scene::CreateRockCrabClone()
-{
-	Layer* pLayer = FindLayer("Default");
-
-	Obj* pRockCrab = m_pStage->CreateCloneObj("RockCrab", "RockCrab", pLayer);
-
-	pRockCrab->SetPos(400.f, 200.f);
-
-	Collider* pCol = pRockCrab->GetCollider("RockCrabBody");
-
-	pCol->AddCollisionFunction(CS_ENTER, (RockCrab*)pRockCrab,
-		&RockCrab::Collision);
-	pCol->AddCollisionFunction(CS_STAY, (RockCrab*)pRockCrab,
-		&RockCrab::Collision);
-
-	SAFE_RELEASE(pCol);
-	SAFE_RELEASE(pRockCrab);
-}
-
 void Scene::CreateProtoNumber()
-{//	736, 111, 10, 15
+{
 	UINum* pNum = CreateProtoType<UINum>("Num");
 
 	pNum->SetTexture("Mouse", TEXT("UI\\Cursors.bmp"));
 	pNum->SetColorKey(0, 0, 0);
 	pNum->SetSize(16.f, 16.f);
-	pNum->SetOriginOffset(1025.f, 255.f);
+	pNum->SetOriginOffset(1024.f, 255.f);
 	pNum->SetAlpha(255);
 	pNum->EnableAlpha(true);
 
@@ -510,32 +430,6 @@ void Scene::CreateFarmEffect()
 	Layer* pLayer = FindLayer("Default");
 
 	FarmEffect* pEffect = CreateProtoType<FarmEffect>("HoeEffect");
-
-	pEffect->SetSize(32.f, 32.f);
-
-	Animation* pAni = pEffect->CreateAnimation("HoeAni");
-
-	pEffect->AddAnimationClip("HoeDirt", AT_ATLAS, AO_ONCE_DESTROY, 0.6f, 10, 52, 0, 12, 8, 1, 1.f,0,
-		"FarmAni", TEXT("TileSheets\\animations.bmp"));
-	pEffect->SetAnimationClipColorKey("HoeDirt", 255, 255, 255);
-
-	pEffect->AddAnimationClip("WaterSplashing", AT_ATLAS, AO_ONCE_DESTROY, 0.6f, 10, 52, 0, 13, 10, 1, 1.f,0,
-		"FarmAni", TEXT("TileSheets\\animations.bmp"));
-	pEffect->SetAnimationClipColorKey("WaterSplashing", 255, 255, 255);
-
-	pEffect->AddAnimationClip("HarvestEffect", AT_ATLAS, AO_ONCE_DESTROY, 0.6f, 10, 52, 0, 17, 7, 1, 1.f,0,
-		"FarmAni", TEXT("TileSheets\\animations.bmp"));
-	pEffect->SetAnimationClipColorKey("HarvestEffect", 255, 255, 255);
-
-	pEffect->AddAnimationClip("RockEffect", AT_ATLAS, AO_ONCE_DESTROY, 0.6f, 10, 52, 0, 5, 8, 1, 1.f,0,
-		"FarmAni", TEXT("TileSheets\\animations.bmp"));
-	pEffect->SetAnimationClipColorKey("RockEffect", 255, 255, 255);
-
-	pEffect->AddAnimationClip("Rain", AT_ATLAS, AO_ONCE_DESTROY, 0.5f, 4, 1, 0, 0, 4, 1, 1.f,0,
-		"rain", TEXT("TileSheets\\rain.bmp"));
-	pEffect->SetAnimationClipColorKey("Rain", 255, 255, 255);
-
-	SAFE_RELEASE(pAni);
 
 	SAFE_RELEASE(pEffect);
 }
@@ -684,14 +578,23 @@ void Scene::CreateProtoTypes()
 
 			pTool->SetToolType(pInfo->eToolType);
 
-			if (pInfo->eToolType == TOOL_SWORD)
+			if (pInfo->eToolType == TOOL_SWORD || pInfo->eToolType == TOOL_SCYTHE)
 			{
 				pTool->SetAttack(pInfo->iAttack);
 
 				pTool->SetTexture("weapon", TEXT("Item\\weapons.bmp"));
+				pTool->SetColorKey(255, 255, 255);
+			}
+
+			else
+			{
+				pTool->SetTexture("tools", TEXT("Item\\tools.bmp"));
+				pTool->SetColorKey(255, 255, 255);
 			}
 
 			pTool->SetImageOffset(pTool->GetSize()* pInfo->tTileOffset);
+
+			pTool->SetIndex((int)(8 * pInfo->tTileOffset.y + pInfo->tTileOffset.x));
 
 			pTool->SetItemType(eItemType);
 
@@ -712,7 +615,26 @@ void Scene::CreateProtoTypes()
 
 			pEtc->SetFileIndex(i);
 
+			pEtc->SetSellPrice(pInfo->iSellPrice);
+
 			SAFE_RELEASE(pEtc);
+		}
+
+		else if (eItemType == IT_EGG)
+		{
+			Egg* pEgg = CreateProtoType<Egg>(pInfo->strName.c_str());
+
+			pEgg->SetImageOffset(pEgg->GetSize() * pInfo->tTileOffset);
+
+			pEgg->SetIndex((int)(24 * pInfo->tTileOffset.y + pInfo->tTileOffset.x));
+
+			pEgg->SetFileIndex(i);
+
+			pEgg->SetEggType(pInfo->eEggType);
+
+			pEgg->SetSellPrice(pInfo->iSellPrice);
+
+			SAFE_RELEASE(pEgg);
 		}
 	}
 }
@@ -726,6 +648,10 @@ Obj* Scene::CreatePlayer()
 	GET_SINGLE(ObjManager)->SetPlayer(pPlayer);
 
 	CWeapon* pWeapon = Obj::CreateObj<CWeapon>("weapon", pLayer);
+
+	pPlayer->SetWeapon(pWeapon);
+
+	pWeapon->SetPlayer(pPlayer);
 
 	GET_SINGLE(ObjManager)->SetWeapon(pWeapon);
 
@@ -776,7 +702,7 @@ void Scene::LoadFile()
 
 		int iObj = atoi(cLine);
 
-		if (iObj == 0)
+		if (iObj == LT_LABEL)
 		{
 			fgets(cLine, 256, pFile);
 
@@ -786,7 +712,7 @@ void Scene::LoadFile()
 			m_vecstrProto.push_back(strProto);
 		}
 
-		else if (iObj == 1)
+		else if (iObj == LT_OBJECT)
 		{
 			fgets(cLine, 256, pFile);
 
@@ -814,6 +740,12 @@ void Scene::LoadFile()
 				break;
 			case OB_ROCK:
 				pProto = Scene::CreateProtoType<Rock>(cLine);
+				break;
+			case OB_GRASS:
+				pProto = Scene::CreateProtoType<Grass>(cLine);
+				break;
+			case OB_FURNITURE:
+				pProto = Scene::CreateProtoType<Furniture>(cLine);
 				break;
 			}
 
@@ -899,22 +831,33 @@ void Scene::LoadFile()
 			{
 				fgets(cLine, 256, pFile);
 				cLine[strlen(cLine) - 1] = 0;
+
 				ColliderRect* pRC = pProto->AddCollider<ColliderRect>(cLine);
 
-				fgets(cLine, 256, pFile);
-				pResult = strtok_s(cLine, ", ", &pContext);
-				float fLeft = (float)atof(pResult);
+				if (eBlock == OB_FURNITURE)
+				{
+					pRC->SetRect((1-pProto->m_tPivot.x) * iSize_x, (1-pProto->m_tPivot.y) * iSize_y, 
+						pProto->m_tPivot.x * iSize_x, pProto->m_tPivot.y * iSize_y);
+				}
 
-				pResult = strtok_s(nullptr, ", ", &pContext);
-				float fTop = (float)atof(pResult);
+				else
+				{
+					fgets(cLine, 256, pFile);
+					pResult = strtok_s(cLine, ", ", &pContext);
+					float fLeft = (float)atof(pResult);
 
-				pResult = strtok_s(nullptr, ", ", &pContext);
-				float fRight = (float)atof(pResult);
+					pResult = strtok_s(nullptr, ", ", &pContext);
+					float fTop = (float)atof(pResult);
 
-				pResult = strtok_s(nullptr, ", ", &pContext);
-				float fBottom = (float)atof(pResult);
+					pResult = strtok_s(nullptr, ", ", &pContext);
+					float fRight = (float)atof(pResult);
 
-				pRC->SetRect(fLeft, fTop, fRight, fBottom);
+					pResult = strtok_s(nullptr, ", ", &pContext);
+					float fBottom = (float)atof(pResult);
+
+					pRC->SetRect(fLeft, fTop, fRight, fBottom);
+				}
+
 				SAFE_RELEASE(pRC);
 			}
 

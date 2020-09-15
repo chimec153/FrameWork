@@ -237,6 +237,15 @@ typedef struct _tagPosition
 		return tPos;
 	}
 
+	friend _tagPosition operator * (float f, const _tagPosition& pos)
+	{
+		_tagPosition tPos = pos;
+
+		tPos *= f;
+
+		return tPos;
+	}
+
 	void operator *= (const _tagPosition& tPos)
 	{
 		x *= tPos.x;
@@ -344,7 +353,7 @@ typedef struct _tagPosition
 		return RadToDeg(fAngle);
 	}
 
-	float AngleAxis()
+	float AngleAxis()	const
 	{
 		_tagPosition p1 = *this;
 		_tagPosition p2(1.f, 0.f);
@@ -466,11 +475,11 @@ typedef struct _tagAnimationClip
 
 	}
 }ANIMATIONCLIP,*PANIMATIONCLIP;
-
-static wchar_t* charToWChar(const char* text)
-{
-	const size_t size = strlen(text) + 1;
-	wchar_t* wText = new wchar_t[size];
-	mbstowcs(wText, text, size);
-	return wText;
-}
+//
+//static wchar_t* charToWChar(const char* text)
+//{
+//	const size_t size = strlen(text) + 1;
+//	wchar_t* wText = new wchar_t[size];
+//	mbstowcs(wText, text, size);
+//	return wText;
+//}

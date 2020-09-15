@@ -15,6 +15,13 @@ private:
 private:
 	float		m_fLimitDist;
 	float		m_fDist;
+	bool		m_bWalkStart;
+
+public:
+	void Walk()
+	{
+		m_bWalkStart = true;
+	}
 
 public:
 	virtual bool Init();

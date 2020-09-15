@@ -41,6 +41,15 @@ public:
 	{
 		m_pObj = pObj;
 	}
+
+	int GetFrame()	const
+	{
+		if (m_pCurClip)
+			return m_pCurClip->iFrameX;
+
+		return 0;
+	}
+
 	bool AddClip(const string& strName, ANIMATION_TYPE eType,
 		ANIMATION_OPTION eOption, float fAnimationLimitTime,
 		int iFrameMaxX, int iFrameMaxY, int iStartX, int iStartY,
@@ -65,9 +74,11 @@ public:
 	void AddFrame(const string& strName, FrameInfo tFrame);
 	void AddFrame(const string& strName, POSITION tStart, POSITION tEnd);
 	void AddRenderPos(const string& strName, POSITION tRenderPos);
+	void AddFramePos(int ix, int iy);
+	FrameInfo GetFrame(const string& strName)	const;
 
 private:
-	PANIMATIONCLIP FindClip(const string& strName);
+	PANIMATIONCLIP FindClip(const string& strName)	const;
 
 public:
 	bool Init();

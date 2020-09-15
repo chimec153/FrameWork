@@ -32,6 +32,8 @@ bool Mouse::Init()
 	
 	ColliderPoint* pColl = AddCollider<ColliderPoint>("Mouse");
 
+	pColl->SetUI(true);
+
 	SAFE_RELEASE(pColl);
 
 	return true;
@@ -75,15 +77,22 @@ void Mouse::Collision(float fDeltaTime)
 void Mouse::Render(HDC hDC, float fDeltaTime)
 {
 	UI::Render(hDC, fDeltaTime);
-
-	if (KEYDOWN("Debug"))
+#ifdef _DEBUG
+	if (KEYPRESS("Debug"))
 	{
 		TCHAR strScene[32] = {};
 
 		swprintf_s(strScene, TEXT("Scene: %lld"), (long long)m_pScene);
 
 		TextOut(hDC, (int)m_tPos.x, (int)m_tPos.y, strScene, lstrlen(strScene));
+
+		TCHAR strPos[32] = {};
+
+		swprintf_s(strPos, TEXT("Pos: %d, %d"), (int)m_tPos.x, (int)m_tPos.y);
+
+		TextOut(hDC, (int)m_tPos.x, (int)m_tPos.y-20, strPos, lstrlen(strPos));
 	}
+#endif
 }
 
 Mouse * Mouse::Clone()

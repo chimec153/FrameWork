@@ -17,6 +17,8 @@ ResourcesManager::~ResourcesManager()
 	SAFE_RELEASE(m_pBackBuffer);
 	Safe_Release_Map(m_mapTexture);
 	Safe_Delete_VecList(m_vecItemInfo);
+	Safe_Delete_VecList(m_vecAnimalInfo);
+	Safe_Delete_VecList(m_vecMonsterInfo);
 	SAFE_DELETE_MAP(m_mapShopInfo);
 }
 
@@ -30,13 +32,15 @@ bool ResourcesManager::Init(HINSTANCE hInst,HDC hDC)
 {
 	m_hInst = hInst;
 	m_hDC = hDC;
-	m_pBackBuffer = LoadTexture("BackBuffer", L"backbuffer.bmp");
+	m_pBackBuffer = LoadTexture("BackBuffer", TEXT("AnimationUI\\BackGround.bmp"));
 
 	Texture* pTexture = LoadTexture("Marlon", TEXT("Characters\\NPC\\MarlonAll.bmp"));
 
 	SAFE_RELEASE(pTexture);
 
 	LoadItemInfo(TEXT("SeedData.txt"));
+	LoadAnimalInfo(TEXT("AnimalData.txt"));
+	LoadMonsterInfo("monsterdata.txt");
 	LoadShopInfo("Harvey", "HarveyShopData.txt");
 	LoadShopInfo("Marlon", "MarlonShopData.txt");
 
@@ -216,7 +220,9 @@ bool ResourcesManager::LoadItemInfo(const TCHAR* pFileName, const string& strPat
 
 		m_iItemCount = atoi(cLine);		//	아이템 개수
 
-		for (int i = 0; i < m_iItemCount; ++i)
+		int iItemCount = 0;
+
+		while (true)
 		{
 			fgets(cLine, 256, pFile);
 
@@ -237,22 +243,38 @@ bool ResourcesManager::LoadItemInfo(const TCHAR* pFileName, const string& strPat
 
 			pInfo->strName = cLine;		//	아이템 이름
 
+			if (pInfo->strName == "end")
+			{
+				m_iItemCount = iItemCount;
+				SAFE_DELETE(pInfo);
+				break;
+			}
+
+			else
+				++iItemCount;
+
 			fgets(cLine, 256, pFile);
 
 			int iTextCount = atoi(cLine);
 
 			for (int i = 0; i < iTextCount; ++i)
 			{
-				TCHAR* wstrContext = new TCHAR[256];
+				TCHAR* pContext = new TCHAR[256];
 
 				fgets(cLine, 256, pFile);
 
-				MultiByteToWideChar(CP_ACP, NULL, cLine, -1, wstrContext, lstrlen(wstrContext));
+#ifdef _UNICODE
+				int iLength = MultiByteToWideChar(CP_ACP, NULL, cLine, -1, pContext, 0);
+				MultiByteToWideChar(CP_ACP, NULL, cLine, -1, pContext, iLength);
+#else
+				strcpy_s(pContext, cLine);
+#endif
 
-				wstrContext[strlen(cLine) - 1] = 0;
+				pContext[strlen(cLine) - 1] = 0;
 
-				pInfo->vecComment.push_back(wstrContext);
+				pInfo->vecComment.push_back(pContext);
 			}
+
 
 			fgets(cLine, 256, pFile);
 
@@ -277,7 +299,7 @@ bool ResourcesManager::LoadItemInfo(const TCHAR* pFileName, const string& strPat
 
 				fgets(cLine, 256, pFile);
 
-				pInfo->eCropType = (CROP_TYPE)i;	//	작물 타입
+				pInfo->eCropType = (CROP_TYPE)(iItemCount-1);	//	작물 타입
 
 				fgets(cLine, 256, pFile);
 
@@ -383,7 +405,7 @@ bool ResourcesManager::LoadItemInfo(const TCHAR* pFileName, const string& strPat
 
 				pInfo->iSellPrice = atoi(cLine);	//	아이템 판매가격
 
-				if (pInfo->eToolType == TOOL_SWORD)
+				if (pInfo->eToolType == TOOL_SWORD || pInfo->eToolType == TOOL_SCYTHE)
 				{
 					fgets(cLine, 256, pFile);
 
@@ -400,6 +422,29 @@ bool ResourcesManager::LoadItemInfo(const TCHAR* pFileName, const string& strPat
 				char* pResult = strtok_s(cLine, ", ", &pContext);
 
 				pInfo->tTileOffset = POSITION((float)atof(pResult), (float)atof(pContext));	//	아이템 이미지 오프셋
+
+				fgets(cLine, 256, pFile);
+
+				pInfo->iSellPrice = atoi(cLine);
+			}
+
+			else if (pInfo->eItemType == IT_EGG)
+			{
+				fgets(cLine, 256, pFile);
+
+				char* pContext = nullptr;
+
+				char* pResult = strtok_s(cLine, ", ", &pContext);
+
+				pInfo->tTileOffset = POSITION((float)atof(pResult), (float)atof(pContext));	//	아이템 이미지 오프셋
+
+				fgets(cLine, 256, pFile);
+
+				pInfo->eEggType = ((EGG_TYPE)atoi(cLine));
+
+				fgets(cLine, 256, pFile);
+
+				pInfo->iSellPrice = atoi(cLine);
 			}
 
 			m_vecItemInfo.push_back(pInfo);
@@ -528,6 +573,179 @@ PITEMINFO ResourcesManager::FindItemInfo(int iIndex)
 		return	nullptr;
 
 	return m_vecItemInfo[iIndex];
+}
+
+bool ResourcesManager::LoadAnimalInfo(const TCHAR* pFileName, const string& strPathKey)
+{
+	char strFileName[MAX_PATH] = {};
+
+	const char* pRootPath = GET_SINGLE(PathManager)->FindPathMultiByte(strPathKey);
+
+#ifdef _UNICODE
+	WideCharToMultiByte(CP_ACP, NULL, pFileName, -1, strFileName, lstrlen(pFileName), NULL, NULL);
+#else
+	strcpy_s(strFileName, pFileName);
+#endif
+
+	char strFullPath[MAX_PATH] = {};
+
+	if(pRootPath)
+		strcat_s(strFullPath, pRootPath);
+
+	strcat_s(strFullPath, strFileName);
+
+	FILE* pFile = nullptr;
+
+	fopen_s(&pFile, strFullPath, "rt");
+
+	if (pFile)
+	{
+		char cLine[256] = {};
+
+		fgets(cLine, 256, pFile);
+
+		int iAnimalCount = atoi(cLine);
+
+		for (int i = 0; i < iAnimalCount; ++i)
+		{
+			fgets(cLine, 256, pFile);
+
+			PITEMINFO pInfo = new ITEMINFO;
+
+			fgets(cLine, 256, pFile);
+
+			int iLength = (int)strlen(cLine);
+
+			for (int i = 0; i < iLength; ++i)
+			{
+				if (cLine[i] == '\t')
+				{
+					cLine[i] = 0;
+					break;
+				}
+			}
+
+			pInfo->strName = cLine;
+
+			fgets(cLine, 256, pFile);
+
+			int iCount = atoi(cLine);
+
+			for (int i = 0; i < iCount; ++i)
+			{
+				TCHAR* strDescript = new TCHAR[256];
+
+				fgets(cLine, 256, pFile);
+
+#ifdef _UNICODE
+				int iLength = MultiByteToWideChar(CP_ACP, NULL, cLine, -1, strDescript, 0);
+				MultiByteToWideChar(CP_ACP, NULL, cLine, -1, strDescript, iLength);
+#else
+				strcpy_s(strDescript, cLine);
+#endif
+
+				strDescript[lstrlen(strDescript)-1] = 0;
+
+				pInfo->vecComment.push_back(strDescript);
+			}
+
+			fgets(cLine, 256, pFile);
+
+			pInfo->vecPrice.push_back(atoi(cLine));
+
+			fgets(cLine, 256, pFile);
+
+			pInfo->iSellPrice = atoi(cLine);
+
+			m_vecAnimalInfo.push_back(pInfo);
+		}
+
+		fclose(pFile);
+	}
+
+	return true;
+}
+
+PITEMINFO ResourcesManager::FindAnimalInfo(int iIndex)
+{
+	size_t iSize = m_vecAnimalInfo.size();
+
+	if (iSize <= iIndex)
+		return	nullptr;
+
+	return m_vecAnimalInfo[iIndex];
+}
+
+bool ResourcesManager::LoadMonsterInfo(const char* pFileName, const string& strPathKey)
+{
+	char strFullPath[MAX_PATH] = {};
+
+	const char* pRootPath = GET_SINGLE(PathManager)->FindPathMultiByte(strPathKey);
+
+	if (pRootPath)
+		strcat(strFullPath, pRootPath);
+
+	strcat(strFullPath, pFileName);
+
+	FILE* pFile = nullptr;
+
+	fopen_s(&pFile, strFullPath, "rt");
+
+	if (pFile)
+	{
+		char cLine[256] = {};
+
+		while (true)
+		{
+			fgets(cLine, 256, pFile);
+
+			int iMaxLevel = atoi(cLine);
+
+			if (iMaxLevel == -1)
+				break;
+
+			PMonsterInfo pInfo = new MonsterInfo;
+
+			fgets(cLine, 256, pFile);
+
+			char* pContext = nullptr;
+
+			char* pResult = strtok_s(cLine, "\t", &pContext);
+
+			pInfo->vecHP.push_back(atoi(pResult));
+
+			for (int i = 0; i < iMaxLevel - 1; ++i)
+			{
+				pResult = strtok_s(nullptr, "\t", &pContext);
+
+				pInfo->vecHP.push_back(atoi(pResult));
+			}
+
+			fgets(cLine, 256, pFile);
+
+			pResult = strtok_s(cLine, "\t", &pContext);
+
+			pInfo->vecAttack.push_back(atoi(pResult));
+
+			for (int i = 0; i < iMaxLevel - 1; ++i)
+			{
+				pResult = strtok_s(nullptr, "\t", &pContext);
+
+				pInfo->vecAttack.push_back(atoi(pResult));
+			}
+
+			m_vecMonsterInfo.push_back(pInfo);
+		}
+
+		fclose(pFile);
+	}
+
+	return true;
+}
+
+PMonsterInfo ResourcesManager::FindMonsterInfo(int iIndex)
+{
+	return m_vecMonsterInfo[iIndex];
 }
 
 PSHOPINFO ResourcesManager::FindShopInfo(const string& strName)

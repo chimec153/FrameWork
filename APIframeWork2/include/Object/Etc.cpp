@@ -6,6 +6,8 @@
 Etc::Etc()
 {
 	m_eType = IT_ETC;
+	m_cAlpha = 255;
+	m_bAlphaOn = true;
 }
 
 Etc::Etc(const Etc& etc)	:

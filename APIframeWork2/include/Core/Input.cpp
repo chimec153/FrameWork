@@ -94,12 +94,17 @@ bool Input::Init(HWND hWnd)
 	AddKey("CtrlPixelLeft", 'F',VK_CONTROL);
 	AddKey("CtrlPixelRight", 'H',VK_CONTROL);
 
+	AddKey("Hat", VK_F1);
+	AddKey("SeasonNext", VK_F2);
+	AddKey("SetGoToHome", VK_F3);
 	AddKey("TimeFaster", VK_F4);
 	AddKey("TimeSlower", VK_F5);
 	AddKey("TimeOrigin", VK_F6);
 	AddKey("CarpenterShop", VK_F7);
 	AddKey("Shop", VK_F8);
 	AddKey("WeaponShop", VK_F9);
+	AddKey("Coop", VK_F10);
+	AddKey("NewGame", VK_F11);
 
 	GetCursorPos(&m_tMousePos);
 

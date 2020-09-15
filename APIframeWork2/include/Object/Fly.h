@@ -31,5 +31,8 @@ public:
 
 public:
 	void Collision(class Collider* pSrc, class Collider* pDest, float fTime);
+
+public:
+	virtual void DieMotion();
 };
 

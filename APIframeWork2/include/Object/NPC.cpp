@@ -10,13 +10,17 @@
 
 NPC::NPC()	:
 	m_fLimitDist(200.f),
-	m_fDist(0.f)
+	m_fDist(0.f),
+	m_bWalkStart(false)
 {
 }
 
 NPC::NPC(const NPC& npc)	:
 	FightObj(npc)
 {
+	m_fLimitDist = npc.m_fLimitDist;
+	m_fDist = npc.m_fDist;
+	m_bWalkStart = npc.m_bWalkStart;
 }
 
 NPC::~NPC()
@@ -39,8 +43,7 @@ bool NPC::Init()
 	AddAnimationClip("RobinIdleDown", AT_ATLAS, AO_LOOP, 1.f, 4, 9, 0, 0, 1, 1, 1.f,0, "RobinAni", TEXT("Characters\\NPC\\Robin.bmp"));
 	SetAnimationClipColorKey("RobinIdleDown", 255, 255, 255);
 
-	AddAnimationClip("HaleyIdleDown", AT_ATLAS, AO_LOOP, 1.f, 4, 9, 0, 0, 1, 1, 1.f,0, "HaleyAni", TEXT("Characters\\NPC\\Haley.bmp"));
-	SetAnimationClipColorKey("HaleyIdleDown", 255, 0, 255);
+	pAni->LoadFromPath("Haley.sac");
 
 	SAFE_RELEASE(pAni);
 
@@ -70,6 +73,32 @@ int NPC::Update(float fDeltaTime)
 		m_fDist -= m_fLimitDist;
 
 		m_tMoveDir *= -1;
+
+		if (GetTag() == "Haley")
+		{
+			if(m_tMoveDir.x > 0.f)
+				SetAnimationCurrentClip("HaleyWalkRight");
+
+			else
+				SetAnimationCurrentClip("HaleyWalkLeft");
+		}
+	}
+
+	if (m_bWalkStart)
+	{
+		if (m_pAnimation->GetMotionEnd())
+		{
+			if (m_tMoveDir.x > 0.f)
+				SetAnimationCurrentClip("HaleyWalkRight");
+
+			else
+				SetAnimationCurrentClip("HaleyWalkLeft");
+
+			SetSpeed(50.f);
+
+			m_bWalkStart = false;
+		}
+
 	}
 
 	return 0;
@@ -130,6 +159,18 @@ void NPC::CollStay(Collider* pSrc, Collider* pDest, float fDeltaTime)
 				{
 					if (pInven)
 						pInven->CreateBuildShop();
+				}
+
+				else if (strTag == "Haley")
+				{
+					if (pInven)
+					{
+						pInven->CreateAnimalShop();
+
+						SetAnimationCurrentClip("HaleyIdleDown");
+
+						SetSpeed(0.f);
+					}
 				}
 
 				else

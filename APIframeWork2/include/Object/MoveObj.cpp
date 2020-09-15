@@ -434,7 +434,7 @@ void MoveObj::MoveAngle()
 	}
 }
 
-void MoveObj::MoveAngle(float fDeltaTime)
+bool MoveObj::MoveAngle(float fDeltaTime)
 {
 	m_tPos += m_tMoveDir * m_fSpeed*fDeltaTime;
 
@@ -449,7 +449,7 @@ void MoveObj::MoveAngle(float fDeltaTime)
 		if (iIndex < 0)
 		{
 			m_tPos -= m_tMoveDir * m_fSpeed * fDeltaTime;
-			return;
+			return false;
 		}
 
 		Tile* pTile = pStage->GetTile(iIndex);
@@ -457,17 +457,19 @@ void MoveObj::MoveAngle(float fDeltaTime)
 		if (!pTile)
 		{
 			m_tPos -= m_tMoveDir * m_fSpeed * fDeltaTime;
-			return;
-		}
-			
+			return false;
+		}			
 
 		TILE_OPTION eOption = pTile->GetTileOption();
 
 		if (eOption >= TO_NOMOVE)
 		{
 			m_tPos -= m_tMoveDir * m_fSpeed * fDeltaTime;
+			return false;
 		}
 	}
+
+	return true;
 }
 
 void MoveObj::MoveAngle(float fSpeed, float fDeltaTime)

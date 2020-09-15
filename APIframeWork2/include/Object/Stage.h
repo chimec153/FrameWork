@@ -22,6 +22,7 @@ private:
 	class Tile*				m_pSelectTile;
 	POSITION				m_tStart;
 	STAGE_TYPE				m_eStageType;
+	SEASON					m_eSeason;
 
 public:
 	class Tile* GetSelectedTile()	const
@@ -29,9 +30,11 @@ public:
 		return m_pSelectTile;
 	}
 
-	void SetStart(const POSITION& tPos)
+	void SetStart(const POSITION& tPos);
+
+	void SetStart(float x, float y)
 	{
-		m_tStart = tPos;
+		m_tStart = POSITION(x, y);
 	}
 
 	void SetStageType(STAGE_TYPE eType)
@@ -42,6 +45,16 @@ public:
 	STAGE_TYPE GetStageType()	const
 	{
 		return m_eStageType;
+	}
+
+	void SetSeason(SEASON eSeason)
+	{
+		m_eSeason = eSeason;
+	}
+
+	SEASON GetSeason()	const
+	{
+		return m_eSeason;
 	}
 
 public:
@@ -63,6 +76,7 @@ public:
 public:
 	void ChangeTileTexture(const POSITION& tPos,
 		class Texture* pTexture, int iLayer = 0);
+	void ChangeTileTextureAll(class Texture* pCurrentTexture, class Texture* pTexture, int iLayer = 0);
 	void ChangeTileOption(const POSITION& tPos,
 		TILE_OPTION eOption);
 	void ChangeTileImageOffset(const POSITION& tPos,

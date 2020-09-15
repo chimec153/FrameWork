@@ -24,6 +24,7 @@ protected:
 	int				m_iEnergy;
 	int				m_iRegrowthDay;
 	class Crop*		m_pFlower;
+	bool			m_bFrozen;
 
 public:
 	void SetCropType(CROP_TYPE eType)
@@ -110,6 +111,16 @@ public:
 	int GetRegrowthDay()	const
 	{
 		return m_iRegrowthDay;
+	}
+
+	bool IsFrozen()	const
+	{
+		return m_bFrozen;
+	}
+
+	void SetFrozen(bool bFrozen)
+	{
+		m_bFrozen = bFrozen;
 	}
 
 public:

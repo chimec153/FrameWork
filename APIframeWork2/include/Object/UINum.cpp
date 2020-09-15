@@ -122,18 +122,25 @@ void UINum::CreateNum(int iNum)
 		else
 			pObj = (UINum*)CreateCloneObj("Num", "num", m_pLayer);
 		
-		if(m_fSpeed == 0.f)
-			pObj->SetSpeed(0.f);
+		if (m_fSpeed == 0.f)
+		{
+			if(pObj)
+				pObj->SetSpeed(0.f);
+		}
+			
 
 		POSITION tPos = m_tPos;
 
 		tPos.x -= m_tSize.x * i;
 
-		pObj->SetPos(tPos);
+		if (pObj)
+		{
+			pObj->SetPos(tPos);
 
-		pObj->SetNum(iNum / 10);
+			pObj->SetNum(iNum / 10);
 
-		m_vecNum.push_back(pObj);
+			m_vecNum.push_back(pObj);
+		}
 
 		iNum /= 10;
 
@@ -211,6 +218,7 @@ void UINum::Render(HDC hDC, float fDeltaTime)
 		m_vecNum[i]->Render(hDC, fDeltaTime);
 
 #ifdef _DEBUG
+	/*
 	if (KEYPRESS("Debug"))
 	{
 		POSITION tPos = m_tPos - GET_SINGLE(Camera)->GetPos();
@@ -221,7 +229,7 @@ void UINum::Render(HDC hDC, float fDeltaTime)
 		TextOut(hDC, (int)tPos.x, (int)tPos.y, strHP, lstrlen(strHP));
 		wsprintf(strHP, TEXT("Scene: %p"), m_pScene);
 		TextOut(hDC, (int)tPos.x, (int)tPos.y - 20, strHP, lstrlen(strHP));
-	}
+	}*/
 #endif
 }
 

@@ -15,7 +15,18 @@ private:
 private:
 	float	m_fLimitDist;
 	float	m_fDist;
+	int		m_iAttack;
 
+public:
+	void SetAttack(int iAttack)
+	{
+		m_iAttack = iAttack;
+	}
+
+	int GetAttack()	const
+	{
+		return m_iAttack;
+	}
 
 public:
 	void SetBulletDistance(float fDist)

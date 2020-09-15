@@ -275,7 +275,7 @@ void UIBuildingShop::CreatePanel()
 		m_pExitBtn->SetSize(22.f, 22.f);
 		m_pExitBtn->SetImageOffset(676.f, 988.f);
 		m_pExitBtn->SetTexture("Mouse");
-		m_pExitBtn->SetCallback(this, &UIBuildingShop::DisablePanel);
+		m_pExitBtn->SetCallback(CS_STAY, this, &UIBuildingShop::DisablePanel);
 		m_pExitBtn->SetAlpha(255);
 		m_pExitBtn->EnableAlpha(true);
 		m_pExitBtn->SetPos(tPanelPos.x + tPanelSize.x + tMaterialPanelSize.x, tPanelPos.y);
@@ -292,7 +292,7 @@ void UIBuildingShop::CreatePanel()
 		m_pPrevBtn->SetSize(22.f, 20.f);
 		m_pPrevBtn->SetImageOffset(706.f, 990.f);
 		m_pPrevBtn->SetTexture("Mouse");
-		m_pPrevBtn->SetCallback(this, &UIBuildingShop::PagePrev);
+		m_pPrevBtn->SetCallback(CS_STAY, this, &UIBuildingShop::PagePrev);
 		m_pPrevBtn->SetAlpha(255);
 		m_pPrevBtn->EnableAlpha(true);
 		m_pPrevBtn->SetPos(tPanelPos.x + tPanelSize.x/2.f - 25.f, tPanelPos.y + tPanelSize.y + m_pPrevBtn->GetSize().y);
@@ -309,7 +309,7 @@ void UIBuildingShop::CreatePanel()
 		m_pNextBtn->SetSize(22.f, 20.f);
 		m_pNextBtn->SetImageOffset(732.f, 990.f);
 		m_pNextBtn->SetTexture("Mouse");
-		m_pNextBtn->SetCallback(this, &UIBuildingShop::PageNext);
+		m_pNextBtn->SetCallback(CS_STAY, this, &UIBuildingShop::PageNext);
 		m_pNextBtn->SetAlpha(255);
 		m_pNextBtn->EnableAlpha(true);
 		m_pNextBtn->SetPos(tPanelPos.x + tPanelSize.x / 2.f + 25.f, tPanelPos.y + tPanelSize.y + m_pNextBtn->GetSize().y);
@@ -326,7 +326,7 @@ void UIBuildingShop::CreatePanel()
 		m_pBuildBtn->SetSize(32.f, 32.f);
 		m_pBuildBtn->SetImageOffset(732.f, 746.f);
 		m_pBuildBtn->SetTexture("Mouse");
-		m_pBuildBtn->SetCallback(this, &UIBuildingShop::BuyBuilding);
+		m_pBuildBtn->SetCallback(CS_STAY, this, &UIBuildingShop::BuyBuilding);
 		m_pBuildBtn->SetAlpha(255);
 		m_pBuildBtn->EnableAlpha(true);
 		m_pBuildBtn->SetPos(tPanelPos.x + tPanelSize.x + 50.f, tPanelPos.y + tPanelSize.y);
@@ -355,20 +355,6 @@ void UIBuildingShop::CreatePanel()
 		
 		m_vecPanel.push_back(pPanel);
 
-		pPanel = Obj::CreateObj<UIPanel>("BuildingNamePanel", pLayer);	//	건물 이름 판넬을 생성한다.
-		
-		pPanel->SetSize(204.f, 36.f);
-		pPanel->SetImageOffset(1178.f, 976.f);
-		pPanel->SetTexture("Mouse");
-		pPanel->SetEnable(false);
-		pPanel->SetPos(tPanelPos.x + tPanelSize.x + 20.f, tPanelPos.y);
-
-		pPanel->EnableAlpha(true);
-
-		pPanel->SetAlpha(255);
-
-		m_vecPanel.push_back(pPanel);
-
 		m_pBuildingName = Obj::CreateObj<Text>("BuildingName", pLayer);
 
 		m_pBuildingName->SetText(TEXT("Coop"));
@@ -378,6 +364,54 @@ void UIBuildingShop::CreatePanel()
 		m_pBuildingName->SetPos(tPanelPos.x + tPanelSize.x + 32.f, tPanelPos.y + 12.f);
 
 		m_pBuildingName->SetEnable(false);
+
+		pPanel = Obj::CreateObj<UIPanel>("BuildingNamePanelLeft", pLayer);	//	건물 이름 판넬 왼쪽을 생성한다.
+
+		pPanel->SetSize(25.f, 36.f);
+		pPanel->SetImageOffset(650.f, 636.f);
+		pPanel->SetTexture("Mouse");
+		pPanel->SetEnable(false);
+
+		POSITION tTitlePanelLeftSize = pPanel->GetSize();
+
+		pPanel->SetPos(tPanelPos.x + tPanelSize.x + 20.f, tPanelPos.y);
+
+		pPanel->EnableAlpha(true);
+
+		pPanel->SetAlpha(255);
+
+		m_vecPanel.push_back(pPanel);
+
+		pPanel = Obj::CreateObj<UIPanel>("BuildingNamePanel", pLayer);	//	건물 이름 판넬을 생성한다.
+
+		pPanel->SetSize(122.f, 34.f);
+		pPanel->SetImageOffset(1203.f, 978.f);
+		pPanel->SetTexture("Mouse");
+		pPanel->SetEnable(false);
+
+		POSITION tTitlePanelSize = pPanel->GetSize();
+
+		pPanel->SetPos(tPanelPos.x + tPanelSize.x + tTitlePanelLeftSize.x + 20.f, tPanelPos.y  + 2.f);
+
+		pPanel->EnableAlpha(true);
+
+		pPanel->SetAlpha(255);
+
+		m_vecPanel.push_back(pPanel);
+
+		pPanel = Obj::CreateObj<UIPanel>("BuildingNamePanelRight", pLayer);	//	건물 이름 판넬 오른쪽을 생성한다.
+
+		pPanel->SetSize(25.f, 36.f);
+		pPanel->SetImageOffset(675.f, 636.f);
+		pPanel->SetTexture("Mouse");
+		pPanel->SetEnable(false);
+		pPanel->SetPos(tPanelPos.x + tPanelSize.x + tTitlePanelLeftSize.x + tTitlePanelSize.x + 20.f, tPanelPos.y);
+
+		pPanel->EnableAlpha(true);
+
+		pPanel->SetAlpha(255);
+
+		m_vecPanel.push_back(pPanel);
 
 		for (int i = 0; i < 4; ++i)
 		{

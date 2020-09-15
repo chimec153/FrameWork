@@ -1,4 +1,4 @@
-25	행 개수
+72	행 개수
 ====================================0
 0		Label
 Object
@@ -191,6 +191,216 @@ StaticObjBody
 ====================================17
 1		Object
 4		Type	1: tree, 2: building, 3: crop, 4: rock
+Rock2
+items,Item\springobjects.bmp
+255, 255, 255
+32, 32
+0.5, 0.5
+224, 448		offset1
+0		RockType 0: Rock, 1: ...
+100		GemsDropRate
+1
+StaticObjBody
+-16, -16, 16, 16
+====================================18
+1		Object
+4		Type	1: tree, 2: building, 3: crop, 4: rock
+Rock3
+items,Item\springobjects.bmp
+255, 255, 255
+32, 32
+0.5, 0.5
+256, 32		offset1
+1		RockType 0: Rock, 1: ...
+100		GemsDropRate
+1
+StaticObjBody
+-16, -16, 16, 16
+====================================19
+1		Object
+4		Type	1: tree, 2: building, 3: crop, 4: rock
+Rock4
+items,Item\springobjects.bmp
+255, 255, 255
+32, 32
+0.5, 0.5
+320, 32		offset1
+2		RockType 0: Rock, 1: ...
+100		GemsDropRate
+1
+StaticObjBody
+-16, -16, 16, 16
+====================================20
+1		Object
+4		Type	1: tree, 2: building, 3: crop, 4: rock
+Rock5
+items,Item\springobjects.bmp
+255, 255, 255
+32, 32
+0.5, 0.5
+384, 32		offset1
+3		RockType 0: Rock, 1: ...
+100		GemsDropRate
+1
+StaticObjBody
+-16, -16, 16, 16
+====================================21
+1		Object
+4		Type	1: tree, 2: building, 3: crop, 4: rock
+Rock6
+items,Item\springobjects.bmp
+255, 255, 255
+32, 32
+0.5, 0.5
+448, 32		offset1
+4		RockType 0: Rock, 1: ...
+100		GemsDropRate
+1
+StaticObjBody
+-16, -16, 16, 16
+====================================22
+1		Object
+4		Type	1: tree, 2: building, 3: crop, 4: rock
+Rock7
+items,Item\springobjects.bmp
+255, 255, 255
+32, 32
+0.5, 0.5
+512, 32		offset1
+5		RockType 0: Rock, 1: ...
+100		GemsDropRate
+1
+StaticObjBody
+-16, -16, 16, 16
+====================================23
+1		Object
+4		Type	1: tree, 2: building, 3: crop, 4: rock
+Rock8
+items,Item\springobjects.bmp
+255, 255, 255
+32, 32
+0.5, 0.5
+576, 32		offset1
+6		RockType 0: Rock, 1: ...
+100		GemsDropRate
+1
+StaticObjBody
+-16, -16, 16, 16
+====================================24
+1		Object
+4		Type	1: tree, 2: building, 3: crop, 4: rock
+Rock9
+items,Item\springobjects.bmp
+255, 255, 255
+32, 32
+0.5, 0.5
+640, 32		offset1
+7		RockType 0: Rock, 1: ...
+100		GemsDropRate
+1
+StaticObjBody
+-16, -16, 16, 16
+====================================25
+1		Object
+4		Type	1: tree, 2: building, 3: crop, 4: rock
+Rock10
+items,Item\springobjects.bmp
+255, 255, 255
+32, 32
+0.5, 0.5
+704, 32		offset1
+8		RockType 0: Rock, 1: ...
+100		GemsDropRate
+1
+StaticObjBody
+-16, -16, 16, 16
+====================================26
+1		Object
+4		Type	1: tree, 2: building, 3: crop, 4: rock
+Rock11
+items,Item\springobjects.bmp
+255, 255, 255
+32, 32
+0.5, 0.5
+0, 64		offset1
+0		RockType 0: Rock, 1: ...
+100		GemsDropRate
+1
+StaticObjBody
+-16, -16, 16, 16
+====================================27
+1		Object
+4		Type	1: tree, 2: building, 3: crop, 4: rock
+Rock12
+items,Item\springobjects.bmp
+255, 255, 255
+32, 32
+0.5, 0.5
+64, 64		offset1
+0		RockType 0: Rock, 1: ...
+100		GemsDropRate
+1
+StaticObjBody
+-16, -16, 16, 16
+====================================28
+1		Object
+4		Type	1: tree, 2: building, 3: crop, 4: rock
+Rock13
+items,Item\springobjects.bmp
+255, 255, 255
+32, 32
+0.5, 0.5
+128, 64		offset1
+0		RockType 0: Rock, 1: ...
+100		GemsDropRate
+1
+StaticObjBody
+-16, -16, 16, 16
+====================================29
+1		Object
+4		Type	1: tree, 2: building, 3: crop, 4: rock
+Rock14
+items,Item\springobjects.bmp
+255, 255, 255
+32, 32
+0.5, 0.5
+192, 64		offset1
+0		RockType 0: Rock, 1: ...
+100		GemsDropRate
+1
+StaticObjBody
+-16, -16, 16, 16
+====================================30
+1		Object
+4		Type	1: tree, 2: building, 3: crop, 4: rock
+Rock15
+items,Item\springobjects.bmp
+255, 255, 255
+32, 32
+0.5, 0.5
+256, 64		offset1
+0		RockType 0: Rock, 1: ...
+100		GemsDropRate
+1
+StaticObjBody
+-16, -16, 16, 16
+====================================31
+1		Object
+4		Type	1: tree, 2: building, 3: crop, 4: rock
+Rock16
+items,Item\springobjects.bmp
+255, 255, 255
+32, 32
+0.5, 0.5
+320, 64		offset1
+0		RockType 0: Rock, 1: ...
+100		GemsDropRate
+1
+StaticObjBody
+-16, -16, 16, 16
+====================================32
+1		Object
+4		Type	1: tree, 2: building, 3: crop, 4: rock
 EmeraldNode
 items,Item\springobjects.bmp
 255, 255, 255
@@ -202,7 +412,7 @@ items,Item\springobjects.bmp
 1
 StaticObjBody
 -16, -16, 16, 16
-====================================18
+====================================33
 1		Object
 4		Type	1: tree, 2: building, 3: crop, 4: rock
 AquamarineNode
@@ -216,7 +426,7 @@ items,Item\springobjects.bmp
 1
 StaticObjBody
 -16, -16, 16, 16
-====================================19
+====================================34
 1		Object
 4		Type	1: tree, 2: building, 3: crop, 4: rock
 RubyNode
@@ -230,7 +440,7 @@ items,Item\springobjects.bmp
 1
 StaticObjBody
 -16, -16, 16, 16
-====================================20
+====================================35
 1		Object
 4		Type	1: tree, 2: building, 3: crop, 4: rock
 AmethystNode
@@ -244,7 +454,7 @@ items,Item\springobjects.bmp
 1
 StaticObjBody
 -16, -16, 16, 16
-====================================21
+====================================36
 1		Object
 4		Type	1: tree, 2: building, 3: crop, 4: rock
 TopazNode
@@ -258,7 +468,7 @@ items,Item\springobjects.bmp
 1
 StaticObjBody
 -16, -16, 16, 16
-====================================22
+====================================37
 1		Object
 4		Type	1: tree, 2: building, 3: crop, 4: rock
 JadeNode
@@ -272,7 +482,7 @@ items,Item\springobjects.bmp
 1
 StaticObjBody
 -16, -16, 16, 16
-====================================23
+====================================38
 1		Object
 4		Type	1: tree, 2: building, 3: crop, 4: rock
 DiamondNode
@@ -286,7 +496,7 @@ items,Item\springobjects.bmp
 1
 StaticObjBody
 -16, -16, 16, 16
-====================================24
+====================================39
 1		Object
 4		Type	1: tree, 2: building, 3: crop, 4: rock
 IridiumNode
@@ -300,3 +510,353 @@ items,Item\springobjects.bmp
 1
 StaticObjBody
 -16, -16, 16, 16
+====================================40
+0		Label
+Grass
+====================================41
+1		Object
+5		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass
+grass1
+grass,TileSheets\grass.bmp
+255, 255, 255
+30, 40
+0.5, 0.6
+0, 0
+1
+StaticObjBody
+-15, -24, 15, 16
+====================================42
+1		Object
+5		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass
+grass2
+grass,TileSheets\grass.bmp
+255, 255, 255
+30, 40
+0.5, 0.6
+30, 0
+1
+StaticObjBody
+-15, -24, 15, 16
+====================================43
+1		Object
+5		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass
+grass3
+grass,TileSheets\grass.bmp
+255, 255, 255
+30, 40
+0.5, 0.6
+60, 0
+1
+StaticObjBody
+-15, -24, 15, 16
+====================================44
+0		Label
+Furniture
+====================================45
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair1
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+0, 144
+1
+StaticObjBody
+====================================46
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair2
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+96, 144
+1
+StaticObjBody
+====================================47
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair3
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+192, 144
+1
+StaticObjBody
+====================================48
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair4
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+288, 144
+1
+StaticObjBody
+====================================49
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair5
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+384, 144
+1
+StaticObjBody
+====================================50
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair6
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+480, 144
+1
+StaticObjBody
+====================================51
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair7
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+576, 144
+1
+StaticObjBody
+====================================52
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair8
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+672, 144
+1
+StaticObjBody
+====================================53
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair9
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+768, 144
+1
+StaticObjBody
+====================================54
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair10
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+862, 144
+1
+StaticObjBody
+====================================55
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair11
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+894, 144
+1
+StaticObjBody
+====================================56
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair12
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+926, 144
+1
+StaticObjBody
+====================================57
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair13
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+0, 208
+1
+StaticObjBody
+====================================58
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair14
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+96, 208
+1
+StaticObjBody
+====================================59
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair15
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+192, 208
+1
+StaticObjBody
+====================================60
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair16
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+288, 208
+1
+StaticObjBody
+====================================61
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair17
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+384, 208
+1
+StaticObjBody
+====================================62
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair18
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+480, 208
+1
+StaticObjBody
+====================================63
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair19
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+576, 208
+1
+StaticObjBody
+====================================64
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair20
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+672, 208
+1
+StaticObjBody
+====================================65
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair21
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+768, 208
+1
+StaticObjBody
+====================================66
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair22
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+862, 208
+1
+StaticObjBody
+====================================67
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair23
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+894, 208
+1
+StaticObjBody
+====================================68
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair24
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+926, 208
+1
+StaticObjBody
+====================================69
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair25
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+0, 272
+1
+StaticObjBody
+====================================70
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+chair26
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 64
+0.5, 0.75
+96, 272
+1
+StaticObjBody
+====================================71
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+longchair1
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+64, 64
+0.5, 0.75
+0, 336
+1
+StaticObjBody
+====================================72
+1		Object
+6		Type	1: tree, 2: building, 3: crop, 4: rock, 5: grass, 6: Furniture
+longchair1R
+furniture,TileSheets\furniture.bmp
+255, 255, 255
+32, 96
+0.5, 0.5
+64, 336
+1
+StaticObjBody

@@ -9,6 +9,8 @@
 #include "ObjManager.h"
 #include "UIShop.h"
 #include "../Core/Camera.h"
+#include "../Resources/ResourcesManager.h"
+#include "Crop.h"
 
 Item::Item()	:
 	m_eType(IT_NONE),
@@ -43,6 +45,14 @@ Item::Item(const Item& item)	:
 	m_bDrag = false;
 	m_iSellPrice = item.m_iSellPrice;
 	m_iFileIndex = item.m_iFileIndex;
+
+	Collider* pCol = GetCollider("ItemBody");
+
+	pCol->AddCollisionFunction(CS_ENTER, this, &Item::CollEnter);
+	pCol->AddCollisionFunction(CS_STAY, this, &Item::ColStay);
+	pCol->AddCollisionFunction(CS_LEAVE, this, &Item::ColEnd);
+
+	SAFE_RELEASE(pCol);
 }
 
 Item::~Item()
@@ -93,7 +103,7 @@ int Item::Update(float fDeltaTime)
 
 		m_pNumber->SetPosAll(tPos);
 
-		DisableItem();
+		//DisableItem();
 	}
 
 	if (m_bInventory)
@@ -150,15 +160,16 @@ void Item::Render(HDC hDC, float fDeltaTime)
 		m_pNumber->Render(hDC, fDeltaTime);
 
 #ifdef _DEBUG
+	
 	if (KEYPRESS("Debug"))
 	{
 		POSITION tPos = m_tPos - GET_SINGLE(Camera)->GetPos();
 
 		TCHAR strHP[32] = {};
 
-		wsprintf(strHP, TEXT("Layer: %d"), m_pLayer->GetZOrder());
+		wsprintf(strHP, TEXT("L:%d"), m_pLayer->GetZOrder()%1000);
 		TextOut(hDC, (int)tPos.x, (int)tPos.y, strHP, lstrlen(strHP));
-		wsprintf(strHP, TEXT("Scene: %p"), m_pScene);
+		wsprintf(strHP, TEXT("S:%d"), ((int)m_pScene)%1000);
 		TextOut(hDC, (int)tPos.x, (int)tPos.y - 20, strHP, lstrlen(strHP));
 	}
 #endif
@@ -173,7 +184,26 @@ void Item::CollEnter(Collider* pSrc, Collider* pDest, float fTime)
 {
 	if (!m_bInventory)
 	{
-		if (pDest->GetTag() == "PlayerBody")
+		ITEM_TYPE eType = GetType();
+
+		if (eType == IT_CROP)
+		{
+			bool bHarvest = ((Crop*)pSrc->GetObj())->Crop::IsHarvested();
+
+			if (bHarvest)
+			{
+				if (pDest->GetTag() == "PlayerBody")
+				{
+					UIInventory* pInven = GET_SINGLE(ObjManager)->GetInven();
+
+					pInven->AddItem(this);
+
+					SAFE_RELEASE(pInven);
+				}
+			}
+		}
+
+		else if (pDest->GetTag() == "PlayerBody")
 		{
 			UIInventory* pInven = GET_SINGLE(ObjManager)->GetInven();
 
@@ -181,16 +211,18 @@ void Item::CollEnter(Collider* pSrc, Collider* pDest, float fTime)
 
 			SAFE_RELEASE(pInven);
 		}
-			
+
 	}
 
 	else
 	{
 		if (pDest->GetTag() == "Mouse")
 		{
+			PITEMINFO pInfo = GET_SINGLE(ResourcesManager)->FindItemInfo(m_iFileIndex);
+
 			m_bMouseOn = true;
 
-			m_pInventory->InfoPanelOn(pDest->GetObj()->GetPos(), m_iFileIndex);
+			m_pInventory->InfoPanelOn(pDest->GetObj()->GetPos(), *pInfo);
 		}
 	}
 }
@@ -206,9 +238,11 @@ void Item::ColStay(Collider* pSrc, Collider* pDest, float fTime)
 
 			else
 			{
+				PITEMINFO pInfo = GET_SINGLE(ResourcesManager)->FindItemInfo(m_iFileIndex);
+
 				m_bMouseOn = true;
 
-				m_pInventory->InfoPanelOn(pDest->GetObj()->GetPos(), m_iFileIndex);
+				m_pInventory->InfoPanelOn(pDest->GetObj()->GetPos(), *pInfo);
 			}
 
 			if (KEYDOWN("MouseLButton"))

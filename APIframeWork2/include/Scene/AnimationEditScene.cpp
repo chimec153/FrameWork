@@ -76,14 +76,27 @@ void CAnimationEditScene::Input(float fDeltaTime)
 		GET_SINGLE(Camera)->Scroll(300.f * fDeltaTime, 0.f);
 	}
 
-	if (GetAsyncKeyState('5') & 0x8000)
+	if (KEYDOWN("5"))
 	{
-		if (!m_pAniEditDlg)
+		if (m_pAniEditDlg)
+		{
+			if (m_pAniEditDlg->IsDestroyed())
+			{
+				SAFE_DELETE(m_pAniEditDlg);
+
+				m_pAniEditDlg = new CAniEditDlg;
+
+				m_pAniEditDlg->OnEditDlg(IDD_DIALOG2);
+			}
+		}
+
+		else
 		{
 			m_pAniEditDlg = new CAniEditDlg;
 
 			m_pAniEditDlg->OnEditDlg(IDD_DIALOG2);
 		}
+
 	}
 
 	if (KEYDOWN("Key_C"))
@@ -94,21 +107,22 @@ void CAnimationEditScene::Input(float fDeltaTime)
 		{
 			POSITION tMousePos = GET_SINGLE(Input)->GetMouseWorldPos();
 
-			Texture* pTexture = GET_SINGLE(ResourcesManager)->GetBackBuffer();
+			Texture* pTexture = m_pAniEditDlg->GetTexture();
 
 			COLORREF tColor = GetPixel(pTexture->GetDC(), (int)tMousePos.x, (int)tMousePos.y);
 
 			m_pAniEditDlg->SetColorKey(tColor);
-
-			SAFE_RELEASE(pTexture);
 		}
 	}
 
 	if (KEYDOWN("Key_E_CTRL"))
 	{
-		PANIMATIONCLIP pClip = m_pAniEditDlg->GetClip();
+		if(m_pAniEditDlg)
+		{
+			PANIMATIONCLIP pClip = m_pAniEditDlg->GetClip();
 
-		pClip->vecFrame.clear();
+			pClip->vecFrame.clear();
+		}
 	}
 
 	else if (KEYDOWN("Inventory"))
@@ -190,7 +204,6 @@ void CAnimationEditScene::Input(float fDeltaTime)
 				}
 			}
 		}
-
 	}
 
 	if (KEYDOWN("CtrlFocusLeft"))
@@ -264,7 +277,6 @@ void CAnimationEditScene::Input(float fDeltaTime)
 				}
 			}
 		}
-
 	}
 
 	if (KEYDOWN("CtrlPixelUp"))
@@ -275,7 +287,7 @@ void CAnimationEditScene::Input(float fDeltaTime)
 
 			float fSizeY = m_pAniEditDlg->GetSize().y;
 
-			tBasePos.y -= fSizeY;
+			tBasePos.y -= 64;
 
 			m_pAniEditDlg->SetBasePos(tBasePos);
 		}
@@ -307,7 +319,6 @@ void CAnimationEditScene::Input(float fDeltaTime)
 				}
 			}
 		}
-
 	}
 
 	if (KEYDOWN("CtrlPixelDown"))
@@ -318,7 +329,7 @@ void CAnimationEditScene::Input(float fDeltaTime)
 
 			float fSizeY = m_pAniEditDlg->GetSize().y;
 
-			tBasePos.y += fSizeY;
+			tBasePos.y += 64;
 
 			m_pAniEditDlg->SetBasePos(tBasePos);
 		}
@@ -361,7 +372,7 @@ void CAnimationEditScene::Input(float fDeltaTime)
 
 			float fSizeX = m_pAniEditDlg->GetSize().x;
 
-			tBasePos.x -= fSizeX;
+			tBasePos.x -= 32;
 
 			m_pAniEditDlg->SetBasePos(tBasePos);
 		}
@@ -404,7 +415,7 @@ void CAnimationEditScene::Input(float fDeltaTime)
 
 			float fSizeX = m_pAniEditDlg->GetSize().x;
 
-			tBasePos.x += fSizeX;
+			tBasePos.x += 32;
 
 			m_pAniEditDlg->SetBasePos(tBasePos);
 		}
@@ -469,7 +480,8 @@ void CAnimationEditScene::Input(float fDeltaTime)
 
 			POSITION tMouseClientPos = GET_SINGLE(Input)->GetMouseClientPos();
 
-			if (tRS.iW >= tMouseClientPos.x && tRS.iH >= tMouseClientPos.y)
+			if (tRS.iW >= tMouseClientPos.x && tRS.iH >= tMouseClientPos.y &&
+				tMouseClientPos.x >=0.f && tMouseClientPos.y >=0.f)
 			{
 				if (SelectFrame(m_tStart))
 				{
@@ -498,7 +510,8 @@ void CAnimationEditScene::Input(float fDeltaTime)
 
 		POSITION tMouseClientPos = GET_SINGLE(Input)->GetMouseClientPos();
 
-		if (tRS.iW >= tMouseClientPos.x && tRS.iH >= tMouseClientPos.y)
+		if (tRS.iW >= tMouseClientPos.x && tRS.iH >= tMouseClientPos.y &&
+			tMouseClientPos.x >= 0.f && tMouseClientPos.y >= 0.f)
 		{
 			PANIMATIONCLIP pClip = m_pAniEditDlg->GetClip();
 

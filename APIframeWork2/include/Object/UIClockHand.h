@@ -15,8 +15,9 @@ private:
 private:
 	float				m_fTime;
 	POSITION			m_tOriginPos;
-	class Obj*			m_pNightPanel;
+	class Obj* m_pNightPanel;
 	list<class Obj*>	m_CropList;
+	list<class Obj*>	m_AnimalList;
 	bool				m_bRain;
 	int					m_iDay;
 	int					m_iWeek;
@@ -28,6 +29,7 @@ private:
 	vector<TCHAR*>		m_vecWeekText;
 	class UIPanel*		m_pWeatherPanel;
 	class UIPanel*		m_pSeasonPanel;
+	bool				m_bBackToHome;
 
 public:
 	void AddTime(float fTime);
@@ -41,6 +43,11 @@ public:
 	float GetTime()	const
 	{
 		return m_fTime;
+	}
+
+	int GetDay()	const
+	{
+		return m_iDay;
 	}
 
 	void SetNightPanel(class Obj* pObj);
@@ -72,6 +79,31 @@ public:
 		}
 	}
 
+	void AddAnimal(class Obj* pObj)
+	{
+		if (pObj)
+		{
+			pObj->AddRef();
+			m_AnimalList.push_back(pObj);
+		}
+	}
+
+	void DeleteAnimal(class Obj* pObj)
+	{
+		auto iter = m_AnimalList.begin();
+		auto iterEnd = m_AnimalList.end();
+
+		for (; iter != iterEnd; ++iter)
+		{
+			if ((*iter) == pObj)
+			{
+				SAFE_RELEASE(pObj);
+				m_AnimalList.erase(iter);
+				return;
+			}
+		}
+	}
+
 	bool IsRain()	const
 	{
 		return m_bRain;
@@ -79,6 +111,16 @@ public:
 
 	void SetWeekText(Text* pText);
 	void SetTimeText(Text* pText);
+
+	void SetBackToHome(bool bHome)
+	{
+		m_bBackToHome = bHome;
+	}
+
+	bool IsBackToHome()	const
+	{
+		return m_bBackToHome;
+	}
 
 public:
 	virtual bool Init();

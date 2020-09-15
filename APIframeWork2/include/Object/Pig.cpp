@@ -2,15 +2,15 @@
 #include "../Animation/Animation.h"
 
 Pig::Pig()	:
-	m_fTime(0.f),
 	m_iLevel(0)
 {
+	m_eAnimalType = ANIMAL_PIG;
+	m_bTileEffect = true;
 }
 
 Pig::Pig(const Pig& pig)	:
-	FightObj(pig)
+	Animal(pig)
 {
-	m_fTime = pig.m_fTime;
 	m_iLevel = pig.m_iLevel;
 }
 
@@ -21,74 +21,274 @@ Pig::~Pig()
 bool Pig::Init()
 {
 	SetSize(64.f, 64.f);
-	SetPivot(0.5f, 0.5f);
+	SetPivot(0.5f, 1.f);
 	SetSpeed(50.f);
 
 	Animation* pAni = CreateAnimation("PigAni");
-/*
-	pAni->AddClip("PigIdleDown", AT_ATLAS, AO_LOOP, 0.4f, 4, 5, 0, 0, 1, 1,
-		1.f, "Pig", TEXT("Animals\\Pig.bmp"));
-	pAni->AddClip("PigIdleRight", AT_ATLAS, AO_LOOP, 0.4f, 4, 5, 0, 1, 1, 1,
-		1.f, "Pig", TEXT("Animals\\Pig.bmp"));
-	pAni->AddClip("PigIdleUp", AT_ATLAS, AO_LOOP, 0.4f, 4, 5, 0, 2, 1, 1,
-		1.f, "Pig", TEXT("Animals\\Pig.bmp"));
-	pAni->AddClip("PigIdleLeft", AT_ATLAS, AO_LOOP, 0.4f, 4, 5, 0, 3, 1, 1,
-		1.f, "Pig", TEXT("Animals\\Pig.bmp"));
 
-	pAni->AddClip("PigletIdleDown", AT_ATLAS, AO_LOOP, 0.4f, 4, 5, 0, 0, 1, 1,
-		1.f, "Piglet", TEXT("Animals\\Piglet.bmp"));
-	pAni->AddClip("PigletIdleRight", AT_ATLAS, AO_LOOP, 0.4f, 4, 5, 0, 1, 1, 1,
-		1.f, "Piglet", TEXT("Animals\\Piglet.bmp"));
-	pAni->AddClip("PigletIdleUp", AT_ATLAS, AO_LOOP, 0.4f, 4, 5, 0, 2, 1, 1,
-		1.f, "Piglet", TEXT("Animals\\Piglet.bmp"));
-	pAni->AddClip("PigletIdleLeft", AT_ATLAS, AO_LOOP, 0.4f, 4, 5, 0, 3, 1, 1,
-		1.f, "Piglet", TEXT("Animals\\Piglet.bmp"));
-
-	pAni->AddClip("PigWalkDown", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 5, 1, 0, 3, 1,
-		1.f, "Pig", TEXT("Animals\\Pig.bmp"));
-	pAni->AddClip("PigWalkRight", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 5, 1, 1, 3, 1,
-		1.f, "Pig", TEXT("Animals\\Pig.bmp"));
-	pAni->AddClip("PigWalkUp", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 5, 1, 2, 3, 1,
-		1.f, "Pig", TEXT("Animals\\Pig.bmp"));
-	pAni->AddClip("PigWalkLeft", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 5, 1, 3, 3, 1,
-		1.f, "Pig", TEXT("Animals\\Pig.bmp"));
-
-	pAni->AddClip("PigletWalkDown", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 5, 1, 0, 3, 1,
-		1.f, "Piglet", TEXT("Animals\\Piglet.bmp"));
-	pAni->AddClip("PigletWalkRight", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 5, 1, 1, 3, 1,
-		1.f, "Piglet", TEXT("Animals\\Piglet.bmp"));
-	pAni->AddClip("PigletWalkUp", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 5, 1, 2, 3, 1,
-		1.f, "Piglet", TEXT("Animals\\Piglet.bmp"));
-	pAni->AddClip("PigletWalkLeft", AT_ATLAS, AO_ONCE_RETURN, 0.4f, 4, 5, 1, 3, 3, 1,
-		1.f, "Piglet", TEXT("Animals\\Piglet.bmp"));*/
+	pAni->LoadFromPath("pig.sac");
 
 	SAFE_RELEASE(pAni);
+
+	if (!Animal::Init())
+		return false;
+
 	return true;
 }
 
 int Pig::Update(float fDeltaTime)
 {
-	FightObj::Update(fDeltaTime);
+	Animal::Update(fDeltaTime);
 	return 0;
 }
 
 int Pig::LateUpdate(float fDeltaTime)
 {
-	FightObj::LateUpdate(fDeltaTime);
+	Animal::LateUpdate(fDeltaTime);
 	return 0;
 }
 
 void Pig::Collision(float fDeltaTime)
 {
-	FightObj::Collision(fDeltaTime);
+	Animal::Collision(fDeltaTime);
 }
 
 void Pig::Render(HDC hDC, float fDeltaTime)
 {
-	FightObj::Render(hDC, fDeltaTime);
+	Animal::Render(hDC, fDeltaTime);
 }
 
 Pig* Pig::Clone()
 {
 	return new Pig(*this);
+}
+
+void Pig::ActionChange(ANIMAL_ACTION eAction)
+{
+	m_eAction = eAction;
+
+	if (m_eAction == AA_IDLE)
+	{
+		if (m_tMoveDir.x < 0.f)
+		{
+			if (m_bBaby)
+			{
+				SetAnimationCurrentClip("PigletIdleLeft");
+				SetAnimationDefaultClip("PigletIdleLeft");
+			}
+
+			else
+			{
+				SetAnimationCurrentClip("PigIdleLeft");
+				SetAnimationDefaultClip("PigIdleLeft");
+			}
+		}
+
+		else if (m_tMoveDir.x > 0.f)
+		{
+			if (m_bBaby)
+			{
+				SetAnimationCurrentClip("PigletIdleRight");
+				SetAnimationDefaultClip("PigletIdleRight");
+			}
+
+			else
+			{
+				SetAnimationCurrentClip("PigIdleRight");
+				SetAnimationDefaultClip("PigIdleRight");
+			}
+		}
+
+		else if (m_tMoveDir.y < 0.f)
+		{
+			if (m_bBaby)
+			{
+				SetAnimationCurrentClip("PigletIdleUp");
+				SetAnimationDefaultClip("PigletIdleUp");
+			}
+
+			else
+			{
+				SetAnimationCurrentClip("PigIdleUp");
+				SetAnimationDefaultClip("PigIdleUp");
+			}
+		}
+
+		else
+		{
+			if (m_bBaby)
+			{
+				SetAnimationCurrentClip("PigletIdleDown");
+				SetAnimationDefaultClip("PigletIdleDown");
+			}
+
+			else
+			{
+				SetAnimationCurrentClip("PigIdleDown");
+				SetAnimationDefaultClip("PigIdleDown");
+			}
+		}
+	}
+
+	else if (m_eAction == AA_WALK)
+	{
+		if (m_tMoveDir.x < 0.f)
+		{
+			if (m_bBaby)
+			{
+				SetAnimationCurrentClip("PigletWalkLeft");
+				SetAnimationDefaultClip("PigletIdleLeft");
+			}
+
+			else
+			{
+				SetAnimationCurrentClip("PigWalkLeft");
+				SetAnimationDefaultClip("PigIdleLeft");
+			}
+		}
+
+		else if (m_tMoveDir.x > 0.f)
+		{
+			if (m_bBaby)
+			{
+				SetAnimationCurrentClip("PigletWalkRight");
+				SetAnimationDefaultClip("PigletIdleRight");
+			}
+
+			else
+			{
+				SetAnimationCurrentClip("PigWalkRight");
+				SetAnimationDefaultClip("PigIdleRight");
+			}
+		}
+
+		else if (m_tMoveDir.y < 0.f)
+		{
+			if (m_bBaby)
+			{
+				SetAnimationCurrentClip("PigletWalkUp");
+				SetAnimationDefaultClip("PigletIdleUp");
+			}
+
+			else
+			{
+				SetAnimationCurrentClip("PigWalkUp");
+				SetAnimationDefaultClip("PigIdleUp");
+			}
+		}
+
+		else
+		{
+			if (m_bBaby)
+			{
+				SetAnimationCurrentClip("PigletWalkDown");
+				SetAnimationDefaultClip("PigletIdleDown");
+			}
+
+			else
+			{
+				SetAnimationCurrentClip("PigWalkDown");
+				SetAnimationDefaultClip("PigIdleDown");
+			}
+		}
+	}
+
+	else if (m_eAction == AA_EAT)
+	{
+		if (m_bBaby)
+		{
+			SetAnimationCurrentClip("PigletEat");
+		}
+
+		else
+		{
+			SetAnimationCurrentClip("PigEat");
+		}
+	}
+
+	else if (m_eAction == AA_SIT)
+	{
+		if (m_tMoveDir.x < 0.f)
+		{
+			if (m_bBaby)
+			{
+				SetAnimationCurrentClip("PigletSleepLeft");
+				SetAnimationDefaultClip("PigletIdleLeft");
+			}
+
+			else
+			{
+				SetAnimationCurrentClip("PigSleepLeft");
+				SetAnimationDefaultClip("PigIdleLeft");
+			}
+		}
+
+		else if (m_tMoveDir.x > 0.f)
+		{
+			if (m_bBaby)
+			{
+				SetAnimationCurrentClip("PigletSleepRight");
+				SetAnimationDefaultClip("PigletIdleRight");
+			}
+
+			else
+			{
+				SetAnimationCurrentClip("PigSleepRight");
+				SetAnimationDefaultClip("PigIdleRight");
+			}
+		}
+
+		else if (m_tMoveDir.y < 0.f)
+		{
+			if (m_bBaby)
+			{
+				SetAnimationCurrentClip("PigletSleepUp");
+				SetAnimationDefaultClip("PigletIdleUp");
+			}
+
+			else
+			{
+				SetAnimationCurrentClip("PigSleepUp");
+				SetAnimationDefaultClip("PigIdleUp");
+			}
+		}
+
+		else
+		{
+			if (m_bBaby)
+			{
+				SetAnimationCurrentClip("PigletSleepDown");
+				SetAnimationDefaultClip("PigletIdleDown");
+			}
+
+			else
+			{
+				SetAnimationCurrentClip("PigSleepDown");
+				SetAnimationDefaultClip("PigIdleDown");
+			}
+		}
+	}
+}
+
+bool Pig::AddDay(int iDay)
+{
+	Animal::AddDay(iDay);
+
+	if (IsFeed())
+	{
+		SetFeed(false);
+
+		++m_iFeedCount;
+
+		if (m_iFeedCount >= 5)
+		{
+			if (m_bBaby)
+				m_bBaby = false;
+		}
+	}
+
+
+	ActionChange(AA_IDLE);
+
+	return false;
 }

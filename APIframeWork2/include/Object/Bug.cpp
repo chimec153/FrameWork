@@ -68,12 +68,8 @@ bool Bug::Init()
 
 	SAFE_RELEASE(pAni);
 
-	ColliderRect* pRC = AddCollider<ColliderRect>("BugBody");
-
-	pRC->SetRect(-16.f, -16.f, 16.f, 16.f);
-
-	SAFE_RELEASE(pRC);
-
+	if (!FightObj::Init())
+		return false;
 
 	return true;
 }
@@ -183,44 +179,24 @@ Bug* Bug::Clone()
 
 void Bug::Collision(Collider* pSrc, Collider* pDest, float fTime)
 {
-	string strDest = pDest->GetTag();
+}
 
-	if (!m_bHitted)
+void Bug::DieMotion()
+{
+	Die();
+
+	for (int j = 0; j < 2; ++j)
 	{
-		if (strDest == "attack")
+		for (int i = 0; i < 2; ++i)
 		{
-			Obj* pObj = pDest->GetObj();
-			POSITION tPos = pObj->GetPos();
+			Effect* pEffect = (Effect*)CreateCloneObj("BugEffect", "BugEffect", m_pLayer);
 
-			UIInventory* pInven = GET_SINGLE(ObjManager)->GetInven();
+			POSITION tDir(i - 0.5f, j - 0.5f);
+			pEffect->SetAngle(tDir);
+			pEffect->SetPos(m_tPos);
+			pEffect->SetImageOffset(i * 16.f, 16.f * j + 128.f);
 
-			Item* pItem = pInven->GetItem();
-
-			SAFE_RELEASE(pInven);
-
-			int iAttack = ((Tool*)pItem)->GetAttack();
-
-			Hitted(((FightObj*)pObj)->GetAttack() + iAttack, tPos);
-
-			if (m_iHP <= 0.f)
-			{
-				Die();
-
-				for (int j = 0; j < 2; ++j)
-				{
-					for (int i = 0; i < 2; ++i)
-					{
-						Effect* pEffect = (Effect*)CreateCloneObj("BugEffect", "BugEffect", m_pLayer);
-
-						POSITION tDir(i - 0.5f, j - 0.5f);
-						pEffect->SetAngle(tDir);
-						pEffect->SetPos(m_tPos);
-						pEffect->SetImageOffset(i * 16.f, 16.f * j + 128.f);
-
-						SAFE_RELEASE(pEffect);
-					}
-				}
-			}
+			SAFE_RELEASE(pEffect);
 		}
 	}
 }

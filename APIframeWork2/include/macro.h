@@ -84,6 +84,8 @@
 #define INVENTORY_MAX			36
 #define INVENTORY_SHORT			12
 #define SHOP_PAGE				10
+#define HAIR_COLOR_MAX			12
+#define PANTS_COLOR_MAX			12
 
 #define _CRTDBG_MAP_ALLOC
 

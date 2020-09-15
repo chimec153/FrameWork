@@ -55,7 +55,7 @@ int ColliderRect::LateUpdate(float fDeltaTime)
 	m_tWorldInfo.r = tPos.x + m_tInfo.r;
 	m_tWorldInfo.b = tPos.y + m_tInfo.b;
 
-	SetSectionInfo(m_tWorldInfo);
+	SetSectionInfo(m_tWorldInfo);	
 
 	return 0;
 }
@@ -65,7 +65,22 @@ bool ColliderRect::Collision(Collider* pDest)
 	switch (pDest->GetColliderType())
 	{
 	case CT_RECT:
-		return CollisionRectToRect(m_tWorldInfo, ((ColliderRect*)pDest)->GetWorldInfo());
+		if (pDest->IsUI())
+		{
+			POSITION tCamPos = GET_SINGLE(Camera)->GetPos();
+
+			RECTANGLE tWorldInfo = ((ColliderRect*)pDest)->GetWorldInfo();
+
+			tWorldInfo.l += tCamPos.x;
+			tWorldInfo.t += tCamPos.y;
+			tWorldInfo.r += tCamPos.x;
+			tWorldInfo.b += tCamPos.y;
+
+			return CollisionRectToRect(m_tWorldInfo, tWorldInfo);
+		}			
+
+		else
+			return CollisionRectToRect(m_tWorldInfo, ((ColliderRect*)pDest)->GetWorldInfo());
 	case CT_SPHERE:
 		return CollisionRectToSphere(m_tWorldInfo, ((ColliderSphere*)pDest)->GetWorldInfo());
 	case CT_PIXEL:
@@ -73,9 +88,18 @@ bool ColliderRect::Collision(Collider* pDest)
 			((ColliderPixel*)pDest)->GetPixel(), ((ColliderPixel*)pDest)->GetWidth(),
 			((ColliderPixel*)pDest)->GetHeight());
 	case CT_POINT:
-		return CollisionRectToPoint(m_tWorldInfo,
+		if (pDest->IsUI())
+		{
+			POSITION tCamPos = GET_SINGLE(Camera)->GetPos();
+
+			return  CollisionRectToPoint(m_tWorldInfo,
+				((ColliderPoint*)pDest)->GetPoint() + tCamPos);
+		}
+		else
+			return CollisionRectToPoint(m_tWorldInfo,
 			((ColliderPoint*)pDest)->GetPoint());
 	}
+
 	return false;
 }
 
@@ -84,24 +108,24 @@ void ColliderRect::Render(HDC hDC, float fDeltaTime)
 #ifdef _DEBUG
 	if (KEYPRESS("Debug"))
 	{
-	Collider::Render(hDC, fDeltaTime);
-	POSITION	tCamPos = GET_SINGLE(Camera)->GetPos();
+		Collider::Render(hDC, fDeltaTime);
+		POSITION	tCamPos = GET_SINGLE(Camera)->GetPos();
 
-	RECTANGLE	tRC = m_tWorldInfo;
+		RECTANGLE	tRC = m_tWorldInfo;
 
-	if (!m_bUI)
-	{
-		tRC.l -= tCamPos.x;
-		tRC.r -= tCamPos.x;
-		tRC.t -= tCamPos.y;
-		tRC.b -= tCamPos.y;
-	}	
+		if (!m_bUI)
+		{
+			tRC.l -= tCamPos.x;
+			tRC.r -= tCamPos.x;
+			tRC.t -= tCamPos.y;
+			tRC.b -= tCamPos.y;
+		}
 
-	MoveToEx(hDC, (int)tRC.l, (int)tRC.t, NULL);
-	LineTo(hDC, (int)tRC.r, (int)tRC.t);
-	LineTo(hDC, (int)tRC.r, (int)tRC.b);
-	LineTo(hDC, (int)tRC.l, (int)tRC.b);
-	LineTo(hDC, (int)tRC.l, (int)tRC.t);
+		MoveToEx(hDC, (int)tRC.l, (int)tRC.t, NULL);
+		LineTo(hDC, (int)tRC.r, (int)tRC.t);
+		LineTo(hDC, (int)tRC.r, (int)tRC.b);
+		LineTo(hDC, (int)tRC.l, (int)tRC.b);
+		LineTo(hDC, (int)tRC.l, (int)tRC.t);
 
 		RECT tRect = { (LONG)tRC.l, (LONG)tRC.t, (LONG)tRC.r, (LONG)tRC.b };
 		if (m_bColl)
@@ -128,7 +152,7 @@ void ColliderRect::Render(HDC hDC, float fDeltaTime)
 		auto iter = m_SectionList.begin();
 		auto iterEnd = m_SectionList.end();
 
-		for (;iter != iterEnd; ++iter)
+		for (; iter != iterEnd; ++iter)
 		{
 			TCHAR strSectionIndex[32] = {};
 
@@ -136,6 +160,14 @@ void ColliderRect::Render(HDC hDC, float fDeltaTime)
 
 			TextOut(hDC, (int)(m_tWorldInfo.l - tCamPos.x), (int)(m_tWorldInfo.t + 20.f * (*iter) - tCamPos.y), strSectionIndex, lstrlen(strSectionIndex));
 		}
+
+/*
+		TCHAR strHP[32] = {};
+
+		wsprintf(strHP, TEXT("L:%d"), m_pLayer->GetZOrder() % 1000);
+		TextOut(hDC, (int)tRC.l, (int)tRC.t, strHP, lstrlen(strHP));
+		wsprintf(strHP, TEXT("S:%d"), ((int)m_pScene) % 1000);
+		TextOut(hDC, (int)tRC.l, (int)tRC.t - 20, strHP, lstrlen(strHP));*/
 	}
 #endif
 }

@@ -19,6 +19,9 @@
 #include "../Core/Input.h"
 #include "UIShop.h"
 #include "UIBuildingShop.h"
+#include "UIAnimalShop.h"
+#include "Hair.h"
+#include "../Core/PathManager.h"
 
 UIInventory::UIInventory()	:
 	m_iCount(0),
@@ -34,7 +37,16 @@ UIInventory::UIInventory()	:
 	m_pInfoIconHealth(nullptr),
 	m_pInfoIconEnergy(nullptr),
 	m_pGoldText(nullptr),
-	m_pShop(nullptr)
+	m_pShop(nullptr),
+	m_pPrevColorBtn(nullptr),
+	m_pNextColorBtn(nullptr),
+	m_iColorIndex(0),
+	m_pHairChangeBtn(nullptr),
+	m_pPantChangeBtn(nullptr),
+	m_iPantsColorIndex(0),
+	m_pPrevPantsColorBtn(nullptr),
+	m_pNextPantsColorBtn(nullptr),
+	m_iCurrentHairColorIndex(0)
 {
 	m_vecItem.resize(36);
 
@@ -56,6 +68,11 @@ UIInventory::~UIInventory()
 	SAFE_RELEASE(m_pInfoIconEnergy);
 	SAFE_RELEASE(m_pGoldText);
 	SAFE_RELEASE(m_pShop);
+	SAFE_RELEASE(m_pPrevColorBtn);
+	SAFE_RELEASE(m_pNextColorBtn);
+	SAFE_RELEASE(m_pHairChangeBtn);
+	SAFE_RELEASE(m_pPrevPantsColorBtn);
+	SAFE_RELEASE(m_pNextPantsColorBtn);
 }
 
 void UIInventory::AddObjectToLayer(Layer* pLayer)
@@ -76,6 +93,20 @@ void UIInventory::AddObjectToLayer(Layer* pLayer)
 
 	if (m_pShop)
 		m_pShop->AddObjectToLayer(pLayer);
+
+	Layer* pHUD = m_pScene->FindLayer("HUD");
+
+	if (m_pPrevColorBtn)
+		if (!pHUD->HasObject(m_pPrevColorBtn))
+			pHUD->AddObject(m_pPrevColorBtn);
+
+	if (m_pNextColorBtn)
+	if (!pHUD->HasObject(m_pNextColorBtn))
+		pHUD->AddObject(m_pNextColorBtn);
+
+	if (m_pHairChangeBtn)
+	if (!pHUD->HasObject(m_pHairChangeBtn))
+		pHUD->AddObject(m_pHairChangeBtn);
 }
 
 void UIInventory::AddInfoPanelToLayer(Layer* pLayer)
@@ -136,6 +167,24 @@ void UIInventory::SetObjectLayer(Layer* pLayer)
 
 	if (m_pShop)
 		m_pShop->SetObjectLayer(pLayer);
+
+	if (m_pPrevColorBtn)
+	{
+		m_pPrevColorBtn->SetLayer(pLayer);
+		m_pPrevColorBtn->SetScene(pScene);
+	}
+
+	if (m_pNextColorBtn)
+	{
+		m_pNextColorBtn->SetLayer(pLayer);
+		m_pNextColorBtn->SetScene(pScene);
+	}
+
+	if (m_pHairChangeBtn)
+	{
+		m_pHairChangeBtn->SetLayer(pLayer);
+		m_pHairChangeBtn->SetScene(pScene);
+	}
 }
 
 void UIInventory::SetInfoPanelLayer(Layer* pLayer)
@@ -186,7 +235,49 @@ void UIInventory::AddItemToLayer(Layer* pLayer)
 		{
 			if (!pLayer->HasObject(m_vecItem[i]))
 				m_vecItem[i]->AddObjectToLayer(pLayer);
+
+			m_vecItem[i]->SetEnable(true);
 		}
+	}
+}
+
+void UIInventory::ReadColorFromFile(char* pFileName)
+{
+	char strFullPath[MAX_PATH] = {};
+
+	const char* pDataPath = GET_SINGLE(PathManager)->FindPathMultiByte(DATA_PATH);
+
+	if (pDataPath)
+		strcat(strFullPath, pDataPath);
+
+	strcat(strFullPath, pFileName);
+
+	FILE* pFile = nullptr;
+
+	fopen_s(&pFile, strFullPath, "rt");
+
+	if (pFile)
+	{
+		for (int i = 0; i < HAIR_COLOR_MAX * 9; ++i)
+		{
+			char cLine[256] = {};
+
+			fgets(cLine, 256, pFile);
+
+			char* pContext = nullptr;
+
+			char* pResult =	strtok_s(cLine, ", ", &pContext);
+
+			int iRed = atoi(pResult);
+
+			int iGreen = atoi(strtok_s(nullptr, ", ", &pContext));
+
+			int iBlue = atoi(pContext);
+
+			m_vecColor.push_back(RGB(iRed, iGreen, iBlue));
+		}
+
+		fclose(pFile);
 	}
 }
 
@@ -234,6 +325,8 @@ bool UIInventory::Init()
 
 	m_pBackTexture = GET_SINGLE(ResourcesManager)->LoadTexture("pade", TEXT("UI\\Pade.bmp"));
 
+	ReadColorFromFile((char*)"color.txt");
+
 	return true;
 }
 
@@ -256,6 +349,12 @@ void UIInventory::Input(float fDeltaTime)
 				m_vecInvenPanel[i]->SetEnable(false);
 
 			m_pInventoryPanel->SetEnable(true);
+
+			m_pPrevColorBtn->SetEnable(true);
+
+			m_pNextColorBtn->SetEnable(true);
+
+			m_pHairChangeBtn->SetEnable(true);
 		}
 
 		else
@@ -266,6 +365,12 @@ void UIInventory::Input(float fDeltaTime)
 				m_vecInvenPanel[i]->SetEnable(false);
 
 			m_pInventoryPanel->SetEnable(false);
+
+			m_pPrevColorBtn->SetEnable(false);
+
+			m_pNextColorBtn->SetEnable(false);
+
+			m_pHairChangeBtn->SetEnable(false);
 		}
 	}
 }
@@ -565,7 +670,7 @@ void UIInventory::CreateInfoPanel(int iCountX, int iCountY)
 	m_pInfoIconEnergy->SetImageOffset(0.f, 856.f);
 	m_pInfoIconEnergy->SetEnable(false);
 
-	m_pInfoIconHealth = CreateObj<UIPanel>("EnergyIcon", pLayer);
+	m_pInfoIconHealth = CreateObj<UIPanel>("HealthIcon", pLayer);
 
 	m_pInfoIconHealth->SetSize(20.f, 20.f);
 	m_pInfoIconHealth->SetTexture("Mouse");
@@ -573,87 +678,119 @@ void UIInventory::CreateInfoPanel(int iCountX, int iCountY)
 	m_pInfoIconHealth->SetEnable(false);
 }
 
-void UIInventory::InfoPanelOn(const POSITION& tPos, int iFileIndex)
+void UIInventory::InfoPanelOn(const POSITION& tPos, const ITEMINFO& tInfo)
 {
-	PITEMINFO pInfo = GET_SINGLE(ResourcesManager)->FindItemInfo(iFileIndex);
-
 	for (int i = 0; i < m_iCountX; ++i)
 	{
 		for (int j = 0; j < m_iCountY; ++j)
-		{
 			m_vecPanel[i * m_iCountX + j]->SetEnable(true);
-		}
 	}
 
-	if (pInfo)
+	if (&tInfo)
 	{
-		char strName[256] = {};
-
-		strcpy_s(strName, pInfo->strName.c_str());
-
-		TCHAR wstrName[256] = {};
-
-		MultiByteToWideChar(CP_ACP, NULL, strName, -1, wstrName, strlen(strName));
-
-		m_pInfoName->SetText(wstrName);
-
-		size_t iSize = pInfo->vecComment.size();
-
-		Layer* pUILayer = m_pScene->FindLayer("UI");
-
-		for (size_t i = 0; i < iSize; ++i)
+		if(tInfo.eItemType != 0)
 		{
-			Text* pText = CreateObj<Text>("Description", pUILayer);
+			char strName[256] = {};
 
-			pText->SetText(pInfo->vecComment[i]);
+			strcpy_s(strName, tInfo.strName.c_str());
 
-			m_vecInfoDescription.push_back(pText);
+			TCHAR wstrName[256] = {};
+
+			MultiByteToWideChar(CP_ACP, NULL, strName, -1, wstrName, (int)strlen(strName));
+
+			m_pInfoName->SetText(wstrName);
+
+			size_t iSize = tInfo.vecComment.size();
+
+			Layer* pUILayer = m_pScene->FindLayer("UI");
+
+			for (size_t i = 0; i < iSize; ++i)
+			{
+				Text* pText = CreateObj<Text>("Description", pUILayer);
+
+				pText->SetText(tInfo.vecComment[i]);
+
+				m_vecInfoDescription.push_back(pText);
+			}
+
+			if (tInfo.iHPRecovery != 0)
+			{
+				Text* pHealthText = CreateObj<Text>("HealthText", pUILayer);
+
+				int iHealth = tInfo.iHPRecovery;
+
+				TCHAR strHealth[256] = {};
+
+				TCHAR strFullText[256] = {};
+
+				swprintf_s(strHealth, TEXT("+ %d"), iHealth);
+
+				lstrcat(strFullText, strHealth);
+
+				lstrcat(strFullText, TEXT(" Health"));
+
+				pHealthText->SetText(strFullText);
+
+				m_pInfoIconHealth->SetEnable(true);
+
+				m_vecInfoDescription.push_back(pHealthText);
+			}
+
+			if (tInfo.iEnergyRecovery != 0)
+			{
+				Text* pEnergyText = CreateObj<Text>("EnergyText", pUILayer);
+
+				int iEnergy = tInfo.iEnergyRecovery;
+
+				TCHAR strEnergy[256] = {};
+
+				TCHAR strFullText[256] = {};
+
+				swprintf_s(strEnergy, TEXT("+ %d"), iEnergy);
+
+				lstrcat(strFullText, strEnergy);
+
+				lstrcat(strFullText, TEXT(" Health"));
+
+				pEnergyText->SetText(strFullText);
+
+				m_pInfoIconEnergy->SetEnable(true);
+
+				m_vecInfoDescription.push_back(pEnergyText);
+			}
 		}
 
-		if (pInfo->iHPRecovery != 0)
+		else
 		{
-			Text* pHealthText = CreateObj<Text>("HealthText", pUILayer);
+			Layer* pUILayer = m_pScene->FindLayer("UI");
 
-			int iHealth = pInfo->iHPRecovery;
+			size_t iSize = tInfo.vecComment.size();
 
-			TCHAR strHealth[256] = {};
+			for (size_t i = 0; i < iSize; ++i)
+			{
+				Text* pText = CreateObj<Text>("AnimalDescript", pUILayer);
 
-			TCHAR strFullText[256] = {};
+				pText->SetText(tInfo.vecComment[i]);
 
-			swprintf_s(strHealth, TEXT("+ %d"), iHealth);
+				m_vecInfoDescription.push_back(pText);
+			}
 
-			lstrcat(strFullText, strHealth);
+			char strName[256] = {};
 
-			lstrcat(strFullText, TEXT(" Health"));
+			strcpy_s(strName, tInfo.strName.c_str());
 
-			pHealthText->SetText(strFullText);
+			TCHAR pName[256] = {};
 
-			m_pInfoIconHealth->SetEnable(true);
+#ifdef _UNICODE
+			int iLength = MultiByteToWideChar(CP_ACP, NULL, strName, -1, pName, 0);
+			MultiByteToWideChar(CP_ACP, NULL, strName, -1, pName, iLength);
+#else
+			strcpy_s(pName, strName);
+#endif
 
-			m_vecInfoDescription.push_back(pHealthText);
-		}
+			pName[iLength - 1] = 0;
 
-		if (pInfo->iEnergyRecovery != 0)
-		{
-			Text* pEnergyText = CreateObj<Text>("EnergyText", pUILayer);
-
-			int iEnergy = pInfo->iEnergyRecovery;
-
-			TCHAR strEnergy[256] = {};
-
-			TCHAR strFullText[256] = {};
-
-			swprintf_s(strEnergy, TEXT("+ %d"), iEnergy);
-
-			lstrcat(strFullText, strEnergy);
-
-			lstrcat(strFullText, TEXT(" Health"));
-
-			pEnergyText->SetText(strFullText);
-
-			m_pInfoIconEnergy->SetEnable(true);
-
-			m_vecInfoDescription.push_back(pEnergyText);
+			m_pInfoName->SetText(pName);
 		}
 	}
 	else
@@ -958,6 +1095,65 @@ void UIInventory::CreateInventory()
 	pPanel->SetEnable(false);
 
 	m_vecInvenPanel.push_back(pPanel);
+
+	Layer* pUILayer = m_pScene->FindLayer("UI");
+
+	m_pHairChangeBtn = Obj::CreateObj<UIButton>("HairButton", pUILayer);	//	머리 색 변경 버튼을 생성한다.
+
+	m_pHairChangeBtn->SetSize(18.f, 18.f);
+	m_pHairChangeBtn->SetImageOffset(864.f, 878.f);
+	m_pHairChangeBtn->SetTexture("Mouse");
+	m_pHairChangeBtn->SetCallback(CS_STAY, this, &UIInventory::ChangeHairColor);
+	m_pHairChangeBtn->SetAlpha(255);
+	m_pHairChangeBtn->EnableAlpha(true);
+	m_pHairChangeBtn->SetPos(68.f + tPos.x, 32.f * 7.f + tPos.y + 18.f);
+	m_pHairChangeBtn->SetEnable(true);
+
+	ColliderRect* pChangeButtonRC = (ColliderRect*)m_pHairChangeBtn->GetCollider("ButtonBody");
+
+	pChangeButtonRC->SetRect(0.f, 0.f, 18.f, 18.f);
+
+	SAFE_RELEASE(pChangeButtonRC);
+
+	m_pPrevColorBtn = Obj::CreateObj<UIButton>("HairColorPrevButton", pUILayer);	//	머리 이전 색 버튼을 생성한다.
+
+	m_pPrevColorBtn->SetSize(24.f, 22.f);
+	m_pPrevColorBtn->SetImageOffset(704.f, 990.f);
+	m_pPrevColorBtn->SetTexture("Mouse");
+	m_pPrevColorBtn->SetCallback(CS_STAY, this, &UIInventory::GetColorPrev);
+	m_pPrevColorBtn->SetAlpha(255);
+	m_pPrevColorBtn->EnableAlpha(true);
+	m_pPrevColorBtn->SetPos(32.f + tPos.x, 32.f * 7.f + tPos.y + 18.f);
+	m_pPrevColorBtn->SetEnable(true);
+
+	ColliderRect* pUpButtonRC = (ColliderRect*)m_pPrevColorBtn->GetCollider("ButtonBody");
+
+	pUpButtonRC->SetRect(0.f, 0.f, 24.f, 22.f);
+
+	SAFE_RELEASE(pUpButtonRC);
+
+	m_pNextColorBtn = Obj::CreateObj<UIButton>("HairColorNextButton", pUILayer);	//	머리 다음 색 버튼을 생성한다.
+
+	m_pNextColorBtn->SetSize(24.f, 22.f);
+	m_pNextColorBtn->SetImageOffset(730.f, 990.f);
+	m_pNextColorBtn->SetTexture("Mouse");
+	m_pNextColorBtn->SetCallback(CS_STAY, this, &UIInventory::GetColorNext);
+	m_pNextColorBtn->SetAlpha(255);
+	m_pNextColorBtn->EnableAlpha(true);
+	m_pNextColorBtn->SetPos(96.f + tPos.x, 32.f * 7.f + tPos.y + 18.f);
+	m_pNextColorBtn->SetEnable(true);
+
+	ColliderRect* pDownButtonRC = (ColliderRect*)m_pNextColorBtn->GetCollider("ButtonBody");
+
+	pDownButtonRC->SetRect(0.f, 0.f, 24.f, 22.f);
+
+	SAFE_RELEASE(pDownButtonRC);
+
+	m_pPrevColorBtn->SetEnable(false);
+
+	m_pNextColorBtn->SetEnable(false);
+
+	m_pHairChangeBtn->SetEnable(false);
 }
 
 void UIInventory::SwapItem(Item* pItem, const POSITION& tPos)
@@ -1115,6 +1311,8 @@ void UIInventory::DeleteItem()
 			m_vecItem[m_iCursor]->Die();
 
 			SAFE_RELEASE(m_vecItem[m_iCursor]);
+
+			--m_iCount;
 		}
 	}
 }
@@ -1134,6 +1332,8 @@ void UIInventory::DeleteItem(Item* pItem)
 				pItem->DeleteItemNumber();
 
 				pItem->Die();
+
+				--m_iCount;
 			}				
 
 			else
@@ -1187,4 +1387,163 @@ void UIInventory::CreateBuildShop()
 		pBuildingShop->CreatePanel();
 
 		SAFE_RELEASE(pBuildingShop);
+}
+
+void UIInventory::CreateAnimalShop()
+{
+	Layer* pHUDLayer = m_pScene->FindLayer("HUD");
+
+	UIAnimalShop* pAnimalShop = Obj::CreateObj<UIAnimalShop>("Shop", pHUDLayer);
+
+	pAnimalShop->SetInven(this);
+
+	pAnimalShop->CreatePanel();
+
+	SAFE_RELEASE(pAnimalShop);
+}
+
+void UIInventory::ChangeHairColor(int iIndex, float fTime)
+{
+	Player* pPlayer = (Player*)GET_SINGLE(ObjManager)->GetPlayer();
+
+	Hair* pHair = (Hair*)pPlayer->GetHair();
+
+	Texture* pTexture = GET_SINGLE(ResourcesManager)->FindTexture("81210");
+
+	Texture* pLeftTexture = GET_SINGLE(ResourcesManager)->FindTexture("81210Left");
+
+	FrameInfo tInfo = pHair->GetFrame("HairIdleDown");
+
+	FrameInfo tLeftInfo = pHair->GetFrame("HairIdleLeft");
+
+	HDC hDC = pTexture->GetDC();
+
+	HDC hLeftDC = pLeftTexture->GetDC();
+
+	size_t iColorSize = m_vecColor.size() / HAIR_COLOR_MAX;
+
+	for (int k = 0; k < iColorSize; ++k)
+	{
+		COLORREF tPrevColor = m_vecColor[k + m_iCurrentHairColorIndex * iColorSize];
+
+		COLORREF tColor = m_vecColor[k + m_iColorIndex * iColorSize];
+
+		for (int j = 0; j < 192; ++j)
+		{
+			for (int i = 0; i < 32; ++i)
+			{
+				COLORREF tCurrentColor = GetPixel(hDC, (int)(i + tInfo.tStart.x), (int)(j + tInfo.tStart.y));
+
+				if (tCurrentColor == tPrevColor)
+				{
+					SetPixel(hDC, (int)(i + tInfo.tStart.x), (int)(j + tInfo.tStart.y), tColor);
+				}
+			}
+		}
+
+		for (int j = 0; j < 64; ++j)
+		{
+			for (int i = 0; i < 32; ++i)
+			{
+				COLORREF tCurrentColor = GetPixel(hLeftDC, (int)(i + tLeftInfo.tStart.x), (int)(j + tLeftInfo.tStart.y));
+
+				if (tCurrentColor == tPrevColor)
+				{
+					SetPixel(hLeftDC, (int)(i + tLeftInfo.tStart.x), (int)(j + tLeftInfo.tStart.y), tColor);
+				}
+			}
+		}
+	}
+
+	m_iCurrentHairColorIndex = m_iColorIndex;
+
+	SAFE_RELEASE(pPlayer);
+
+	SAFE_RELEASE(pTexture);
+
+	SAFE_RELEASE(pLeftTexture);
+}
+
+void UIInventory::GetColorPrev(int iIndex, float fTime)
+{
+	--m_iColorIndex;
+
+	if (m_iColorIndex < 0)
+	{
+		++m_iColorIndex;
+
+		return;
+	}
+
+	size_t iSize = m_vecInvenPanel.size();
+
+	Texture* pTexture = m_vecInvenPanel[iSize - 1]->GetTexture();
+
+	size_t iColorSize = m_vecColor.size() / HAIR_COLOR_MAX;
+
+	HDC hDC = pTexture->GetDC();
+
+	for (int k = 0; k < iColorSize; ++k)
+	{
+		COLORREF tPrevColor = m_vecColor[k + (m_iColorIndex + 1) * iColorSize];
+
+		COLORREF tColor = m_vecColor[k + m_iColorIndex * iColorSize];
+
+		for (int j = 0; j < 64; ++j)
+		{
+			for (int i = 0; i < 32; ++i)
+			{
+				COLORREF tCurrentColor = GetPixel(hDC, i,j);
+
+				if (tCurrentColor == tPrevColor)
+				{
+					SetPixel(hDC, i, j, tColor);
+				}
+			}
+		}
+	}
+
+	SAFE_RELEASE(pTexture);
+}
+
+void UIInventory::GetColorNext(int iIndex, float fTime)
+{
+	++m_iColorIndex;
+
+	if (m_iColorIndex == HAIR_COLOR_MAX)
+	{
+		--m_iColorIndex;
+
+		return;
+	}		
+
+	size_t iSize = m_vecInvenPanel.size();
+
+	size_t iColorSize = m_vecColor.size() / HAIR_COLOR_MAX;
+
+	Texture* pTexture = m_vecInvenPanel[iSize - 1]->GetTexture();
+
+	HDC hDC = pTexture->GetDC();
+
+	for (int k = 0; k < iColorSize; ++k)
+	{
+		COLORREF tPrevColor = m_vecColor[k + (m_iColorIndex-1) * iColorSize];
+
+		COLORREF tColor = m_vecColor[k + m_iColorIndex * iColorSize];
+
+		for (int j = 0; j < 64; ++j)
+		{
+			for (int i = 0; i < 32; ++i)
+			{
+				COLORREF tCurrentColor = GetPixel(hDC, i, j);
+
+				if (tCurrentColor == tPrevColor)
+				{
+					SetPixel(hDC, i, j, tColor);
+				}
+			}
+		}
+	}
+
+	SAFE_RELEASE(pTexture);
 }

@@ -21,8 +21,8 @@ private:
 	~UIButton();
 
 private:
-	function<void(float fTime)> m_BtnCallback;
-	function<void(int, float)>		m_BtnCallback2;
+	function<void(float)>			m_BtnCallback;
+	function<void(int, float)>		m_pBtnCallback[CS_END];
 	bool							m_bEnableCallback2;
 	bool						m_bEnableCallback;
 	BUTTON_STATE				m_eState;
@@ -53,9 +53,9 @@ public:
 	}
 
 	template <typename T>
-	void SetCallback(T* pObj, void (T::* pFunc)(int, float))
+	void SetCallback(COLLISION_STATE eState, T* pObj, void (T::* pFunc)(int, float))
 	{
-		m_BtnCallback2 = bind(pFunc, pObj, placeholders::_1, placeholders::_2);
+		m_pBtnCallback[eState] = bind(pFunc, pObj, placeholders::_1, placeholders::_2);
 		m_bEnableCallback2 = true;
 	}
 

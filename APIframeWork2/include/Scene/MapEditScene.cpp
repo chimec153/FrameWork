@@ -389,21 +389,24 @@ void MapEditScene::Input(float fDeltaTime)
 
 						if (m_iEditTileTex < iSize)
 						{
-							Obj* pTree = m_pStage->CreateCloneObj(m_vecstrProto[m_iEditTileTex], "Tree",	pLayer);
+							Obj* pObj = m_pStage->CreateCloneObj(m_vecstrProto[m_iEditTileTex], "Tree",	pLayer);
 
 							int iTileSizeX = m_pStage->GetTileSizeX();
 							int iTileSizeY = m_pStage->GetTileSizeY();
 
 							POSITION tPos = pTile->GetPos();
 
-							if (pTree)
+							if (pObj)
 							{
-								m_pStage->SetBlock(pTile, pTree->GetBlock(), pTree);
+								OBJ_BLOCK eBlock = pObj->GetBlock();
 
-								SAFE_RELEASE(pTree);
+								m_pStage->SetBlock(pTile, pObj->GetBlock(), pObj);
+
+								if(eBlock != OB_GRASS)
+									pTile->SetTileOption(TO_NOMOVE);
+								
+								SAFE_RELEASE(pObj);
 							}
-
-							pTile->SetTileOption(TO_NOMOVE);
 						}
 					}
 				}

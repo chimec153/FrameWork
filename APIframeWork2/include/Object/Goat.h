@@ -1,7 +1,7 @@
 #pragma once
-#include "FightObj.h"
+#include "Animal.h"
 class Goat :
-	public FightObj
+	public Animal
 {
 private:
 	friend class Obj;
@@ -29,5 +29,9 @@ public:
 	virtual void Collision(float fDeltaTime);
 	virtual void Render(HDC hDC, float fDeltaTime);
 	virtual Goat* Clone();
+
+public:
+	virtual void ActionChange(ANIMAL_ACTION eAction);
+	virtual bool AddDay(int iDay);
 };
 

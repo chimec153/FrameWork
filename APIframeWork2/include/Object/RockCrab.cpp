@@ -6,9 +6,10 @@
 #include "ObjManager.h"
 #include "UIInventory.h"
 #include "Tool.h"
+#include "UINum.h"
 
 RockCrab::RockCrab() :
-	m_fDist(250.f),
+	m_fDist(120.f),
 	m_bRock(true),
 	m_bAwake(false),
 	m_iRock(3)
@@ -82,11 +83,8 @@ bool RockCrab::Init()
 
 	SAFE_RELEASE(pAni);
 
-	ColliderRect* pRC = AddCollider<ColliderRect>("RockCrabBody");
-
-	pRC->SetRect(-16.f, -24.f, 16.f, 24.f);
-
-	SAFE_RELEASE(pRC);
+	if (!FightObj::Init())
+		return false;
 
 	return true;
 }
@@ -94,9 +92,6 @@ bool RockCrab::Init()
 int RockCrab::Update(float fDeltaTime)
 {
 	FightObj::Update(fDeltaTime);
-
-	if (!m_bRock)
-		m_bAwake = true;
 
 	Obj* pPlayer = GET_SINGLE(ObjManager)->GetPlayer();
 
@@ -108,7 +103,7 @@ int RockCrab::Update(float fDeltaTime)
 
 	float fDist = tDist.Length();
 
-	if (fDist <= m_fDist && !m_bHitted && m_bAwake)
+	if (fDist <= m_fDist)
 	{
 		tDist.Normalize();
 
@@ -142,6 +137,8 @@ int RockCrab::Update(float fDeltaTime)
 		}
 		else
 			m_pAnimation->SetCurrentClip("RockCrabOriginWalk");
+
+		m_bAwake = true;
 	}
 	else
 	{
@@ -171,12 +168,12 @@ int RockCrab::Update(float fDeltaTime)
 				m_pAnimation->SetCurrentClip("RockCrabIdleDown");
 			}
 
-			m_bAwake = false;
 		}
 
 		else
 			m_pAnimation->SetCurrentClip("RockCrabOriginIdle");
 
+		m_bAwake = false;
 	}
 
 	return 0;
@@ -205,57 +202,56 @@ RockCrab* RockCrab::Clone()
 
 void RockCrab::Collision(Collider* pSrc, Collider* pDest, float fTime)
 {
-	string strDest = pDest->GetTag();
+}
 
-	if (!m_bHitted)
+void RockCrab::Hitted(int iAttack, const POSITION& tPos)
+{
+	if (!m_bRock)
 	{
-		if (strDest == "attack")
+		if (AddHP(-iAttack))
+			return;
+
+		SetHitAngle(tPos);
+		SetHitTime(0.5f);
+	}
+
+	else
+	{
+		iAttack = 0;
+
+		if (m_bAwake)
+			m_bRock = false;
+	}		
+
+	Layer* pLayer = m_pScene->FindLayer("UI");
+
+	Obj* pNum = CreateCloneObj("Num", "Num", pLayer);
+
+	((UINum*)pNum)->CreateNum(iAttack);
+
+	pNum->SetPos(m_tPos.x, m_tPos.y - m_tSize.y * m_tPivot.y);
+
+	SAFE_RELEASE(pNum);
+
+	return;
+}
+
+void RockCrab::DieMotion()
+{
+	Die();
+
+	for (int j = 0; j < 2; ++j)
+	{
+		for (int i = 0; i < 2; ++i)
 		{
-			if (!m_bRock)
-			{
-				Obj* pObj = pDest->GetObj();
-				POSITION tPos = pObj->GetPos();
+			Effect* pEffect = (Effect*)CreateCloneObj("RockCrabEffect", "RockCrabEffect", m_pLayer);
 
-				UIInventory* pInven = GET_SINGLE(ObjManager)->GetInven();
+			POSITION tDir(i - 0.5f, j - 0.5f);
+			pEffect->SetAngle(tDir);
+			pEffect->SetPos(m_tPos);
+			pEffect->SetImageOffset(i * 16.f, 16.f * j + 240.f);
 
-				Item* pItem = pInven->GetItem();
-
-				SAFE_RELEASE(pInven);
-
-				int iAttack = ((Tool*)pItem)->GetAttack();
-
-				Hitted(((FightObj*)pObj)->GetAttack() + iAttack, tPos);
-
-				if (m_iHP <= 0.f)
-				{
-					Die();
-
-					for (int j = 0; j < 2; ++j)
-					{
-						for (int i = 0; i < 2; ++i)
-						{
-							Effect* pEffect = (Effect*)CreateCloneObj("RockCrabEffect", "RockCrabEffect", m_pLayer);
-
-							POSITION tDir(i - 0.5f, j - 0.5f);
-							pEffect->SetAngle(tDir);
-							pEffect->SetPos(m_tPos);
-							pEffect->SetImageOffset(i * 16.f, 16.f * j + 240.f);
-
-							SAFE_RELEASE(pEffect);
-						}
-					}
-				}
-			}
-
-			else
-			{
-				--m_iRock;
-
-				if(m_iRock <= 0)
-					m_bRock = false;
-			}
-
-			m_bAwake = true;
+			SAFE_RELEASE(pEffect);
 		}
 	}
 }

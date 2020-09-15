@@ -21,7 +21,8 @@ CAniEditDlg::CAniEditDlg()	:
 	m_fFrameTime(0.f),
 	m_hListClip(NULL),
 	m_pDefaultClip(nullptr),
-	m_iSelect(0)
+	m_iSelect(0),
+	m_bDestroyed(true)
 {
 	g_pDlg = this;
 }
@@ -74,6 +75,8 @@ void CAniEditDlg::OnEditDlg(int iID)
 	ShowWindow(m_hWnd, SW_SHOW);
 
 	ShowCursor(true);
+
+	m_bDestroyed = false;
 
 	m_hComboOption = GetDlgItem(m_hWnd, IDC_COMBO_OPTION);
 	m_hListClip = GetDlgItem(m_hWnd, IDC_LIST_CLIP);
@@ -441,9 +444,17 @@ void CAniEditDlg::Render()
 
 	if (m_pTexture)
 	{
+		bool bColorKey = m_pTexture->GetColorKeyEnable();
+
+		if(bColorKey)
 		TransparentBlt(m_hDC, tRC.left + pt.x, tRC.top + pt.y,
 			32, 64, m_pTexture->GetDC(),
-			(int)m_tBasePos.x, (int)m_tBasePos.y, 32, 64, RGB(255, 255, 255));
+			(int)m_tBasePos.x, (int)m_tBasePos.y, 32, 64, m_pTexture->GetColorKey());
+
+		else
+			BitBlt(m_hDC, tRC.left + pt.x, tRC.top + pt.y,
+				32, 64, m_pTexture->GetDC(),
+				(int)m_tBasePos.x, (int)m_tBasePos.y, SRCCOPY);
 	}
 
 	if (m_pAnimation)
@@ -461,9 +472,17 @@ void CAniEditDlg::Render()
 					int iWidth = (int)(m_pClip->vecFrame[iFrame].tEnd.x - m_pClip->vecFrame[iFrame].tStart.x);
 					int iHeight = (int)(m_pClip->vecFrame[iFrame].tEnd.y - m_pClip->vecFrame[iFrame].tStart.y);
 
+					bool bColorKey = m_pTexture->GetColorKeyEnable();
+
+					if (bColorKey)
 					TransparentBlt(m_hDC, tRC.left + pt.x + (int)m_pClip->vecRenderPos[iFrame].x, tRC.top + pt.y + (int)m_pClip->vecRenderPos[iFrame].y,
 						iWidth, iHeight, m_pTexture->GetDC(),
-						(int)m_pClip->vecFrame[iFrame].tStart.x, (int)m_pClip->vecFrame[iFrame].tStart.y, iWidth, iHeight, RGB(255, 255, 255));
+						(int)m_pClip->vecFrame[iFrame].tStart.x, (int)m_pClip->vecFrame[iFrame].tStart.y, iWidth, iHeight, m_pTexture->GetColorKey());
+
+					else
+						BitBlt(m_hDC, tRC.left + pt.x + (int)m_pClip->vecRenderPos[iFrame].x, tRC.top + pt.y + (int)m_pClip->vecRenderPos[iFrame].y,
+							iWidth, iHeight, m_pTexture->GetDC(),
+							(int)m_pClip->vecFrame[iFrame].tStart.x, (int)m_pClip->vecFrame[iFrame].tStart.y, SRCCOPY);
 				}
 			}
 		}
@@ -554,8 +573,11 @@ void CAniEditDlg::ChangeRenderPos()
 	{
 		BOOL bTrans = false;
 
-		m_pClip->vecRenderPos[m_iSelect].x = (float)GetDlgItemInt(m_hWnd, IDC_EDIT_RENDER_X, &bTrans, false);
-		m_pClip->vecRenderPos[m_iSelect].y = (float)GetDlgItemInt(m_hWnd, IDC_EDIT_RENDER_Y, &bTrans, false);
+		int iX = GetDlgItemInt(m_hWnd, IDC_EDIT_RENDER_X, &bTrans, true);
+		int iY = GetDlgItemInt(m_hWnd, IDC_EDIT_RENDER_Y, &bTrans, true);
+
+		m_pClip->vecRenderPos[m_iSelect].x = (float)iX;
+		m_pClip->vecRenderPos[m_iSelect].y = (float)iY;
 	}
 }
 
@@ -751,6 +773,8 @@ INT_PTR __stdcall CAniEditDlg::DlgProc(HWND hWnd, UINT iMessage, WPARAM wParam, 
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
+		g_pDlg->m_bDestroyed = true;
+		ShowCursor(false);
 		break;
 	}
 

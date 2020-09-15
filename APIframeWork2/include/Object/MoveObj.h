@@ -23,10 +23,12 @@ public:
 		m_fForceOrigin = fForce;
 	}
 
-	void SetAngle(const POSITION& tDir)
+	virtual void SetAngle(const POSITION& tDir)
 	{
 		m_tMoveDir = tDir;
-		m_tMoveDir.Normalize();
+
+		if (m_tMoveDir != 0.f)
+			m_tMoveDir.Normalize();
 	}
 
 	void SetAngle(float x, float y)
@@ -74,7 +76,7 @@ public:
 	void MoveYFromSpeed(float fDeltaTime, float fScale);
 	void MoveY(float y, float fDeltaTime);
 	void MoveAngle();
-	void MoveAngle(float fDeltaTime);
+	bool MoveAngle(float fDeltaTime);
 	void MoveAngle(float fSpeed, float fDeltaTime);
 	void Jump();
 	void JumpEnd();

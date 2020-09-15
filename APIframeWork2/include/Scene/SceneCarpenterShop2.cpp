@@ -15,9 +15,9 @@ SceneCarpenterShop2::~SceneCarpenterShop2()
 
 bool SceneCarpenterShop2::Init()
 {
-	Layer* pLayer = FindLayer("Stage");
+	Layer* pStageLayer = FindLayer("Stage");
 
-	m_pStage = Obj::CreateObj<Stage>("CarpentersShopStage2", pLayer);
+	m_pStage = Obj::CreateObj<Stage>("CarpentersShopStage2", pStageLayer);
 
 	m_pStage->LoadFromPath("CarpentersShop2.tmp");
 
@@ -30,11 +30,14 @@ bool SceneCarpenterShop2::Init()
 
 	CreateProtoTypes();
 
-	NPC* pNPC = m_pStage->CreateObj<NPC>("Haley");
+	Layer* pLayer = FindLayer("Default");
 
-	pNPC->SetPos(32.f * 11, 32.f * 10.f);
-	pNPC->SetSpeed(10.f);
-	pNPC->SetAnimationCurrentClip("HaleyIdleDown");
+	NPC* pNPC = m_pStage->CreateObj<NPC>("Haley", pLayer);
+
+	pNPC->SetPos(32.f * 11, 32.f * 6);
+	pNPC->SetSpeed(50.f);
+	pNPC->SetAngle(1.f, 0.f);
+	pNPC->SetAnimationCurrentClip("HaleyWalkRight");
 
 	SAFE_RELEASE(pNPC);
 

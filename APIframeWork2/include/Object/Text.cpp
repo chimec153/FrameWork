@@ -90,16 +90,19 @@ void Text::Render(HDC hDC, float fDeltaTime)
 
 	COLORREF tColor = SetTextColor(hDC, m_tColor);
 
+	int iMode = 0;
+
 	if(!m_bBackColor)
 		SetBkMode(hDC, TRANSPARENT);
 
 	else
-		SetBkMode(hDC, OPAQUE);
+		iMode = SetBkMode(hDC, OPAQUE);
 
 	TextOut(hDC, (int)m_tPos.x, (int)m_tPos.y, m_pText, lstrlen(m_pText));
 
 	SetTextColor(hDC, tColor);
 	SelectObject(hDC, hPrevFont);
+	SetBkMode(hDC, iMode);
 }
 
 Text* Text::Clone()

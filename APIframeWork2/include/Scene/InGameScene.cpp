@@ -26,6 +26,7 @@
 #include "SceneCoop.h"
 #include "SceneBarn.h"
 #include "../Object/Horse.h"
+#include "../Object/UIClockHand.h"
 
 InGameScene::InGameScene()
 {
@@ -51,6 +52,15 @@ bool InGameScene::Init()
 	SAFE_RELEASE(pTexture);
 
 	pTexture = GET_SINGLE(ResourcesManager)->LoadTexture("mine", TEXT("Maps\\TheMines.bmp"));
+	SAFE_RELEASE(pTexture);
+
+	pTexture = GET_SINGLE(ResourcesManager)->LoadTexture("summeroutdoor", TEXT("Maps\\summer_outdoors.bmp"));
+	SAFE_RELEASE(pTexture);
+
+	pTexture = GET_SINGLE(ResourcesManager)->LoadTexture("falloutdoor", TEXT("Maps\\fall_outdoors.bmp"));
+	SAFE_RELEASE(pTexture);
+
+	pTexture = GET_SINGLE(ResourcesManager)->LoadTexture("winteroutdoor", TEXT("Maps\\winter_outdoors.bmp"));
 	SAFE_RELEASE(pTexture);
 
 	Texture* pNoneTex = GET_SINGLE(ResourcesManager)->LoadTexture(
@@ -98,30 +108,26 @@ bool InGameScene::Init()
 
 	SAFE_RELEASE(pRoadPortal);
 
-	Layer* pLayer = FindLayer("Default");
-
-	for (int i = 0; i < 5; ++i)
-	{
-		Item* pSeed = (Item*)m_pStage->CreateCloneObj("Potato Seeds", "PotatoSeed", pLayer);
-
-		pSeed->SetPos(600.f + 100 * i, 600.f);
-
-		Collider* pCol = pSeed->GetCollider("ItemBody");
-
-		pCol->AddCollisionFunction(CS_ENTER, pSeed, &Item::CollEnter);
-		pCol->AddCollisionFunction(CS_STAY, pSeed, &Item::ColStay);
-		pCol->AddCollisionFunction(CS_LEAVE, pSeed, &Item::ColEnd);
-
-		SAFE_RELEASE(pCol);
-
-		SAFE_RELEASE(pSeed);
-	}
+	Layer* pHUDLayer = FindLayer("HUD");
 
 	Player* pPlayer = (Player*)GET_SINGLE(ObjManager)->GetPlayer();
 
-	pPlayer->AddGold(20000);
+	pPlayer->AddGold(100000);
 
 	SAFE_RELEASE(pPlayer);
+
+	UIInventory* pInven = GET_SINGLE(ObjManager)->GetInven();
+
+	for (int i = 0; i < 20; ++i)
+	{
+		Item* pHay = (Item*)pInven->Obj::CreateCloneObj("Hay", "Hay", pHUDLayer);
+
+		pInven->AddItem(pHay);
+
+		SAFE_RELEASE(pHay);
+	}
+
+	SAFE_RELEASE(pInven);
 
 	return true;
 }
@@ -195,7 +201,7 @@ int InGameScene::Update(float fTime)
 
 		Obj* pObj = m_pStage->CreateCloneObj("Silo", "Silo", pLayer);
 
-		pObj->SetPos(32.f * 23.5f, 32.f * 11.5f);
+		pObj->SetPos(32.f * 20.5f, 32.f * 11.5f);
 
 		pPlayer->BuildComplete(BT_SILO);
 
@@ -203,6 +209,80 @@ int InGameScene::Update(float fTime)
 	}
 
 	SAFE_RELEASE(pPlayer);
+
+	UIClockHand* pClockHand = (UIClockHand*)GET_SINGLE(ObjManager)->GetClockHand();
+
+	int iDay = pClockHand->GetDay() % 365;
+
+	SEASON eSeason = m_pStage->GetSeason();
+
+	if (iDay > 90 && eSeason == SEASON_SPRING)
+	{
+		m_pStage->SetSeason(SEASON_SUMMER);
+
+		Texture* pTexture = GET_SINGLE(ResourcesManager)->FindTexture("summeroutdoor");
+		
+		Texture* pCurTexture = GET_SINGLE(ResourcesManager)->FindTexture("springoutdoor");
+		Texture* pUpperTexture = GET_SINGLE(ResourcesManager)->FindTexture("spring_outdoorsTileSheet");
+
+		m_pStage->ChangeTileTextureAll(pUpperTexture, pTexture);
+		m_pStage->ChangeTileTextureAll(pCurTexture, pTexture);
+		m_pStage->ChangeTileTextureAll(pUpperTexture, pTexture, 1);
+		m_pStage->ChangeTileTextureAll(pCurTexture, pTexture, 1);
+
+		SAFE_RELEASE(pUpperTexture);
+		SAFE_RELEASE(pCurTexture);
+
+		SAFE_RELEASE(pTexture);
+	}
+
+	else if (iDay > 180 && eSeason == SEASON_SUMMER)
+	{
+		m_pStage->SetSeason(SEASON_FALL);
+
+		Texture* pTexture = GET_SINGLE(ResourcesManager)->FindTexture("falloutdoor");
+
+		Texture* pCurTexture = GET_SINGLE(ResourcesManager)->FindTexture("summeroutdoor");
+
+		m_pStage->ChangeTileTextureAll(pCurTexture, pTexture);
+		m_pStage->ChangeTileTextureAll(pCurTexture, pTexture, 1);
+
+		SAFE_RELEASE(pCurTexture);
+
+		SAFE_RELEASE(pTexture);
+	}
+
+	else if (iDay > 270 && eSeason == SEASON_FALL)
+	{
+		m_pStage->SetSeason(SEASON_WINTER);
+
+		Texture* pTexture = GET_SINGLE(ResourcesManager)->FindTexture("winteroutdoor");
+
+		Texture* pCurTexture = GET_SINGLE(ResourcesManager)->FindTexture("falloutdoor");
+
+		m_pStage->ChangeTileTextureAll(pCurTexture, pTexture);
+		m_pStage->ChangeTileTextureAll(pCurTexture, pTexture, 1);
+
+		SAFE_RELEASE(pCurTexture);
+
+		SAFE_RELEASE(pTexture);
+	}
+
+	else if (iDay <= 90 && eSeason == SEASON_WINTER)
+	{
+		m_pStage->SetSeason(SEASON_SPRING);
+
+		Texture* pTexture = GET_SINGLE(ResourcesManager)->FindTexture("springoutdoor");
+
+		Texture* pCurTexture = GET_SINGLE(ResourcesManager)->FindTexture("winteroutdoor");
+
+		m_pStage->ChangeTileTextureAll(pCurTexture, pTexture);
+		m_pStage->ChangeTileTextureAll(pCurTexture, pTexture, 1);
+
+		SAFE_RELEASE(pCurTexture);
+
+		SAFE_RELEASE(pTexture);
+	}
 
 	return 0;
 }
@@ -213,7 +293,7 @@ void InGameScene::Cave(Collider* pSrc, Collider* pDest, float fTime)
 	{
 		GET_SINGLE(SoundManager)->Stop(ST_BGM);
 
-		GET_SINGLE(SceneManager)->CreateScene<SceneCave>("Cave", SC_NEXT);
+		SceneCave* pSceneCave = GET_SINGLE(SceneManager)->CreateScene<SceneCave>("Cave", SC_NEXT);
 
 		Obj* pPlayer = GET_SINGLE(ObjManager)->GetPlayer();
 

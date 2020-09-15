@@ -16,16 +16,8 @@ private:
 	bool						m_bShopUIOn;
 	class UIInventory*			m_pInven;
 	vector<class UIPanel*>		m_vecPanel;
-	class UIButton*				m_pPrevBtn;
-	class UIButton*				m_pNextBtn;
-	class UIButton*				m_pExitBtn;
-	class UIButton*				m_pBuildBtn;
-	class Text*					m_pBuildingName;
-	class Text*					m_pBuildingText;
-	class Text*					m_pBuildingText2;
-	vector<class Text*>			m_vecMaterialText;
-	vector<class UINum*>		m_vecMaterialNum;
-	int							m_iPage;
+	vector<class UIButton*>		m_vecButton;
+	vector<class Text*>			m_vecAnimalDescription;
 
 public:
 
@@ -53,11 +45,11 @@ public:
 	void InitPanel();
 
 public:
-	void PagePrev(int iNum, float fTime);
-	void PageNext(int iNum, float fTime);
 	void DisablePanel(int iNum, float fTime);
 
 public:
+	void AnimalInfoOn(int iIndex, float fTime);
 	void BuyAnimal(int iIndex, float fTime);
+	void AnimalInfoOff(int iIndex, float fTime);
 };
 

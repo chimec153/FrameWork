@@ -38,7 +38,7 @@ int Pants::Update(float fTime)
 {
 	MoveObj::Update(fTime);
 
-	POSITION tAngle = m_pPlayer->GetAngle();
+	POSITION tAngle = GetAngle();
 
 	PLAYER_ACTION eAction = m_pPlayer->GetPlayerAction();
 
@@ -58,103 +58,130 @@ int Pants::Update(float fTime)
 
 	if (eAction == PA_WALK)
 	{
-			if (tAngle.x > 0.f)
-			{
-				SetAnimationDefaultClip("PantsIdleRight");
-				SetAnimationCurrentClip("PantsWalkRight");
-			}
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
+		{
+			SetAnimationDefaultClip("PantsIdleRight");
+			SetAnimationCurrentClip("PantsWalkRight");
+		}
 
-			else if (tAngle.x < 0.f)
-			{
-				SetAnimationDefaultClip("PantsIdleLeft");
-				SetAnimationCurrentClip("PantsWalkLeft");
-			}
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
+		{
+			SetAnimationDefaultClip("PantsIdleLeft");
+			SetAnimationCurrentClip("PantsWalkLeft");
+		}
 
-			else if (tAngle.y > 0.f)
-			{
-				SetAnimationDefaultClip("PantsIdleDown");
-				SetAnimationCurrentClip("PantsWalkDown");
-			}
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
+		{
+			SetAnimationDefaultClip("PantsIdleUp");
+			SetAnimationCurrentClip("PantsWalkUp");
+		}
 
-			else if (tAngle.y < 0.f)
-			{
-				SetAnimationDefaultClip("PantsIdleUp");
-				SetAnimationCurrentClip("PantsWalkUp");
-			}
+		else 
+		{
+			SetAnimationDefaultClip("PantsIdleDown");
+			SetAnimationCurrentClip("PantsWalkDown");
+		}
 	}
 
 	else if (eAction == PA_IDLE)
 	{
-			if (tAngle.x > 0.f)
-				SetAnimationCurrentClip("PantsIdleRight");
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
+			SetAnimationCurrentClip("PantsIdleRight");
 
-			else if (tAngle.x < 0.f)
-				SetAnimationCurrentClip("PantsIdleLeft");
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
+			SetAnimationCurrentClip("PantsIdleLeft");
 
-			else if (tAngle.y > 0.f)
-				SetAnimationCurrentClip("PantsIdleDown");
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
+			SetAnimationCurrentClip("PantsIdleUp");
 
-			else if (tAngle.y < 0.f)
-				SetAnimationCurrentClip("PantsIdleUp");
+		else
+			SetAnimationCurrentClip("PantsIdleDown");
 	}
 
 	else if (eAction == PA_ATTACK || eAction == PA_FARM)
 	{
-		if (tAngle.x > 0.f)
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
 		{
 			SetAnimationDefaultClip("PantsIdleRight");
 			SetAnimationCurrentClip("PantsAttackRight");
 		}
 
-		else if (tAngle.x < 0.f)
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("PantsIdleLeft");
 			SetAnimationCurrentClip("PantsAttackLeft");
 		}
 
-		else if (tAngle.y > 0.f)
-		{
-			SetAnimationDefaultClip("PantsIdleDown");
-			SetAnimationCurrentClip("PantsAttackDown");
-		}
-
-		else if (tAngle.y < 0.f)
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("PantsIdleUp");
 			SetAnimationCurrentClip("PantsAttackUp");
+		}
+
+		else
+		{
+			SetAnimationDefaultClip("PantsIdleDown");
+			SetAnimationCurrentClip("PantsAttackDown");
 		}
 	}
 
 	else if (eAction == PA_WATER)
 	{
-		if (tAngle.x > 0.f)
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
 		{
 			SetAnimationDefaultClip("PantsIdleRight");
 			SetAnimationCurrentClip("PantsWaterRight");
 		}
 
-		else if (tAngle.x < 0.f)
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("PantsIdleLeft");
 			SetAnimationCurrentClip("PantsWaterLeft");
 		}
 
-		else if (tAngle.y > 0.f)
-		{
-			SetAnimationDefaultClip("PantsIdleDown");
-			SetAnimationCurrentClip("PantsWaterDown");
-		}
-
-		else if (tAngle.y < 0.f)
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("PantsIdleUp");
 			SetAnimationCurrentClip("PantsWaterUp");
+		}
+
+		else
+		{
+			SetAnimationDefaultClip("PantsIdleDown");
+			SetAnimationCurrentClip("PantsWaterDown");
 		}
 	}
 	
 	else if (eAction == PA_EAT)
 	{
 		SetAnimationCurrentClip("PantsEat");
+	}
+
+	else if (eAction == PA_RIDE)
+	{
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
+		{
+			SetAnimationDefaultClip("PantsRideRight");
+			SetAnimationCurrentClip("PantsRideRight");
+		}
+
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
+		{
+			SetAnimationDefaultClip("PantsRideLeft");
+			SetAnimationCurrentClip("PantsRideLeft");
+		}
+
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
+		{
+			SetAnimationDefaultClip("PantsRideUp");
+			SetAnimationCurrentClip("PantsRideUp");
+		}
+
+		else
+		{
+			SetAnimationDefaultClip("PantsRideDown");
+			SetAnimationCurrentClip("PantsRideDown");
+		}
 	}
 
 	return 0;

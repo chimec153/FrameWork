@@ -46,13 +46,10 @@ bool Minion::Init()
 		0, 0, 4, 1, 3.f,0, "monster", TEXT("Characters\\Monsters\\Bat.bmp"));
 	SetAnimationClipColorKey("monsterMove", 255, 255, 255);
 
-	ColliderRect* pRC = AddCollider<ColliderRect>("MinionBody");
-
-	pRC->SetRect(-16.f, -16.f, 16.f, 16.f);
-
-	SAFE_RELEASE(pRC);
-
 	SAFE_RELEASE(pAni);
+
+	if (!FightObj::Init())
+		return false;
 
 	return true;
 }
@@ -185,50 +182,29 @@ Minion * Minion::Clone()
 
 void Minion::CollisionBullet(Collider * pSrc, Collider * pDest, float fDeltaTime)
 {
-	if (pDest->GetTag() == "attack" && !m_bHitted)
-	{
-		bool bEnable = pDest->GetEnable();
-
-		if (bEnable)
-		{
-			Obj* pObj = pDest->GetObj();
-
-			POSITION tPos = pObj->GetPos();
-
-			UIInventory* pInven = GET_SINGLE(ObjManager)->GetInven();
-
-			Item* pItem = pInven->GetItem();
-
-			SAFE_RELEASE(pInven);
-
-			int iAttack = ((Tool*)pItem)->GetAttack();
-
-			Hitted(((FightObj*)pObj)->GetAttack() + iAttack, tPos);
-
-			if (m_iHP <= 0)
-			{
-				m_bLife = false;
-
-				for (int j = 0; j < 2; ++j)
-				{
-					for (int i = 0; i < 2; ++i)
-					{
-						Effect* pEffect = (Effect*)CreateCloneObj("batEffect", "BatEffect", m_pLayer);
-
-						POSITION tDir(i - 0.5f, j - 0.5f);
-
-						pEffect->SetAngle(tDir);
-						pEffect->SetPos(m_tPos);
-						pEffect->SetImageOffset(i * 16.f, 16.f * j + 192.f);
-
-						SAFE_RELEASE(pEffect);
-					}
-				}
-			}
-		}
-	}
 }
 
 void Minion::CollStay(Collider* pSrc, Collider* pDest, float fDeltaTime)
 {
+}
+
+void Minion::DieMotion()
+{
+	m_bLife = false;
+
+	for (int j = 0; j < 2; ++j)
+	{
+		for (int i = 0; i < 2; ++i)
+		{
+			Effect* pEffect = (Effect*)CreateCloneObj("batEffect", "BatEffect", m_pLayer);
+
+			POSITION tDir(i - 0.5f, j - 0.5f);
+
+			pEffect->SetAngle(tDir);
+			pEffect->SetPos(m_tPos);
+			pEffect->SetImageOffset(i * 16.f, 16.f * j + 192.f);
+
+			SAFE_RELEASE(pEffect);
+		}
+	}
 }

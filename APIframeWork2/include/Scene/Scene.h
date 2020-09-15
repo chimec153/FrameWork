@@ -31,6 +31,7 @@ protected:
 	class Obj*				m_pPadeEffect;
 	class Stage*			m_pStage;
 	vector<char*>			m_vecstrProto;
+	bool					m_bStart;
 
 public:
 	class Stage* GetStage()	const
@@ -58,6 +59,13 @@ public:
 		m_bEditMode = bEdit;
 	}
 
+	void ResetPadeInEffect();
+
+	bool IsStarted()	const
+	{
+		return m_bStart;
+	}
+
 public:
 	class Layer * CreateLayer(const string& strTag,
 		int iZOrder = 0);
@@ -65,6 +73,7 @@ public:
 
 public:
 	virtual bool Init();
+	virtual void Start();
 	virtual void Input(float fDeltaTime);
 	virtual int Update(float fDeltaTime);
 	virtual int LateUpdate(float fDeltaTime);
@@ -94,11 +103,6 @@ public:
 
 public:
 	void CreateUI(class Obj* pObj);
-	void CreateSlimeClone();
-	void CreateBugClone();
-	void CreateBatClone();
-	void CreateFlyClone();
-	void CreateRockCrabClone();
 	void CreateProtoNumber();
 	void CreateClockHand();
 	void CreateFarmEffect();

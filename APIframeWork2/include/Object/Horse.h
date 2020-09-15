@@ -1,5 +1,5 @@
 #pragma once
-#include "FightObj.h"
+#include "Animal.h"
 
 enum HORSE_OPTION
 {
@@ -9,7 +9,7 @@ enum HORSE_OPTION
 };
 
 class Horse :
-	public FightObj
+	public Animal
 {
 private:
 	friend class Obj;

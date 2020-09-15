@@ -10,12 +10,14 @@
 #include "../Core/Camera.h"
 #include "../Object/UIInventory.h"
 #include "../Object/UIClockHand.h"
+#include "../Object/Weapon.h"
 
 DEFINITION_SINGLE(SceneManager)
 
 SceneManager::SceneManager()	:
 	m_pScene(NULL),
-	m_pNextScene(NULL)
+	m_pNextScene(NULL),
+	m_pInGameScene(NULL)
 {
 }
 
@@ -77,6 +79,7 @@ SCENE_CHANGE SceneManager::ChangeScene()
 		Player* pPlayer = (Player*)GET_SINGLE(ObjManager)->GetPlayer();
 		UIInventory* pInven = GET_SINGLE(ObjManager)->GetInven();
 		UIClockHand* pClockHand = (UIClockHand*)GET_SINGLE(ObjManager)->GetClockHand();
+		CWeapon* pWeapon = (CWeapon*)GET_SINGLE(ObjManager)->GetWeapon();
 
 		if (pClockHand)
 		{
@@ -101,6 +104,12 @@ SCENE_CHANGE SceneManager::ChangeScene()
 			pPlayer->SetBarLayer(pHUDLayer);
 		}
 
+		if (pWeapon)
+		{
+			pWeapon->SetScene(m_pScene);
+			pWeapon->SetLayer(pLayer);
+		}
+
 		Stage* pStage = m_pScene->GetStage();
 
 		if (pStage)
@@ -114,8 +123,12 @@ SCENE_CHANGE SceneManager::ChangeScene()
 			GET_SINGLE(Camera)->SetWorldResolution(iNumX * iSizeX, iNumY * iSizeY);
 		}
 
+		SAFE_RELEASE(pWeapon);
 		SAFE_RELEASE(pPlayer);
 		SAFE_RELEASE(pInven);
+
+		if(!m_pScene->IsStarted())
+			m_pScene->Start();
 
 		return SC_CHANGE;
 	}

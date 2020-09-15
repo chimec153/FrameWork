@@ -38,7 +38,7 @@ int Shirt::Update(float fTime)
 {
 	MoveObj::Update(fTime);
 
-	POSITION tAngle = m_pPlayer->GetAngle();
+	POSITION tAngle = GetAngle();
 
 	PLAYER_ACTION eAction = m_pPlayer->GetPlayerAction();
 
@@ -58,103 +58,130 @@ int Shirt::Update(float fTime)
 
 	if (eAction == PA_WALK)
 	{
-		if (tAngle.x > 0.f)
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
 		{
 			SetAnimationDefaultClip("ShirtIdleRight");
 			SetAnimationCurrentClip("ShirtWalkRight");
 		}
 
-		else if (tAngle.x < 0.f)
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("ShirtIdleLeft");
 			SetAnimationCurrentClip("ShirtWalkLeft");
 		}
 
-		else if (tAngle.y > 0.f)
-		{
-			SetAnimationDefaultClip("ShirtIdleDown");
-			SetAnimationCurrentClip("ShirtWalkDown");
-		}
-
-		else if (tAngle.y < 0.f)
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("ShirtIdleUp");
 			SetAnimationCurrentClip("ShirtWalkUp");
+		}
+
+		else
+		{
+			SetAnimationDefaultClip("ShirtIdleDown");
+			SetAnimationCurrentClip("ShirtWalkDown");
 		}
 	}
 
 	else if (eAction == PA_IDLE)
 	{
-		if (tAngle.x > 0.f)
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
 			SetAnimationCurrentClip("ShirtIdleRight");
 
-		else if (tAngle.x < 0.f)
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
 			SetAnimationCurrentClip("ShirtIdleLeft");
 
-		else if (tAngle.y > 0.f)
-			SetAnimationCurrentClip("ShirtIdleDown");
-
-		else if (tAngle.y < 0.f)
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
 			SetAnimationCurrentClip("ShirtIdleUp");
+
+		else
+			SetAnimationCurrentClip("ShirtIdleDown");
 	}
 
 	else if (eAction == PA_ATTACK || eAction == PA_FARM)
 	{
-		if (tAngle.x > 0.f)
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
 		{
 			SetAnimationDefaultClip("ShirtIdleRight");
 			SetAnimationCurrentClip("ShirtAttackRight");
 		}
 
-		else if (tAngle.x < 0.f)
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("ShirtIdleLeft");
 			SetAnimationCurrentClip("ShirtAttackLeft");
 		}
 
-		else if (tAngle.y > 0.f)
-		{
-			SetAnimationDefaultClip("ShirtIdleDown");
-			SetAnimationCurrentClip("ShirtAttackDown");
-		}
-
-		else if (tAngle.y < 0.f)
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("ShirtIdleUp");
 			SetAnimationCurrentClip("ShirtAttackUp");
+		}
+
+		else
+		{
+			SetAnimationDefaultClip("ShirtIdleDown");
+			SetAnimationCurrentClip("ShirtAttackDown");
 		}
 	}
 
 	else if (eAction == PA_WATER)
 	{
-		if (tAngle.x > 0.f)
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
 		{
 			SetAnimationDefaultClip("ShirtIdleRight");
 			SetAnimationCurrentClip("ShirtWaterRight");
 		}
 
-		else if (tAngle.x < 0.f)
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("ShirtIdleLeft");
 			SetAnimationCurrentClip("ShirtWaterLeft");
 		}
 
-		else if (tAngle.y > 0.f)
-		{
-			SetAnimationDefaultClip("ShirtIdleDown");
-			SetAnimationCurrentClip("ShirtWaterDown");
-		}
-
-		else if (tAngle.y < 0.f)
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
 		{
 			SetAnimationDefaultClip("ShirtIdleUp");
 			SetAnimationCurrentClip("ShirtWaterUp");
+		}
+
+		else
+		{
+			SetAnimationDefaultClip("ShirtIdleDown");
+			SetAnimationCurrentClip("ShirtWaterDown");
 		}
 	}
 
 	else if (eAction == PA_EAT)
 	{
 		SetAnimationCurrentClip("ShirtEat");
+	}
+
+	else if (eAction == PA_RIDE)
+	{
+		if (tAngle.x > tAngle.y && -tAngle.x < tAngle.y)
+		{
+			SetAnimationDefaultClip("ShirtRideRight");
+			SetAnimationCurrentClip("ShirtRideRight");
+		}
+
+		else if (tAngle.x < tAngle.y && -tAngle.x > tAngle.y)
+		{
+			SetAnimationDefaultClip("ShirtRideLeft");
+			SetAnimationCurrentClip("ShirtRideLeft");
+		}
+
+		else if (tAngle.x > tAngle.y && -tAngle.x > tAngle.y)
+		{
+			SetAnimationDefaultClip("ShirtRideUp");
+			SetAnimationCurrentClip("ShirtRideUp");
+		}
+
+		else
+		{
+			SetAnimationDefaultClip("ShirtRideDown");
+			SetAnimationCurrentClip("ShirtRideDown");
+		}
 	}
 
 	return 0;

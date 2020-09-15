@@ -8,6 +8,8 @@
 #include "../Object/Portal.h"
 #include "../Object/UIClockHand.h"
 #include "../Object/Player.h"
+#include "../Object/UIInventory.h"
+#include "../Object/Item.h"
 
 SceneHome::SceneHome()
 {

@@ -18,7 +18,8 @@ Stage::Stage()	:
 	m_iTileSizeY(0),
 	m_ppBlock(nullptr),	//	타일위에 있는 오브젝트 정보를 담고 있는 블록 이중포인터 배열이다.
 	m_pSelectTile(nullptr),
-	m_eStageType(STAGE_INDOOR)
+	m_eStageType(STAGE_INDOOR),
+	m_eSeason(SEASON_SPRING)
 {
 }
 
@@ -49,6 +50,8 @@ Stage::Stage(const Stage & stage)	:
 	m_pSelectTile = nullptr;
 
 	m_eStageType = stage.m_eStageType;
+
+	m_eSeason = stage.m_eSeason;
 }
 
 Stage::~Stage()
@@ -56,7 +59,12 @@ Stage::~Stage()
 	ClearTile();
 }
 
-void Stage::CreateTile(int iNumX, int iNumY, 
+void Stage::SetStart(const POSITION& tPos)
+{
+	m_tStart = tPos;
+}
+
+void Stage::CreateTile(int iNumX, int iNumY,
 	int iSizeX, int iSizeY, const string & strKey, 
 	const wchar_t * pFileName, const string & strPathKey)
 {
@@ -89,6 +97,7 @@ void Stage::CreateTile(int iNumX, int iNumY,
 			pTile->m_pLayer = m_pLayer;
 			pTile->SetAlpha(255);
 			pTile->EnableAlpha(true);
+			pTile->SetStart(m_tStart);
 
 			m_vecTile.push_back(pTile);
 		}
@@ -120,12 +129,11 @@ int Stage::Update(float fDeltaTime)
 
 	Obj* pPlayer = GET_SINGLE(ObjManager)->GetPlayer();
 
-	if (pPlayer)
+	if (pPlayer && pPlayer->GetEnable())
 	{
 		POSITION tPos = pPlayer->GetPos();
 		POSITION tAngle = ((MoveObj*)pPlayer)->GetAngle();
 
-		SAFE_RELEASE(pPlayer);
 
 		POSITION tTilePos = {};
 		Tile* pTile = nullptr;
@@ -150,6 +158,8 @@ int Stage::Update(float fDeltaTime)
 		}
 	}
 
+	SAFE_RELEASE(pPlayer);
+
 	UIClockHand* pHand = (UIClockHand*)GET_SINGLE(ObjManager)->GetClockHand();
 
 	bool bRain = false;
@@ -166,7 +176,15 @@ int Stage::Update(float fDeltaTime)
 
 			if (eOption != TO_WATERDIRT &&
 				eOption != TO_HOEDIRT)
-				continue;
+			{
+				if (eOption == TO_TREEANI)
+				{
+					m_vecTile[i * m_iTileNumX + j]->Update(fDeltaTime);
+				}
+
+				else
+					continue;
+			}
 
 			if (eOption == TO_HOEDIRT && bRain)
 				m_vecTile[i * m_iTileNumX + j]->SetTileOption(TO_WATERDIRT);
@@ -180,6 +198,16 @@ int Stage::Update(float fDeltaTime)
 
 			if (j < m_iTileNumX - 1)
 				pRightTile = m_vecTile[i * m_iTileNumX + j + 1];
+
+			Tile* pUpTile = nullptr;
+
+			if (i > 0)
+				pUpTile = m_vecTile[(i - 1) * m_iTileNumX + j];
+
+			Tile* pDownTile = nullptr;
+
+			if (i < m_iTileNumY - 1)
+				pDownTile = m_vecTile[(i + 1) * m_iTileNumX + j];
 
 			TILE_OPTION eLeftOption = TO_NONE;
 			POSITION tLeftOffset(0.f, 0.f);
@@ -197,45 +225,7 @@ int Stage::Update(float fDeltaTime)
 			{
 				eRightOption = pRightTile->GetTileOption();
 				tRightOffset = pRightTile->GetUpperImageOffset();
-			}				
-
-			if ((eLeftOption == TO_HOEDIRT || eLeftOption == TO_WATERDIRT) &&
-				(eRightOption == TO_HOEDIRT || eRightOption == TO_WATERDIRT) &&
-				tLeftOffset.x != 0.f && tRightOffset.x !=0.f &&
-				((tOffset.x ==0.f && tOffset.y == 0.f) ||
-				(tOffset.x !=0.f)))
-			{
-				m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset(m_iTileSizeX * 2.f, m_iTileSizeY * 3.f);
-				continue;
 			}
-
-			else if ((eLeftOption == TO_HOEDIRT || eLeftOption == TO_WATERDIRT) &&
-				(tLeftOffset.x != 0.f || tLeftOffset.y == 0.f) &&
-				((tOffset.x == 0.f && tOffset.y == 0.f) ||
-				(tOffset.x != 0.f)))
-			{
-				m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset(m_iTileSizeX * 3.f, m_iTileSizeY * 3.f);
-				continue;
-			}
-
-			else if ((eRightOption == TO_HOEDIRT || eRightOption == TO_WATERDIRT) &&
-				(tRightOffset.x != 0.f || tRightOffset.y == 0.f) &&
-				((tOffset.x == 0.f && tOffset.y == 0.f) ||
-				(tOffset.x != 0.f)))
-			{
-				m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset((float)m_iTileSizeX , m_iTileSizeY * 3.f);
-				continue;
-			}
-
-			Tile* pUpTile = nullptr;
-
-			if (i > 0)
-				pUpTile = m_vecTile[(i-1) * m_iTileNumX + j];
-
-			Tile* pDownTile = nullptr;
-
-			if (i < m_iTileNumY - 1)
-				pDownTile = m_vecTile[(i+1) * m_iTileNumX + j];
 
 			TILE_OPTION eUpOption = TO_NONE;
 			POSITION	tUpOffset(0.f, 0.f);
@@ -255,32 +245,67 @@ int Stage::Update(float fDeltaTime)
 				tDownOffset = pDownTile->GetUpperImageOffset();
 			}
 
-			if ((eUpOption == TO_HOEDIRT || eUpOption == TO_WATERDIRT) &&
-				(eDownOption == TO_HOEDIRT || eDownOption == TO_WATERDIRT) &&
-				tUpOffset.x == 0.f && tDownOffset.x ==0.f)
+			if ((eDownOption == TO_HOEDIRT || eDownOption == TO_WATERDIRT) &&
+				(eUpOption == TO_HOEDIRT || eUpOption == TO_WATERDIRT))
 			{
-				m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset(0, m_iTileSizeY * 2.f);
-				continue;
+				if ((eLeftOption == TO_HOEDIRT || eLeftOption == TO_WATERDIRT) &&
+					(eRightOption == TO_HOEDIRT || eRightOption == TO_WATERDIRT))
+					m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset((float)(m_iTileSizeX * 2.f), (float)m_iTileSizeY);
+
+				else if((eLeftOption == TO_HOEDIRT || eLeftOption == TO_WATERDIRT))
+					m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset((float)(m_iTileSizeX * 3.f), (float)m_iTileSizeY);
+
+				else if((eRightOption == TO_HOEDIRT || eRightOption == TO_WATERDIRT))
+					m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset((float)m_iTileSizeX, (float)m_iTileSizeY);
+
+				else
+					m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset(0.f, (float)m_iTileSizeY *2.f);
 			}
 
-			else if ((eUpOption == TO_HOEDIRT || eUpOption == TO_WATERDIRT) &&
-				tUpOffset.x == 0.f &&
-				tOffset.x == 0.f)
+			else if ((eDownOption == TO_HOEDIRT || eDownOption == TO_WATERDIRT))
 			{
-				m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset(0, m_iTileSizeY * 3.f);
-				continue;
+				if ((eLeftOption == TO_HOEDIRT || eLeftOption == TO_WATERDIRT) &&
+					(eRightOption == TO_HOEDIRT || eRightOption == TO_WATERDIRT))
+					m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset((float)m_iTileSizeX * 2.f, 0.f);
+
+				else if ((eLeftOption == TO_HOEDIRT || eLeftOption == TO_WATERDIRT))
+					m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset((float)m_iTileSizeX * 3.f, 0.f);
+
+				else if ((eRightOption == TO_HOEDIRT || eRightOption == TO_WATERDIRT))
+					m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset((float)m_iTileSizeX, 0.f);
+
+				else
+					m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset(0.f, (float)m_iTileSizeY*1.f);
 			}
 
-			else if ((eDownOption == TO_HOEDIRT || eDownOption == TO_WATERDIRT) &&
-				tDownOffset.x  == 0.f &&
-				tOffset.x == 0.f)
+			else if ((eUpOption == TO_HOEDIRT || eUpOption == TO_WATERDIRT))
 			{
-				m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset(0, (float)m_iTileSizeY);
-				continue;
+				if ((eLeftOption == TO_HOEDIRT || eLeftOption == TO_WATERDIRT) &&
+					(eRightOption == TO_HOEDIRT || eRightOption == TO_WATERDIRT))
+					m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset((float)m_iTileSizeX * 2.f, (float)m_iTileSizeY * 2.f);
+
+				else if ((eLeftOption == TO_HOEDIRT || eLeftOption == TO_WATERDIRT))
+					m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset((float)m_iTileSizeX * 3.f, (float)m_iTileSizeY * 2.f);
+
+				else if ((eRightOption == TO_HOEDIRT || eRightOption == TO_WATERDIRT))
+					m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset((float)m_iTileSizeX, (float)m_iTileSizeY * 2.f);
+
+				else
+					m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset(0.f, (float)m_iTileSizeY * 3.f);
 			}
 
 			else
-				m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset(0.f, 0.f);
+			{
+				if ((eLeftOption == TO_HOEDIRT || eLeftOption == TO_WATERDIRT) &&
+					(eRightOption == TO_HOEDIRT || eRightOption == TO_WATERDIRT))
+					m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset((float)m_iTileSizeX * 2.f, (float)m_iTileSizeY * 3.f);
+
+				else if ((eLeftOption == TO_HOEDIRT || eLeftOption == TO_WATERDIRT))
+					m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset((float)m_iTileSizeX * 3.f, (float)m_iTileSizeY * 3.f);
+
+				else if ((eRightOption == TO_HOEDIRT || eRightOption == TO_WATERDIRT))
+					m_vecTile[i * m_iTileNumX + j]->SetUpperImageOffset((float)m_iTileSizeX, (float)m_iTileSizeY * 3.f);
+			}
 		}
 	}
 
@@ -303,14 +328,16 @@ void Stage::Render(HDC hDC, float fDeltaTime)
 	//StaticObj::Render(hDC, fDeltaTime);
 	if (m_pTexture)
 	{
-		POSITION	tPos = m_tPos - m_tSize * m_tPivot;
-		POSITION	tCamPos = GET_SINGLE(Camera)->GetPos();
+		POSITION	tPos = m_tPos - m_tSize * m_tPivot ;
+		POSITION	tCamPos = GET_SINGLE(Camera)->GetPos() - m_tStart;
 		BitBlt(hDC, (int)tPos.x, (int)tPos.y, (int)GETRESOLUTION.iW,
 			(int)GETRESOLUTION.iH, m_pTexture->GetDC(), (int)tCamPos.x, (int)tCamPos.y,
 			SRCCOPY);
 	}
 
-	for (size_t i = 0; i < m_vecTile.size(); ++i)
+	size_t iTileSize = m_vecTile.size();
+
+	for (size_t i = 0; i < iTileSize; ++i)
 	{
 		m_vecTile[i]->Render(hDC, fDeltaTime);
 	}
@@ -438,6 +465,52 @@ void Stage::ChangeTileTexture(const POSITION& tPos, Texture* pTexture, int iLaye
 		m_vecTile[iIndex]->SetUpperTexture(pTexture);
 }
 
+void Stage::ChangeTileTextureAll(Texture* pCurrentTexture, Texture* pTexture, int iLayer)
+{
+	size_t iSize = m_vecTile.size();
+
+	for (size_t i = 0; i < iSize; ++i)
+	{
+		if (iLayer == 0)
+		{
+			Texture* pCurTexture = m_vecTile[i]->GetTexture();
+
+			if(pCurrentTexture == pCurTexture)
+				m_vecTile[i]->SetTexture(pTexture);
+
+			else
+			{
+				int i = 0;
+			}
+
+			SAFE_RELEASE(pCurTexture);
+		}
+			
+
+		else if (iLayer == 1)
+		{
+			Texture* pCurUpTexture = m_vecTile[i]->GetUpperTexture();
+
+			if (pCurUpTexture)
+			{
+				if (pCurUpTexture == pCurrentTexture)
+				{
+					POSITION tOffset = m_vecTile[i]->GetUpperImageOffset();
+
+					m_vecTile[i]->SetUpperTexture(pTexture);
+				}
+				else
+				{
+					int i = 10;
+				}
+			}
+
+			SAFE_RELEASE(pCurUpTexture);
+		}
+			
+	}
+}
+
 void Stage::ChangeTileOption(const POSITION & tPos,
 	TILE_OPTION eOption)
 {
@@ -453,7 +526,10 @@ void Stage::ChangeTileOption(const POSITION & tPos,
 
 int Stage::GetTileIndex(const POSITION & tPos)	const
 {
-	POSITION tNewPos = tPos - m_tStart;
+	POSITION tNewPos = tPos;
+
+	if (tNewPos.x < 0.f || tNewPos.y < 0.f)
+		return -1;
 
 	return GetTileIndex(tNewPos.x, tNewPos.y);
 }
@@ -466,11 +542,11 @@ int Stage::GetTileIndex(float x, float y)	const
 	int idxX = (int)x/ m_iTileSizeX;
 	int idxY = (int)y / m_iTileSizeY;
 
-	/*if (idxX < 0 || idxX >= m_iTileNumX)
+	if (idxX < 0 || idxX >= m_iTileNumX)
 		return -1;
 
 	else if (idxY < 0 || idxY >= m_iTileNumY)
-		return -1;*/
+		return -1;
 
 	return idxY * m_iTileNumX +idxX;
 }

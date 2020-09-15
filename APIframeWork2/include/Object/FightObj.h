@@ -98,6 +98,15 @@ public:
 		return m_iEnergy;
 	}
 
+	POSITION GetHitAngle()	const
+	{
+		return m_tHitAngle;
+	}
+
+	float GetHitTime()	const
+	{
+		return m_fHitTime;
+	}
 
 public:
 	virtual bool Init() = 0;
@@ -109,6 +118,11 @@ public:
 	virtual FightObj* Clone() = 0;
 
 protected:
-	void Hitted(int iAttack, POSITION tPos);
+	virtual void Hitted(int iAttack, const POSITION& tPos);
+	virtual void DieMotion();
+
+public:
+	void ColEnter(class Collider* pSrc, class Collider* pDest, float fTime);
+	void ColStay(class Collider* pSrc, class Collider* pDest, float fTime);
 };
 

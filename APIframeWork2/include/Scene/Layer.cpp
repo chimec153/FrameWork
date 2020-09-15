@@ -23,8 +23,7 @@ Layer::~Layer()
 		Obj::EraseObj(*iter);
 		SAFE_RELEASE((*iter));
 	}
-	m_ObjList.clear();
-	
+	m_ObjList.clear();	
 }
 
 void Layer::AddObject(Obj * pObj)

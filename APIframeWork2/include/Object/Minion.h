@@ -30,5 +30,8 @@ public:
 	void CollStay(class Collider* pSrc,
 		class Collider* pDest, float fDeltaTime);
 
+public:
+	virtual void DieMotion();
+
 };
 

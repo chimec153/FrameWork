@@ -22,6 +22,13 @@ public:
 		m_bPadeDir = true;
 	}
 
+	void Reset()
+	{
+		m_bPadeDir = false;
+		m_fPadeRate = 255.f;
+		SetAlpha(255);
+	}
+
 public:
 	virtual bool Init();
 	virtual int Update(float fDeltaTime);

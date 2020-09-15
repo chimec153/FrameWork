@@ -129,14 +129,6 @@ void Rock::DestroyRock()
 		{
 			pRock->SetPos(m_tPos);
 
-			Collider* pCol = pRock->GetCollider("ItemBody");
-
-			pCol->AddCollisionFunction(CS_ENTER, pRock, &Item::CollEnter);
-			pCol->AddCollisionFunction(CS_STAY, pRock, &Item::ColStay);
-			pCol->AddCollisionFunction(CS_LEAVE, pRock, &Item::ColEnd);
-
-			SAFE_RELEASE(pCol);
-
 			SAFE_RELEASE(pRock);
 		}
 	}

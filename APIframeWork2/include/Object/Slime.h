@@ -35,6 +35,9 @@ public:
 	virtual Slime* Clone();
 
 public:
+	virtual void DieMotion();
+
+public:
 	void Collision(class Collider* pSrc, class Collider* pDest, float fTime);
 
 };

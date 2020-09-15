@@ -203,14 +203,17 @@ void UIContext::Render(HDC hDC, float fDeltaTime)
 	if (m_pPrice)
 		m_pPrice->Render(hDC, fDeltaTime);
 
-	if (KEYDOWN("Debug"))
+#ifdef _DEBUG
+	/*
+	if (KEYPRESS("Debug"))
 	{
 		TCHAR strScene[32] = {};
 
 		swprintf_s(strScene, TEXT("Scene: %lld"), (long long)m_pScene);
 
 		TextOut(hDC, (int)m_tPos.x, (int)m_tPos.y, strScene, lstrlen(strScene));
-	}
+	}*/
+#endif
 }
 
 UIContext* UIContext::Clone()
@@ -224,10 +227,10 @@ void UIContext::ColEnter(Collider* pSrc, Collider* pDest, float fTime)
 	{
 		POSITION tPos = pDest->GetObj()->GetPos();
 
+		PITEMINFO pInfo = GET_SINGLE(ResourcesManager)->FindItemInfo(m_iIndex);
+
 		if (m_pInven)
-			m_pInven->InfoPanelOn(tPos, m_iIndex);
-
-
+			m_pInven->InfoPanelOn(tPos, *pInfo);
 	}
 }
 

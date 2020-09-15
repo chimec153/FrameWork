@@ -36,7 +36,7 @@ bool SceneCrapentersShop::Init()
 
 	NPC* pNPC = Obj::CreateObj<NPC>("Robin", pLayer);
 
-	pNPC->SetPos(32.f * 2.5f, 32.f * 8.5f);
+	pNPC->SetPos(32.f * 2.5f, 32.f * 5.5f);
 
 	pNPC->SetAnimationCurrentClip("RobinIdleDown");
 

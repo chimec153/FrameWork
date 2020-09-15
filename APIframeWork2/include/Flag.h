@@ -4,6 +4,7 @@ enum SCENE_CREATE
 {
 	SC_CURRENT,
 	SC_NEXT,
+	SC_MINIGAME,
 	SC_END
 };
 
@@ -53,7 +54,9 @@ enum TILE_OPTION
 	TO_HOEDIRT,
 	TO_WATERDIRT,
 	TO_NOMOVE,
-	TO_WATER
+	TO_WATER,
+	TO_TREEANI,
+	TO_END
 };
 
 enum TILE_EDIT_MODE
@@ -70,6 +73,8 @@ enum OBJ_BLOCK
 	OB_BUILDING,
 	OB_CROP,
 	OB_ROCK,
+	OB_GRASS,
+	OB_FURNITURE,
 	OB_END
 };
 
@@ -94,11 +99,13 @@ enum ITEM_TYPE
 	IT_TOOL,
 	IT_CROP,
 	IT_ETC,
+	IT_EGG,
 	IT_END
 };
 
 enum CROP_TYPE
 {
+	CROP_NONE,
 	CROP_PARSNIP,
 	CROP_BEAN,
 	CROP_CAULIFLOWER,
@@ -145,6 +152,8 @@ enum TOOL_TYPE
 	TOOL_EX,
 	TOOL_PIKEX,
 	TOOL_WATER,
+	TOOL_SCYTHE,
+	TOOL_SCISSOR,
 	TOOL_END
 };
 
@@ -156,6 +165,8 @@ enum PLAYER_ACTION
 	PA_EAT,
 	PA_FARM,
 	PA_WATER,
+	PA_SMOKE,
+	PA_RIDE,
 	PA_END
 };
 
@@ -194,3 +205,172 @@ enum BUILDING_TYPE
 	BT_STABLE = 8,
 	BT_END
 };
+
+enum ANIMAL_TYPE
+{
+	ANIMAL_CHICKEN,
+	ANIMAL_MILKCOW,
+	ANIMAL_GOAT,
+	ANIMAL_DUCK,
+	ANIMAL_SHEEP,
+	ANIMAL_RABBIT,
+	ANIMAL_PIG,
+	ANIMAL_BROWNCOW,
+	ANIMAL_DINOSAUR,
+	ANIMAL_HORSE,
+	ANIMAL_END
+};
+
+enum DATA_TYPE
+{
+	DATA_ITEM,
+	DATA_ANIMAL,
+	DATA_END
+};
+
+enum CHICKEN_COLOR
+{
+	CC_WHITE,
+	CC_BROWN,
+	CC_BLUE,
+	CC_VOID,
+	CC_END
+};
+
+enum LABELING_TYPE
+{
+	LT_LABEL,
+	LT_OBJECT,
+	LT_END
+};
+
+enum EGG_TYPE
+{
+	ET_CHICK,
+	ET_DUCK,
+	ET_DINO,
+	ET_END
+};
+
+enum MONSTER_TYPE
+{
+	MT_BAT,
+	MT_SLIME,
+	MT_BUG,
+	MT_FLY,
+	MT_ROCKCRAB,
+	MT_END
+};
+
+enum MINI_ITEM_TYPE
+{
+	ITEM_NONE,
+	ITEM_COFFEE,
+	ITEM_MACHINE,
+	ITEM_NUKE,
+	ITEM_SHOTGUN,
+	ITEM_SMOKE,
+	ITEM_BADGE,
+	ITEM_TOMB,
+	ITEM_WHEEL,
+	ITEM_LIFE,
+	ITEM_MONEY,
+	ITEM_5MONEY,
+	ITEM_END
+};
+
+enum SEASON
+{
+	SEASON_SPRING,
+	SEASON_SUMMER,
+	SEASON_FALL,
+	SEASON_WINTER,
+	SEASON_END
+};
+
+enum MINI_MONSTER_TYPE
+{
+	MMT_NONE,
+	MMT_ORC,
+	MMT_MUSHROOM,
+	MMT_MUMMY,
+	MMT_IMP,
+	MMT_ORGE,
+	MMT_PIXIE,
+	MMT_SPIKEBALL,
+	MMT_END
+};
+
+enum HAT_TYPE
+{
+	HT_NONE,
+	HT_COWBOY,
+	HT_BOWLER,
+	HT_TOP,
+	HT_SOMBRERO,
+	HT_STRAW,
+	HT_OFFICIAL,
+	HT_BLUE,
+	HT_PLUM,
+	HT_SKELETON,
+	HT_GOBLIN,
+	HT_CHICKEN,
+	HT_EARMUFFS,
+	HT_DELICATE,
+	HT_TROPICLIP,
+	HT_BUTTERFLY,
+	HT_HUNTER,
+	HT_TRUCKER,
+	HT_SAILOR,
+	HT_GOOD,
+	HT_END
+};
+
+typedef struct _tagItemInfo
+{
+	string			strName;
+	string			strCropName;
+	ITEM_TYPE		eItemType;
+	CROP_TYPE		eCropType;
+	TOOL_TYPE		eToolType;
+	POSITION		tTileOffset;
+	POSITION		tCropOffset;
+	POSITION		tHarvestOffset;
+	vector<int>		vecPrice;
+	int				iSeedSellPrice;
+	int				iSellPrice;
+	int				iMaxStage;
+	vector<int>		vecMaxDay;
+	int				iEnergyRecovery;
+	int				iHPRecovery;
+	int				iRegrowthDay;
+	int				iAttack;
+	vector<TCHAR*>	vecComment;
+	EGG_TYPE		eEggType;
+
+	_tagItemInfo() :
+		eItemType(IT_NONE),
+		eCropType(CROP_PARSNIP),
+		eToolType(TOOL_SWORD),
+		iSeedSellPrice(0),
+		iSellPrice(0),
+		iMaxStage(0),
+		iEnergyRecovery(0),
+		iHPRecovery(0),
+		iRegrowthDay(0),
+		iAttack(0),
+		eEggType(ET_CHICK)	
+	{
+
+	}
+
+	~_tagItemInfo()
+	{
+		size_t iSize = vecComment.size();
+
+		for (size_t i = 0; i < iSize; ++i)
+			delete[] vecComment[i];
+	}
+
+}ITEMINFO, * PITEMINFO;
+

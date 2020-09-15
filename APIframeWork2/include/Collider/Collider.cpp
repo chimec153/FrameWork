@@ -167,8 +167,8 @@ bool Collider::CollisionRectToRect(const RECTANGLE & src,
 		return false;
 
 	//	충돌체들이 겹쳐서 생기는 사각형의 중심 좌표를 계산한다.
-	m_tHitPoint.x = (src.l < dest.l ? dest.l : src.l + src.r < dest.r ? src.r : dest.r) / 2.f;
-	m_tHitPoint.y = (src.t < dest.t ? dest.t : src.t + src.b < dest.b ? src.b : dest.b) / 2.f;
+	m_tHitPoint.x = ((src.l < dest.l ? dest.l : src.l) + (src.r < dest.r ? src.r : dest.r)) / 2.f;
+	m_tHitPoint.y = ((src.t < dest.t ? dest.t : src.t) + (src.b < dest.b ? src.b : dest.b)) / 2.f;
 
 	m_bColl = true;
 

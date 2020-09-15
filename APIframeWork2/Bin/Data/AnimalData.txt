@@ -1,0 +1,79 @@
+8
+=======================================
+Chicken		이름
+4
+Well cared-for adult
+chickens lay eggs
+every day. Lives in
+the coop.
+800
+1040
+=======================================
+Milk Cow		이름
+5
+Adults can be milked
+daily. A milk pail is
+required to harvest
+the milk. Lives in the
+barn.
+1500		구매 가격
+1950		판매 가격
+=======================================
+Goat		이름
+6
+Happy adults provide
+goat milk every other
+day. A milk pail is
+required to harvest
+the milk. Lives in the
+barn.
+4000		구매 가격
+5200		판매 가격
+=======================================
+Duck		이름
+3
+Happy adults lay duck
+eggs every other day.
+Lives in the coop.
+4000		구매 가격
+5200		판매 가격
+=======================================
+Sheep		이름
+8
+Adults can be shorn for
+wool. Sheep who form
+a close bond with their
+owners can grow wool
+faster. A pair of shears
+is required to harvest
+the wool. Lives in the
+barn.
+8000		구매 가격
+10400		판매 가격
+=======================================
+Rabbit		이름
+4
+These are wooly rabbits!
+They shed precious
+wool every few days.
+Lives in the coop.
+8000		구매 가격
+10400		판매 가격
+=======================================
+Pig		이름
+3
+These pigs are trained
+to find truffles! Lives
+in the barn.
+16000		구매 가격
+20800		판매 가격
+=======================================
+Brown Cow	이름
+5
+Adults can be milked
+daily. A milk pail is
+required to harvest
+the milk. Lives in the
+barn.
+1500		구매 가격
+1950		판매 가격

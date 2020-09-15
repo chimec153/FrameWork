@@ -1,6 +1,7 @@
 #include "SceneCollision.h"
 #include "CollisionSection.h"
 #include "../Collider/Collider.h"
+#include "../Core/Camera.h"
 
 SceneCollision::SceneCollision()	:
 	m_iCountX(0),
@@ -39,7 +40,22 @@ void SceneCollision::CreateCollisionSection(int iCountX, int iCountY, POSITION t
 
 void SceneCollision::AddCollider(Collider* pCol)
 {
-	RECTANGLE tRect = pCol->GetSectionInfo();
+	RECTANGLE tRect = {};
+
+	if (pCol->IsUI())
+	{
+		tRect = pCol->GetSectionInfo();
+
+		POSITION tCamPos = GET_SINGLE(Camera)->GetPos();
+
+		tRect.l += tCamPos.x;
+		tRect.t += tCamPos.y;
+		tRect.r += tCamPos.x;
+		tRect.b += tCamPos.y;
+	}		
+
+	else
+		tRect = pCol->GetSectionInfo();
 
 	int iStartX = (int)(tRect.l / m_tSectionSize.x);
 	int iEndX = (int)(tRect.r / m_tSectionSize.x);

@@ -25,6 +25,7 @@ private:
 	PANIMATIONCLIP			m_pDefaultClip;
 	int						m_iSelect;
 	POSITION				m_tBasePos;
+	bool					m_bDestroyed;
 
 public:
 	class Texture* GetTexture()	const
@@ -87,6 +88,11 @@ public:
 
 		SetDlgItemInt(m_hWnd, IDC_EDIT_RENDER_X, (int)m_pClip->vecRenderPos[m_iSelect].x, true);
 		SetDlgItemInt(m_hWnd, IDC_EDIT_RENDER_Y, (int)m_pClip->vecRenderPos[m_iSelect].y, true);
+	}
+
+	bool IsDestroyed()	const
+	{
+		return m_bDestroyed;
 	}
 
 public:

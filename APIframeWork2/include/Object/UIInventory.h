@@ -31,6 +31,17 @@ private:
 	class UIPanel*				m_pInfoIconEnergy;
 	class Text*					m_pGoldText;
 	class UIShop*				m_pShop;
+	class UIButton*				m_pPrevColorBtn;
+	class UIButton*				m_pNextColorBtn;
+	int							m_iColorIndex;
+	vector<COLORREF>			m_vecColor;
+	class UIButton*				m_pHairChangeBtn;
+	class UIButton*				m_pPantChangeBtn;
+	int							m_iPantsColorIndex;
+	vector<COLORREF>			m_vecPantsColor;
+	class UIButton*				m_pPrevPantsColorBtn;
+	class UIButton*				m_pNextPantsColorBtn;
+	int							m_iCurrentHairColorIndex;
 
 public:
 	class Item* GetItem(int iIndex)	const
@@ -83,7 +94,7 @@ public:
 
 public:
 	void CreateInfoPanel(int iCountX, int iCountY);
-	void InfoPanelOn(const POSITION& tPos, int iFileIndex);
+	void InfoPanelOn(const POSITION& tPos, const ITEMINFO& tInfo);
 	void InfoPanelUpdate(const POSITION& tPos);
 	void InfoPanelOff();
 	void CreateInventory();
@@ -92,6 +103,10 @@ public:
 	void CreateGoldText();
 	void CreateShop(const string& strName);
 	void CreateBuildShop();
+	void CreateAnimalShop();
+	void ChangeHairColor(int, float);
+	void GetColorPrev(int , float);
+	void GetColorNext(int , float);
 
 public:
 	void AddObjectToLayer(class Layer* pLayer);
@@ -99,5 +114,8 @@ public:
 	void AddInfoPanelToLayer(class Layer* pLayer);
 	void SetInfoPanelLayer(class Layer* pLayer);
 	void AddItemToLayer(class Layer* pLayer);
+
+	public:
+		void ReadColorFromFile(char* pFileName);
 };
 

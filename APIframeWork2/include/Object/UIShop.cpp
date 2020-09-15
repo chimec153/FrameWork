@@ -274,7 +274,7 @@ void UIShop::UpdateScrollBtnPos()
 
 	fScrollPosY = (m_iPage * ((fDownBtnPosY - fScrollSizeY) - (fUpBtnPosY + fUpBtnSizeY))) / (iSize - SHOP_PAGE) + (fUpBtnPosY + fUpBtnSizeY);
 
-	m_pShopScrollBtn->SetPos(m_pShopUpBtn->GetPos().x, fScrollPosY);
+	m_pShopScrollBtn->SetPos(m_pShopUpBtn->GetPos().x, fScrollPosY + 1.f);
 }
 
 void UIShop::CreateShopPanel(const string& strName)
@@ -350,9 +350,9 @@ void UIShop::CreateShopPanel(const string& strName)
 			}
 		}
 
-		int iCount = GET_SINGLE(ResourcesManager)->GetItemCount();
+		//int iCount = GET_SINGLE(ResourcesManager)->GetItemCount();
 
-		for (int i = 0; i < iCount; ++i)		//	아이템 목록을 만든다.
+		for (int i = 0; i < 46; ++i)		//	아이템 목록을 만든다.
 		{
 			UIContext* pPanel = Obj::CreateObj<UIContext>("ShopContext", pLayer, POSITION::Zero, POSITION(32.f * 16.f, 32.f));
 
@@ -481,7 +481,7 @@ void UIShop::CreateShopPanel(const string& strName)
 		m_pShopExitBtn->SetSize(22.f, 22.f);
 		m_pShopExitBtn->SetImageOffset(676.f, 988.f);
 		m_pShopExitBtn->SetTexture("Mouse");
-		m_pShopExitBtn->SetCallback(this, &UIShop::DisableShopPanel);
+		m_pShopExitBtn->SetCallback(CS_STAY, this, &UIShop::DisableShopPanel);
 		m_pShopExitBtn->SetAlpha(255);
 		m_pShopExitBtn->EnableAlpha(true);
 		m_pShopExitBtn->SetPos(tPos);
@@ -500,7 +500,7 @@ void UIShop::CreateShopPanel(const string& strName)
 		m_pShopUpBtn->SetSize(20.f, 22.f);
 		m_pShopUpBtn->SetImageOffset(844.f, 918.f);
 		m_pShopUpBtn->SetTexture("Mouse");
-		m_pShopUpBtn->SetCallback(this, &UIShop::ShopPageUp);
+		m_pShopUpBtn->SetCallback(CS_STAY, this, &UIShop::ShopPageUp);
 		m_pShopUpBtn->SetAlpha(255);
 		m_pShopUpBtn->EnableAlpha(true);
 		m_pShopUpBtn->SetPos(tPos);
@@ -519,7 +519,7 @@ void UIShop::CreateShopPanel(const string& strName)
 		m_pShopDownBtn->SetSize(20.f, 22.f);
 		m_pShopDownBtn->SetImageOffset(844.f, 944.f);
 		m_pShopDownBtn->SetTexture("Mouse");
-		m_pShopDownBtn->SetCallback(this, &UIShop::ShopPageDown);
+		m_pShopDownBtn->SetCallback(CS_STAY, this, &UIShop::ShopPageDown);
 		m_pShopDownBtn->SetAlpha(255);
 		m_pShopDownBtn->EnableAlpha(true);
 		m_pShopDownBtn->SetPos(tPos);
@@ -737,19 +737,19 @@ void UIShop::BuyItem(int iIndex)
 
 	pPlayer->AddGold(-pInfo->vecPrice[0]);
 
-	Layer* pLayer = m_pScene->FindLayer("Default");
+	Layer* pLayer = m_pScene->FindLayer("HUD");
 
 	Item* pItem = (Item*)CreateCloneObj(pInfo->strName, pInfo->strName, pLayer);
 
 	m_pInven->AddItem(pItem);
-
+/*
 	Collider* pCol = pItem->GetCollider("ItemBody");
 
 	pCol->AddCollisionFunction(CS_ENTER, pItem, &Item::CollEnter);
 	pCol->AddCollisionFunction(CS_STAY, pItem, &Item::ColStay);
 	pCol->AddCollisionFunction(CS_LEAVE, pItem, &Item::ColEnd);
 
-	SAFE_RELEASE(pCol);
+	SAFE_RELEASE(pCol);*/
 
 	SAFE_RELEASE(pPlayer);
 
@@ -836,6 +836,9 @@ void UIShop::SetObjectLayer(Layer* pLayer)
 		m_vecShopItemPanel[i]->SetLayer(pLayer);
 		m_vecShopItemPanel[i]->SetScene(pScene);
 	}
+
+	m_pLayer = pLayer;
+	m_pScene = pScene;
 }
 
 void UIShop::SetGoldText(const TCHAR* strNum)

@@ -113,8 +113,8 @@ int UIButton::LateUpdate(float fDeltaTime)
 		if (m_bEnableCallback)
 			m_BtnCallback(fDeltaTime);
 
-		if (m_bEnableCallback2)
-			m_BtnCallback2(m_iButtonIndex,fDeltaTime);
+		if (m_pBtnCallback[CS_STAY])
+			m_pBtnCallback[CS_STAY](m_iButtonIndex,fDeltaTime);
 	}
 
 	return 0;
@@ -128,6 +128,15 @@ void UIButton::Collision(float fDeltaTime)
 void UIButton::Render(HDC hDC, float fDeltaTime)
 {
 	UI::Render(hDC, fDeltaTime);
+
+	if (KEYPRESS("Debug"))
+	{
+		TCHAR strScene[32] = {};
+
+		swprintf_s(strScene, TEXT("Scene: %lld"), (long long)m_pScene);
+
+		TextOut(hDC, (int)m_tPos.x, (int)m_tPos.y, strScene, lstrlen(strScene));
+	}
 }
 
 UIButton * UIButton::Clone()
@@ -155,6 +164,12 @@ void UIButton::MouseOn(Collider * pSrc, Collider * pDest, float fDeltaTime)
 
 		else if (strTag == "EditAniButton")
 			SetImageOffset(296.f, 490.f);
+
+		if(m_pBtnCallback[CS_ENTER])
+			m_pBtnCallback[CS_ENTER](m_iButtonIndex, fDeltaTime);
+
+		if (m_bAlphaOn)
+			m_cAlpha = 125;
 	}
 }
 
@@ -176,5 +191,11 @@ void UIButton::MouseOut(Collider * pSrc, Collider * pDest, float fDeltaTime)
 
 		else if (strTag == "EditAniButton")
 			SetImageOffset(296.f, 374.f);
+
+		if (m_pBtnCallback[CS_LEAVE])
+			m_pBtnCallback[CS_LEAVE](m_iButtonIndex, fDeltaTime);
+
+		if (m_bAlphaOn)
+			m_cAlpha = 255;
 	}
 }

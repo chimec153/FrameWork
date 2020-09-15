@@ -14,6 +14,8 @@
 #include "UIInventory.h"
 #include "UIPanel.h"
 #include "UIShop.h"
+#include "Animal.h"
+#include "Egg.h"
 
 UIClockHand::UIClockHand()	:
 	m_fTime(720.f),
@@ -27,7 +29,8 @@ UIClockHand::UIClockHand()	:
 	m_pWeekText(nullptr),
 	m_pTimeText(nullptr),
 	m_pWeatherPanel(nullptr),
-	m_pSeasonPanel(nullptr)
+	m_pSeasonPanel(nullptr),
+	m_bBackToHome(true)
 {
 	m_bAlphaOn = true;
 	m_cAlpha = 255;
@@ -62,8 +65,9 @@ UIClockHand::UIClockHand(const UIClockHand& clockhand)	:
 UIClockHand::~UIClockHand()
 {
 	SAFE_RELEASE(m_pNightPanel);
-	Safe_Release_VecList(m_CropList);
-	Safe_Delete_VecList(m_vecWeekText);
+	SAFE_RELEASE_VECLIST(m_CropList);
+	SAFE_RELEASE_VECLIST(m_AnimalList);
+	SAFE_DELETE_VECLIST(m_vecWeekText);
 	SAFE_RELEASE(m_pWeekText);
 	SAFE_RELEASE(m_pTimeText);
 	SAFE_RELEASE(m_pWeatherPanel);
@@ -90,11 +94,14 @@ void UIClockHand::AddTime(float fTime)
 		pPlayer->SetHP(50);
 		pPlayer->SetEnergy(50);
 
-		GET_SINGLE(SceneManager)->CreateScene<SceneHome>("Home", SC_NEXT);
+		if (m_bBackToHome)
+		{
+			GET_SINGLE(SceneManager)->CreateScene<SceneHome>("Home", SC_NEXT);
 
-		pPlayer->SetPos(288.f, 288.f);
+			pPlayer->SetPos(288.f, 288.f);
 
-		SAFE_RELEASE(pPlayer);
+			SAFE_RELEASE(pPlayer);
+		}
 	}
 
 	TCHAR strHour[32] = {};
@@ -131,7 +138,7 @@ void UIClockHand::AddDay()
 
 	TCHAR strNum[32] = {};
 
-	swprintf_s(strNum, TEXT("%d"), m_iDay);
+	swprintf_s(strNum, TEXT("%d"), m_iDay % 31+1);
 
 	TCHAR strText[MAX_PATH] = {};
 
@@ -146,16 +153,89 @@ void UIClockHand::AddDay()
 	auto iter = m_CropList.begin();
 	auto iterEnd = m_CropList.end();
 
-	for (; iter != iterEnd; ++iter)
+	for (; iter != iterEnd;)
 	{
-		if (!((Crop*)(*iter))->IsStart())
-			((Crop*)(*iter))->TimeStart();
+		ITEM_TYPE eType = ((Item*)(*iter))->GetType();
 
-		else
-			((Crop*)(*iter))->AddDay(1);
+		if (eType == IT_CROP)
+		{
+			bool bFrozen = ((Crop*)* iter)->IsFrozen();
+
+			if (!bFrozen)
+			{
+				if (!((Crop*)(*iter))->IsStart())
+					((Crop*)(*iter))->TimeStart();
+
+				else
+					((Crop*)(*iter))->AddDay(1);
+
+				CROP_TYPE eCropType = ((Crop*)* iter)->GetCropType();
+
+				if (eCropType != CROP_NONE && m_iDay % 365 > 270)
+				{
+					POSITION tOffset = ((Crop*)* iter)->GetImageOffset();
+
+					if (tOffset.x < 256.f)
+						tOffset.x += 256.f;
+
+					((Crop*)* iter)->SetImageOffset(tOffset.x, 12.f * 64.f);
+					((Crop*)* iter)->SetFrozen(true);
+				}
+			}
+
+			++iter;
+		}
+
+		else if (eType == IT_EGG)
+		{
+			if (((Egg*)(*iter))->AddDay())
+			{
+				SAFE_RELEASE((*iter));
+				iter = m_CropList.erase(iter);
+				iterEnd = m_CropList.end();
+			}
+			else
+				++iter;
+		}
 	}
 
-	float fRain = rand() % 10001 / 100.f;
+	auto iterAnimal = m_AnimalList.begin();
+	auto iterAnimalEnd = m_AnimalList.end();
+
+	for (; iterAnimal != iterAnimalEnd; ++iterAnimal)
+	{
+		((Animal*)(*iterAnimal))->AddDay(1);
+	}
+
+	float fRain = 0;
+
+	if (m_iDay % 365 > 270)
+	{
+		fRain = rand() % 10001 / 100.f + 28.f;
+
+		m_pSeasonPanel->SetImageOffset(812.f, 930.f);
+	}		
+
+	else if (m_iDay % 365 > 180)
+	{
+		fRain = rand() % 10001 / 100.f + 15.f;
+
+		m_pSeasonPanel->SetImageOffset(812.f, 914.f);
+	}		
+
+	else if (m_iDay % 365 > 90)
+	{
+		fRain = rand() % 10001 / 100.f;
+
+		m_pSeasonPanel->SetImageOffset(812.f, 898.f);
+	}		
+
+	else if (m_iDay % 365 <= 90)
+	{
+		fRain = rand() % 10001 / 100.f + 15.f;
+
+		m_pSeasonPanel->SetImageOffset(812.f, 882.f);
+	}		
 
 	if (fRain < 30.f)
 	{
@@ -393,6 +473,9 @@ void UIClockHand::Collision(float fDeltaTime)
 
 void UIClockHand::Render(HDC hDC, float fDeltaTime)
 {
+	if (12 < (int)m_fTime / 120.f)
+		return;
+
 	if (m_pTexture)
 		m_pTexture->RenderByAlpha(m_cAlpha, hDC, m_tPos, POSITION::Zero, m_tSize, 12 - (int)(m_fTime/120.f));
 }

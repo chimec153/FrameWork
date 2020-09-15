@@ -54,5 +54,9 @@ public:
 
 public:
 	void Collision(class Collider* pSrc, class Collider* pDest, float fTime);
+
+public:
+	virtual void Hitted(int iAttack, const POSITION& tPos);
+	virtual void DieMotion();
 };
 

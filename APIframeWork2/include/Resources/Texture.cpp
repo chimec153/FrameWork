@@ -86,6 +86,15 @@ bool Texture::LoadTexture(HINSTANCE hInst, HDC hDC,
 
 	GetObject(m_hBitmap, sizeof(m_tInfo), &m_tInfo);
 
+	PTextureInfo pInfo = new TextureInfo;
+
+	pInfo->hDC = CreateCompatibleDC(hDC);
+	pInfo->hBmp = m_hBitmap;
+	pInfo->hPrevBmp = m_hOldBitmap;
+	pInfo->BmpInfo = m_tInfo;
+	
+	m_vecTexture.push_back(pInfo);
+
 	return true;
 }
 

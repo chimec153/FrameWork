@@ -16,10 +16,7 @@ private:
 	class UINum*			m_pLevelNum;
 
 public:
-	void SetLevel(int iLevel)
-	{
-		m_iLevel = iLevel;
-	}
+	void SetLevel(int iLevel);
 
 	int GetLevel()	const
 	{
@@ -28,10 +25,15 @@ public:
 
 public:
 	virtual bool Init();
+	virtual void Start();
 	virtual int Update(float fTime);
 
 public:
 	void OutPortalCol(class Collider* pSrc, class Collider* pDest, float fTime);
 	void NextLevel(class Collider* pSrc, class Collider* pDest, float fTime);
+
+public:
+	void CreateRocks();
+	void CreateMonsters();
 };
 

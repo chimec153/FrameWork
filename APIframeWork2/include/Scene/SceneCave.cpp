@@ -20,6 +20,10 @@
 #include "../Object/Portal.h"
 #include "../Object/ObjManager.h"
 #include "../Object/UIInventory.h"
+#include "../Object/Fly.h"
+#include "../Object/Bug.h"
+#include "../Object/SlimeHead.h"
+#include "../Resources/ResourcesManager.h"
 
 SceneCave::SceneCave()	:
 	m_iLevel(0),
@@ -31,6 +35,11 @@ SceneCave::~SceneCave()
 {
 	SAFE_RELEASE(m_pStage);
 	SAFE_RELEASE(m_pLevelNum);
+}
+
+void SceneCave::SetLevel(int iLevel)
+{
+	m_iLevel = iLevel;
 }
 
 bool SceneCave::Init()
@@ -89,16 +98,6 @@ bool SceneCave::Init()
 
 	CreateProtoTypes();
 
-	CreateBatClone();
-
-	CreateSlimeClone();
-
-	CreateBugClone();
-
-	CreateFlyClone();
-
-	CreateRockCrabClone();
-
 	ColliderRect* pPortal = m_pStage->AddCollider<ColliderRect>("OutPortal");
 
 	pPortal->SetRect(32.f * 5.f, 32.f * 2.f, 32.f * 6.f, 32.f * 3.f);
@@ -108,73 +107,16 @@ bool SceneCave::Init()
 	
 	LoadFile();
 
-	int iTileSizeX = m_pStage->GetTileSizeX();
-	int iTileSizeY = m_pStage->GetTileSizeY();
-
-	while (true)
-	{
-		float fIndexX = (float)(rand() % 14 + 2);
-		float fIndexY = (float)(rand() % 9 + 8);
-
-		Tile* pTile = m_pStage->GetTile((float)iTileSizeX * fIndexX, (float)iTileSizeY * fIndexY);
-
-		POSITION tPos = pTile->GetPos();
-
-		TILE_OPTION eOption = pTile->GetTileOption();
-
-		if (eOption == TO_NONE)
-		{
-			pTile->SetUpperImageOffset(416.f, 320.f);
-
-			Layer* pLayer = FindLayer("Default");
-
-			Portal* pPortal = Obj::CreateObj<Portal>("DownPortal", pLayer);
-
-			pPortal->SetCallback(this, &SceneCave::NextLevel);
-			pPortal->SetPos(iTileSizeX * fIndexX, iTileSizeY * fIndexY);
-
-			ColliderRect* pDownPortal = pPortal->AddCollider<ColliderRect>("PortalBody");
-
-			pDownPortal->SetRect(0.f, 0.f, 32.f, 32.f);
-			pDownPortal->AddCollisionFunction(CS_ENTER, pPortal, &Portal::ColEnter);
-
-			SAFE_RELEASE(pDownPortal);
-
-			SAFE_RELEASE(pPortal);
-
-			break;
-		}
-	}
-
-	Layer* pLayer = FindLayer("Default");
-
-	for (int i = 0; i < 20; ++i)
-	{
-		int iIndex = rand() % 8 + 17;
-
-		float fIndexX = (float)(rand() % 14 + 2);
-		float fIndexY = (float)(rand() % 12 + 5);
-
-		Tile* pTile = m_pStage->GetTile((float)iTileSizeX * fIndexX, (float)iTileSizeY * fIndexY);
-
-		POSITION tPos = pTile->GetPos();
-
-		TILE_OPTION eOption = pTile->GetTileOption();
-
-		if (eOption == TO_NOMOVE)
-			continue;
-
-		Obj* pRock = m_pStage->CreateCloneObj(m_vecstrProto[iIndex], "Rock", pLayer);
-
-		if (pRock)
-			m_pStage->SetBlock(pTile, pRock->GetBlock(), pRock);
-
-		SAFE_RELEASE(pRock);
-
-		pTile->SetTileOption(TO_NOMOVE);
-	}
-
 	return true;
+}
+
+void SceneCave::Start()
+{
+	Scene::Start();
+
+	CreateMonsters();
+
+	CreateRocks();
 }
 
 int SceneCave::Update(float fTime)
@@ -196,7 +138,6 @@ void SceneCave::OutPortalCol(Collider* pSrc, Collider* pDest, float fTime)
 
 	if (strDest == "PlayerBody")
 	{
-
 		if (m_iLevel == 0)
 		{
 			GET_SINGLE(SceneManager)->CreateScene<InGameScene>("Main",SC_NEXT);
@@ -207,7 +148,6 @@ void SceneCave::OutPortalCol(Collider* pSrc, Collider* pDest, float fTime)
 
 			SAFE_RELEASE(pPlayer);
 		}
-			
 
 		else
 		{
@@ -224,7 +164,15 @@ void SceneCave::OutPortalCol(Collider* pSrc, Collider* pDest, float fTime)
 				iLevel /= 10;
 			}
 
-			SceneCave* pScene = GET_SINGLE(SceneManager)->CreateScene<SceneCave>("Cave", SC_NEXT);
+			char strName[32] = {};
+
+			if (m_iLevel != 1)
+				sprintf_s(strName, "Cave_%d", m_iLevel - 1);
+
+			else
+				strcat(strName, "Cave");
+
+			SceneCave* pScene = GET_SINGLE(SceneManager)->CreateScene<SceneCave>(strName, SC_NEXT);
 
 			pScene->SetLevel(m_iLevel - 1);
 
@@ -256,9 +204,16 @@ void SceneCave::NextLevel(Collider* pSrc, Collider* pDest, float fTime)
 
 			if (eOption != TO_NOMOVE)
 			{
-				SceneCave* pScene = GET_SINGLE(SceneManager)->CreateScene<SceneCave>("Cave", SC_NEXT);
+				char strName[32] = {};
+
+				sprintf_s(strName, "Cave_%d", m_iLevel + 1);
+
+				SceneCave* pScene = GET_SINGLE(SceneManager)->CreateScene<SceneCave>(strName, SC_NEXT);
 
 				pScene->SetLevel(m_iLevel + 1);
+
+				/*pScene->CreateMonsters();
+				pScene->CreateRocks();*/
 
 				GET_SINGLE(SoundManager)->Stop(ST_BGM);
 				GET_SINGLE(SoundManager)->Stop(ST_EFFECT);
@@ -270,5 +225,158 @@ void SceneCave::NextLevel(Collider* pSrc, Collider* pDest, float fTime)
 				SAFE_RELEASE(pPlayer);
 			}
 		}
+	}
+}
+
+void SceneCave::CreateRocks()
+{
+	int iTileSizeX = m_pStage->GetTileSizeX();
+	int iTileSizeY = m_pStage->GetTileSizeY();
+
+	if (m_iLevel <= 100)
+	{
+		while (true)
+		{
+			float fIndexX = (float)(rand() % 14 + 2);
+			float fIndexY = (float)(rand() % 9 + 8);
+
+			Tile* pTile = m_pStage->GetTile((float)iTileSizeX * fIndexX, (float)iTileSizeY * fIndexY);
+
+			POSITION tPos = pTile->GetPos();
+
+			TILE_OPTION eOption = pTile->GetTileOption();
+
+			if (eOption == TO_NONE)
+			{
+				pTile->SetUpperImageOffset(416.f, 320.f);
+				pTile->SetUpperTexture("mine", TEXT("Maps\\TheMines.bmp"));
+
+				Layer* pLayer = FindLayer("Default");
+
+				Portal* pPortal = Obj::CreateObj<Portal>("DownPortal", pLayer);
+
+				pPortal->SetCallback(this, &SceneCave::NextLevel);
+				pPortal->SetPos(iTileSizeX * fIndexX, iTileSizeY * fIndexY);
+
+				ColliderRect* pDownPortal = pPortal->AddCollider<ColliderRect>("PortalBody");
+
+				pDownPortal->SetRect(0.f, 0.f, 32.f, 32.f);
+				pDownPortal->AddCollisionFunction(CS_ENTER, pPortal, &Portal::ColEnter);
+
+				SAFE_RELEASE(pDownPortal);
+
+				SAFE_RELEASE(pPortal);
+
+				break;
+			}
+		}
+	}
+
+	Layer* pLayer = FindLayer("Default");
+
+	for (int i = 0; i < 20; ++i)
+	{
+		int iIndex = rand() % (int)(22 * (m_iLevel / 100.f) + 2) + 16;
+
+		float fIndexX = (float)(rand() % 14 + 2);
+		float fIndexY = (float)(rand() % 12 + 5);
+
+		Tile* pTile = m_pStage->GetTile((float)iTileSizeX * fIndexX, (float)iTileSizeY * fIndexY);
+
+		POSITION tPos = pTile->GetPos();
+
+		TILE_OPTION eOption = pTile->GetTileOption();
+
+		if (eOption == TO_NOMOVE)
+			continue;
+
+		Obj* pRock = m_pStage->CreateCloneObj(m_vecstrProto[iIndex], "Rock", pLayer);
+
+		if (pRock)
+			m_pStage->SetBlock(pTile, pRock->GetBlock(), pRock);
+
+		SAFE_RELEASE(pRock);
+
+		pTile->SetTileOption(TO_NOMOVE);
+	}
+}
+
+void SceneCave::CreateMonsters()
+{
+	Layer* pLayer = FindLayer("Default");
+
+	int iRand = rand() % 5;
+
+	int iTileSizeX = m_pStage->GetTileSizeX();
+	int iTileSizeY = m_pStage->GetTileSizeY();
+
+	for (int i = 0; i < 4; ++i)
+	{
+		TILE_OPTION eOption = TO_NONE;
+		POSITION tPos = {};
+		do
+		{
+			int iIndex = rand() % 24 + 16;
+
+			float fIndexX = (float)(rand() % 14 + 2);
+			float fIndexY = (float)(rand() % 12 + 5);
+
+			Tile* pTile = m_pStage->GetTile((float)iTileSizeX * fIndexX, (float)iTileSizeY * fIndexY);
+
+			tPos = pTile->GetPos();
+
+			eOption = pTile->GetTileOption();
+		} while (eOption == TO_NOMOVE);
+
+		Obj* pMonster = nullptr;
+
+		if (iRand == MT_BAT)
+		{
+			pMonster = m_pStage->CreateCloneObj("Minion", "Minion", pLayer);
+
+			int iLeft = rand() % 2;
+
+			if (iLeft)
+				tPos.x = 32.f;
+
+			else
+				tPos.x = 480.f;
+		}
+
+		else if (iRand == MT_SLIME)
+		{
+			pMonster = m_pStage->CreateCloneObj("Slime", "slime", pLayer);
+
+			Obj* pHead = m_pStage->CreateCloneObj("SlimeHead", "Head", pLayer);
+
+			((Slime*)pMonster)->SetHead((SlimeHead*)pHead);
+
+			SAFE_RELEASE(pHead);
+		}
+
+		else if (iRand == MT_BUG)
+		{
+			pMonster = m_pStage->CreateCloneObj("Bug", "Bug", pLayer);
+		}
+
+		else if (iRand == MT_FLY)
+		{
+			pMonster = m_pStage->CreateCloneObj("Fly", "Fly", pLayer);
+		}
+
+		else if (iRand == MT_ROCKCRAB)
+		{
+			pMonster = m_pStage->CreateCloneObj("RockCrab", "RockCrab", pLayer);
+		}
+
+		pMonster->SetPos(tPos + 16.f);
+
+		PMonsterInfo pInfo = GET_SINGLE(ResourcesManager)->FindMonsterInfo(iRand);
+
+		((FightObj*)pMonster)->SetAttack(pInfo->vecAttack[m_iLevel / 10]);
+
+		((FightObj*)pMonster)->SetHP(pInfo->vecHP[m_iLevel / 10]);
+
+		SAFE_RELEASE(pMonster);
 	}
 }

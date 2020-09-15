@@ -3,8 +3,9 @@
 class SceneManager
 {
 private:
-	class Scene*	m_pScene;
-	class Scene*	m_pNextScene;
+	class Scene* m_pScene;
+	class Scene* m_pNextScene;
+	class Scene* m_pInGameScene;
 	unordered_map<string, class Scene*>		m_mapScene;
 
 public:
@@ -16,6 +17,11 @@ public:
 	class Scene* GetNextScene()	const
 	{
 		return m_pNextScene;
+	}
+
+	class Scene* GetInGameScene()	const
+	{
+		return m_pInGameScene;
 	}
 
 public:
@@ -45,10 +51,15 @@ public:
 			case SC_NEXT:
 				m_pNextScene = pScene;
 				break;
+			case SC_MINIGAME:
+				m_pNextScene = pScene;
+
+				m_pInGameScene = m_pScene;
+				break;
 			}
 
 			return pScene;
-		}			
+		}
 
 		pScene = new T;
 
@@ -68,11 +79,26 @@ public:
 		case SC_NEXT:
 			m_pNextScene = pScene;
 			break;
+		case SC_MINIGAME:
+			m_pNextScene = pScene;
+
+			m_pInGameScene = m_pScene;
+			break;
 		}
 
 		m_mapScene.insert(make_pair(strName, pScene));
 
 		return pScene;
+	}
+
+	void ReturnToInGameScene()
+	{
+		if (!m_pNextScene)
+		{
+			m_pNextScene = m_pInGameScene;
+
+			m_pInGameScene = nullptr;
+		}
 	}
 
 private:

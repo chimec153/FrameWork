@@ -15,6 +15,7 @@ private:
 
 public:
 	virtual bool Init();
+	virtual int Update(float fTime);
 
 public:
 	void TownPortal(class Collider* pSrc, class Collider* pDest, float fTime);

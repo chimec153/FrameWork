@@ -12,6 +12,16 @@ private:
 	CWeapon(const CWeapon& weapon);
 	~CWeapon();
 
+private:
+	class Player*	m_pPlayer;
+	bool			m_bAction;
+
+public:
+	void SetPlayer(class Player* pPlayer)
+	{
+		m_pPlayer = pPlayer;
+	}
+
 public:
 	virtual bool Init();
 	virtual void Input(float fDeltaTime);

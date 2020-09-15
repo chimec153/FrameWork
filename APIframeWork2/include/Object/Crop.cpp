@@ -11,7 +11,7 @@
 #include "../Resources/ResourcesManager.h"
 
 Crop::Crop()	:
-	m_eCropType(CROP_PARSNIP),
+	m_eCropType(CROP_NONE),
 	m_iDay(0),
 	m_iStage(0),
 	m_bTimeStart(false),
@@ -20,9 +20,12 @@ Crop::Crop()	:
 	m_iHP(0),
 	m_iEnergy(0),
 	m_iRegrowthDay(0),
-	m_pFlower(nullptr)
+	m_pFlower(nullptr),
+	m_bFrozen(false)
 {
 	m_eBlock = OB_CROP;
+	m_cAlpha = 255;
+	m_bAlphaOn = true;
 }
 
 Crop::Crop(const Crop& crop)	:
@@ -44,6 +47,8 @@ Crop::Crop(const Crop& crop)	:
 
 	else
 		m_pFlower = nullptr;
+
+	m_bFrozen = crop.m_bFrozen;
 }
 
 Crop::~Crop()
@@ -141,14 +146,6 @@ void Crop::Harvest()
 
 		SetImageOffset(GetSize() * pInfo->tHarvestOffset);
 
-		Collider* pCol = GetCollider("ItemBody");
-
-		pCol->AddCollisionFunction(CS_ENTER, (Item*)this, &Item::CollEnter);
-		pCol->AddCollisionFunction(CS_STAY, (Item*)this, &Item::ColStay);
-		pCol->AddCollisionFunction(CS_LEAVE, (Item*)this, &Item::ColEnd);
-
-		SAFE_RELEASE(pCol);
-
 		if (m_iStage == m_iMaxStage)
 		{
 			Obj* pEffect = CreateCloneObj("HoeEffect", "HarvestEffect", m_pLayer);
@@ -238,7 +235,7 @@ void Crop::MouseOn(Collider* pSrc, Collider* pDest, float fTime)
 
 void Crop::MousePress(Collider* pSrc, Collider* pDest, float fTime)
 {
-	if (m_bHarvested && !m_bInventory)
+	if (m_bHarvested && !m_bInventory && !m_bFrozen)
 	{
 		UIInventory* pInven = GET_SINGLE(ObjManager)->GetInven();
 

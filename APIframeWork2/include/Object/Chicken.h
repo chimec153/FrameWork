@@ -1,7 +1,9 @@
 #pragma once
-#include "FightObj.h"
+
+#include "Animal.h"
+
 class Chicken :
-	public FightObj
+	public Animal
 {
 private:
 	friend class Obj;
@@ -13,14 +15,15 @@ private:
 	virtual ~Chicken();
 
 private:
-	int				m_iDay;
-	bool			m_bBaby;
+	CHICKEN_COLOR	m_eColor;
 
 public:
-	void AddDay(int iDay)
+	void SetColor(CHICKEN_COLOR eColor)
 	{
-		m_iDay += iDay;
+		m_eColor = eColor;
 	}
+
+	virtual bool AddDay(int iDay);
 
 public:
 	virtual bool Init();
@@ -29,5 +32,13 @@ public:
 	virtual void Collision(float fDeltaTime);
 	virtual void Render(HDC hDC, float fDeltaTime);
 	virtual Chicken* Clone();
+
+public:
+	void ColEnter(class Collider* pSrc, class Collider* pDest, float fTime);
+	void ColStay(class Collider* pSrc, class Collider* pDest, float fTime);
+	void ColLeave(class Collider* pSrc, class Collider* pDest, float fTime);
+
+public:
+	virtual void ActionChange(ANIMAL_ACTION eAction);
 };
 

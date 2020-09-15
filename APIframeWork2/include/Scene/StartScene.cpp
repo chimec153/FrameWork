@@ -20,6 +20,8 @@
 #include "../Object/Pants.h"
 #include "../Object/Shirt.h"
 #include "../Object/Hair.h"
+#include "../Object/Stage.h"
+#include "../Object/Hat.h"
 
 StartScene::StartScene()
 {
@@ -176,6 +178,12 @@ void StartScene::StartButtonCallback(float fTime)
 
 	SAFE_RELEASE(pShirt);
 
+	Hat* pHat = Obj::CreateObj<Hat>("Hat", pLayer);
+
+	pPlayer->SetHat(pHat);
+
+	SAFE_RELEASE(pHat);
+
 	UIBar* pEnergyBar = Obj::CreateObj<UIBar>("EnergyBar", pHUDLayer,
 		POSITION(1006.f, 626.f), POSITION(12.f, 82.f));
 
@@ -214,90 +222,36 @@ void StartScene::StartButtonCallback(float fTime)
 
 	GET_SINGLE(SceneManager)->CreateScene<InGameScene>("Main", SC_NEXT);
 
-	Item* pSword = Obj::CreateObj<Tool>("sword", pLayer);
-
-	pSword->SetTexture("weapon", TEXT("Item\\weapons.bmp"));
-	pSword->SetColorKey(255, 255, 255);
-	((Tool*)pSword)->SetToolType(TOOL_SWORD);
-
-	Collider* pSwordCol = pSword->GetCollider("ItemBody");
-
-	pSwordCol->AddCollisionFunction(CS_ENTER, pSword, &Item::CollEnter);
-	pSwordCol->AddCollisionFunction(CS_STAY, pSword, &Item::ColStay);
-	pSwordCol->AddCollisionFunction(CS_LEAVE, pSword, &Item::ColEnd);
-
-	SAFE_RELEASE(pSwordCol);
+	Item* pSword = (Item*)pInven->Obj::CreateCloneObj("Rusty Sword", "sword", pLayer);
 
 	pInven->AddItem(pSword);
 
-	Item* pHoe = Obj::CreateObj<Tool>("hoe", pLayer);
-
-	pHoe->SetTexture("tool", TEXT("Item\\tools.bmp"));
-	pHoe->SetColorKey(255, 255, 255);
-	pHoe->SetImageOffset(160.f, 64.f);
-	((Tool*)pHoe)->SetToolType(TOOL_HOE);
-
-	Collider* pHoeCol = pHoe->GetCollider("ItemBody");
-
-	pHoeCol->AddCollisionFunction(CS_ENTER, pHoe, &Item::CollEnter);
-	pHoeCol->AddCollisionFunction(CS_STAY, pHoe, &Item::ColStay);
-	pHoeCol->AddCollisionFunction(CS_LEAVE, pHoe, &Item::ColEnd);
-
-	SAFE_RELEASE(pHoeCol);
+	Item* pHoe = (Item*)pInven->Obj::CreateCloneObj("Starter Hoe", "hoe", pLayer);
 
 	pInven->AddItem(pHoe);
 
-	Item* pPikEx = Obj::CreateObj<Tool>("pikex", pLayer);
-
-	pPikEx->SetTexture("tool", TEXT("Item\\tools.bmp"));
-	pPikEx->SetColorKey(255, 255, 255);
-	pPikEx->SetImageOffset(160.f, 192.f);
-	((Tool*)pPikEx)->SetToolType(TOOL_PIKEX);
-
-	Collider* pPikExCol = pPikEx->GetCollider("ItemBody");
-
-	pPikExCol->AddCollisionFunction(CS_ENTER, pPikEx, &Item::CollEnter);
-	pPikExCol->AddCollisionFunction(CS_STAY, pPikEx, &Item::ColStay);
-	pPikExCol->AddCollisionFunction(CS_LEAVE, pPikEx, &Item::ColEnd);
-
-	SAFE_RELEASE(pPikExCol);
+	Item* pPikEx = (Item*)pInven->Obj::CreateCloneObj("Starter Pikex", "Pikex", pLayer);
 
 	pInven->AddItem(pPikEx);
 
-	Item* pEx = Obj::CreateObj<Tool>("ex", pLayer);
-
-	pEx->SetTexture("tool", TEXT("Item\\tools.bmp"));
-	pEx->SetColorKey(255, 255, 255);
-	pEx->SetImageOffset(160.f, 320.f);
-	((Tool*)pEx)->SetToolType(TOOL_EX);
-
-	Collider* pExCol = pEx->GetCollider("ItemBody");
-
-	pExCol->AddCollisionFunction(CS_ENTER, pEx, &Item::CollEnter);
-	pExCol->AddCollisionFunction(CS_STAY, pEx, &Item::ColStay);
-	pExCol->AddCollisionFunction(CS_LEAVE, pEx, &Item::ColEnd);
-
-	SAFE_RELEASE(pExCol);
+	Item* pEx = (Item*)pInven->Obj::CreateCloneObj("Starter Ex", "Ex", pLayer);
 
 	pInven->AddItem(pEx);
 
-	Item* pWateringCan = Obj::CreateObj<Tool>("wateringcan", pLayer);
-
-	pWateringCan->SetTexture("tool", TEXT("Item\\tools.bmp"));
-	pWateringCan->SetColorKey(255, 255, 255);
-	pWateringCan->SetImageOffset(64.f, 446.f);
-	((Tool*)pWateringCan)->SetToolType(TOOL_WATER);
-
-	Collider* pWateringCanCol = pWateringCan->GetCollider("ItemBody");
-
-	pWateringCanCol->AddCollisionFunction(CS_ENTER, pWateringCan, &Item::CollEnter);
-	pWateringCanCol->AddCollisionFunction(CS_STAY, pWateringCan, &Item::ColStay);
-	pWateringCanCol->AddCollisionFunction(CS_LEAVE, pWateringCan, &Item::ColEnd);
-
-	SAFE_RELEASE(pWateringCanCol);
+	Item* pWateringCan = (Item*)pInven->Obj::CreateCloneObj("Starter Watering Can", "Watering Can", pLayer);
 
 	pInven->AddItem(pWateringCan);
 
+	Item* pScythe = (Item*)pInven->Obj::CreateCloneObj("Starter Scythe", "Scythe", pLayer);
+
+	pInven->AddItem(pScythe);
+
+	Item* pScissor = (Item*)pInven->Obj::CreateCloneObj("Scissor", "Scissor", pLayer);
+
+	pInven->AddItem(pScissor);
+
+	SAFE_RELEASE(pScissor);
+	SAFE_RELEASE(pScythe);
 	SAFE_RELEASE(pWateringCan);
 	SAFE_RELEASE(pSword);
 	SAFE_RELEASE(pHoe);

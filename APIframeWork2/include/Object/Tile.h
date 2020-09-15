@@ -21,6 +21,7 @@ private:
 	class Texture*		m_pSelectTex;
 	bool				m_bSelect;
 	class Stage*		m_pStage;
+	POSITION			m_tStart;
 
 
 public:
@@ -85,6 +86,13 @@ public:
 	{
 		m_pStage = pStage;
 	}
+
+	void SetStart(const POSITION& tPos)
+	{
+		m_tStart = tPos;
+	}
+
+	class Texture* GetUpperTexture()	const;
 
 public:
 	virtual bool Init();

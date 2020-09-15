@@ -80,7 +80,7 @@ public:
 		return m_hMemDC;
 	}
 
-	HDC GetTextureDC(int iIndex)	const
+	HDC GetTextureDC(int iIndex = 0)	const
 	{
 		return m_vecTexture[iIndex]->hDC;
 	}
