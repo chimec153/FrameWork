@@ -16,5 +16,6 @@
 - Scene:      모든 장면들
 - Sound:      게임 내에 나오는 소리
 
-MapEditDlg: 맵 에디터 대화상자 
-AniEditDlg: 애니메이션 에디터 대화상자 클래스 
+기타 사항
+- MapEditDlg: 맵 에디터 대화상자 
+- AniEditDlg: 애니메이션 에디터 대화상자 클래스 
